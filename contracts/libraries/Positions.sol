@@ -34,7 +34,7 @@ library Positions
     function validate(
         IRangePoolStructs.ValidateParams memory params
     ) external pure returns (uint128, uint128, uint256 liquidityMinted) {
-        //TODO: we are validating this on insert and here
+        //TODO: check amount is < max int128
         if (params.lower % int24(params.state.tickSpacing) != 0) revert InvalidLowerTick();
         if (params.lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
         if (params.upper % int24(params.state.tickSpacing) != 0) revert InvalidUpperTick();
@@ -63,14 +63,13 @@ library Positions
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.AddParams memory params
     ) external returns (IRangePoolStructs.PoolState memory) {
-        //TODO: dilute amountDeltas when adding liquidity
+
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
             position: positions[params.owner][params.lower][params.upper],
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
         });
-        /// call if claim != lower and liquidity being added
-        /// initialize new position
+
         if (params.amount == 0) return (state);
 
         Ticks.insert(
@@ -96,7 +95,6 @@ library Positions
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.RemoveParams memory params
     ) external returns (IRangePoolStructs.PoolState memory, uint128, uint128) {
-        //TODO: dilute amountDeltas when adding liquidity
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
             position: positions[params.owner][params.lower][params.upper],
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
@@ -113,7 +111,6 @@ library Positions
             uint128(params.amount)
         );
 
-        //TODO: calculate how much should be removed of each side
         uint128 amount0Removed; uint128 amount1Removed;
         (amount0Removed, amount1Removed) = DyDxMath.getAmountsForLiquidity(
                                                         cache.priceLower,
@@ -134,8 +131,6 @@ library Positions
         return (state, params.amount0, params.amount1);
     }
 
-    //TODO: factor in deltas in current auction after implementing GDA
-    //TODO: pass pool as memory and save pool changes using return value
     function update(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position))) storage positions,
@@ -203,6 +198,4 @@ library Positions
         feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
         feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
     }
-
-
 }

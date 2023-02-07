@@ -50,7 +50,6 @@ library Ticks
                                    );
     }
 
-    //TODO: pass in nextTick price
     function quote(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         bool zeroForOne,
@@ -112,7 +111,6 @@ library Ticks
 
     //TODO: set custom metadata for NFT pic
 
-    //maybe call ticks on msg.sender to get tick
     function _cross(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         int24 nextTickToCross,
@@ -142,7 +140,6 @@ library Ticks
         return (currentLiquidity, nextTickToCross);
     }
 
-    //TODO: pass in lowerTick and upperTick
     function insert(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
