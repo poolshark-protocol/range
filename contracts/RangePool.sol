@@ -9,6 +9,7 @@ import './utils/SafeTransfers.sol';
 import './utils/RangePoolErrors.sol';
 import './libraries/Ticks.sol';
 import './libraries/Positions.sol';
+import "./RangePoolERC20.sol";
 
 contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfers {
     uint16 internal constant MAX_FEE = 10000;
@@ -51,43 +52,46 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
     }
 
     //TODO: add ERC-721 interface
-
+    //TODO: add documentation here to note params
     function mint(
-        address recipient,
-        int24 lowerOld,
-        int24 lower,
-        int24 upperOld,
-        int24 upper,
-        uint128 amount0,
-        uint128 amount1
+        MintParams calldata mintParams
     ) external lock {
         PoolState memory pool = poolState;
+        MintParams memory params = mintParams;
         uint256 liquidityMinted;
-        (amount0, amount1, liquidityMinted) = Positions.validate(
-            ValidateParams(lowerOld, lower, upper, upperOld, amount0, amount1, pool)
-        );
-        _transferIn(token0, amount0);
-        _transferIn(token1, amount1);
+        (params, liquidityMinted) = Positions.validate(params, pool);
+        _transferIn(token0, params.amount0);
+        _transferIn(token1, params.amount1);
+
         //TODO: is this dangerous?
         unchecked {
             //TODO: if fees > 0 emit PositionUpdated event
             // update position with latest fees accrued
-            (positions[recipient][lower][upper], , ) = Positions.update(
+            (positions[params.fungible ? address(this) : params.to][params.lower][params.upper], , ) = Positions.update(
                 ticks,
                 positions,
                 pool,
-                recipient,
-                lower,
-                upper
+                params.to,
+                params.lower,
+                params.upper
             );
             pool = Positions.add(
                 positions,
                 ticks,
                 pool,
-                AddParams(recipient, lowerOld, lower, upper, upperOld, uint128(liquidityMinted))
+                params,
+                uint128(liquidityMinted)
             );
         }
-        emit Mint(recipient, lower, upper, uint128(liquidityMinted));
+
+        if (params.fungible) {
+            address positionToken = tokens[params.lower][params.upper];
+            if (positionToken == address(0)) {
+                positionToken = address(new RangePoolERC20());
+            } 
+        }
+
+        emit Mint(params.to, params.lower, params.upper, uint128(liquidityMinted));
     }
 
     function burn(
@@ -125,11 +129,10 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         lock
         returns (uint256 amount0, uint256 amount1)
     {
-        PoolState memory pool = poolState;
         (positions[msg.sender][lower][upper], , ) = Positions.update(
             ticks,
             positions,
-            pool,
+            poolState,
             msg.sender,
             lower,
             upper
@@ -144,7 +147,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         _transferOut(msg.sender, token1, amount1);
 
         emit Collect(msg.sender, amount0, amount1);
-        poolState = pool;
     }
 
     //TODO: block the swap if there is an overflow on fee growth

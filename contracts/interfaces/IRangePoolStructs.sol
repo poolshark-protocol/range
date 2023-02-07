@@ -45,6 +45,17 @@ interface IRangePoolStructs {
         uint128 token1;
     }
 
+    struct MintParams {
+        address to;
+        int24 lowerOld;
+        int24 lower;
+        int24 upper;
+        int24 upperOld;
+        uint128 amount0;
+        uint128 amount1;
+        bool fungible;
+    }
+
     //TODO: should we have a recipient field here?
     struct AddParams {
         address owner;

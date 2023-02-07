@@ -30,19 +30,18 @@ library Positions {
         return type(uint128).max / uint128(uint24(TickMath.MAX_TICK) / (2 * uint24(tickSpacing)));
     }
 
-    function validate(IRangePoolStructs.ValidateParams memory params)
+    function validate(IRangePoolStructs.MintParams memory params, IRangePoolStructs.PoolState memory state)
         external
         pure
         returns (
-            uint128,
-            uint128,
+            IRangePoolStructs.MintParams memory,
             uint256 liquidityMinted
         )
     {
         //TODO: check amount is < max int128
-        if (params.lower % int24(params.state.tickSpacing) != 0) revert InvalidLowerTick();
+        if (params.lower % int24(state.tickSpacing) != 0) revert InvalidLowerTick();
         if (params.lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
-        if (params.upper % int24(params.state.tickSpacing) != 0) revert InvalidUpperTick();
+        if (params.upper % int24(state.tickSpacing) != 0) revert InvalidUpperTick();
         if (params.upper <= TickMath.MAX_TICK) revert InvalidUpperTick();
         if (params.lower >= params.upper) revert InvalidPositionBoundsOrder();
         uint256 priceLower = uint256(TickMath.getSqrtRatioAtTick(params.lower));
@@ -51,15 +50,14 @@ library Positions {
         liquidityMinted = DyDxMath.getLiquidityForAmounts(
             priceLower,
             priceUpper,
-            params.state.price,
+            state.price,
             params.amount1,
             params.amount0
         );
         //TODO: handle partial mints due to incorrect reserve ratio
-
         if (liquidityMinted > uint128(type(int128).max)) revert LiquidityOverflow();
 
-        return (params.amount0, params.amount1, liquidityMinted);
+        return (params, liquidityMinted);
     }
 
     function add(
@@ -67,15 +65,16 @@ library Positions {
             storage positions,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
-        IRangePoolStructs.AddParams memory params
+        IRangePoolStructs.MintParams memory params,
+        uint128 amount
     ) external returns (IRangePoolStructs.PoolState memory) {
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
-            position: positions[params.owner][params.lower][params.upper],
+            position: positions[params.fungible ? msg.sender : params.to][params.lower][params.upper],
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
         });
 
-        if (params.amount == 0) return (state);
+        if (params.amount0 == 0 && params.amount1 == 0) return (state);
 
         Ticks.insert(
             ticks,
@@ -84,12 +83,12 @@ library Positions {
             params.lower,
             params.upperOld,
             params.upper,
-            params.amount
+            amount
         );
 
-        cache.position.liquidity += uint128(params.amount);
+        cache.position.liquidity += uint128(amount);
 
-        positions[params.owner][params.lower][params.upper] = cache.position;
+        positions[params.fungible ? msg.sender : params.to][params.lower][params.upper] = cache.position;
 
         return (state);
     }

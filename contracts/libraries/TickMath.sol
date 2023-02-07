@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 /// @notice Math library for computing sqrt price for ticks of size 1.0001, i.e., sqrt(1.0001^tick) as fixed point Q64.96 numbers - supports
 /// prices between 2**-128 and 2**128 - 1.
-/// @author Adapted from https://github.com/Uniswap/uniswap-v3-core/blob/main/contracts/libraries/TickMath.sol.
 library TickMath {
     /// @dev The minimum tick that may be passed to #getSqrtRatioAtTick computed from log base 1.0001 of 2**-128.
     int24 internal constant MIN_TICK = -887272;

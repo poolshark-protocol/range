@@ -9,6 +9,7 @@ abstract contract RangePoolStorage is IRangePoolStructs, RangePoolErrors {
     PoolState public poolState;
 
     address public feeTo;
-    mapping(int24 => Tick) public ticks; /// @dev Ticks containing token1 as output
-    mapping(address => mapping(int24 => mapping(int24 => Position))) public positions; //nonfungible positions
+    mapping(int24 => Tick) public ticks; /// @dev Ticks with liquidity and fee data
+    mapping(address => mapping(int24 => mapping(int24 => Position))) public positions; /// @dev - nonfungible positions
+    mapping(int24 => mapping(int24 => address)) public tokens;                         /// @dev - fungible positions 
 }
