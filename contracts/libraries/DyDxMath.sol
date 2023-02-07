@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "./PrecisionMath.sol";
+import './PrecisionMath.sol';
 
 /// @notice Math library that facilitates ranged liquidity calculations.
 library DyDxMath {
@@ -35,17 +35,9 @@ library DyDxMath {
     ) internal pure returns (uint256 dy) {
         unchecked {
             if (roundUp) {
-                dy = PrecisionMath.mulDivRoundingUp(
-                    liquidity,
-                    priceUpper - priceLower,
-                    Q96
-                );
+                dy = PrecisionMath.mulDivRoundingUp(liquidity, priceUpper - priceLower, Q96);
             } else {
-                dy = PrecisionMath.mulDiv(
-                    liquidity,
-                    priceUpper - priceLower,
-                    Q96
-                );
+                dy = PrecisionMath.mulDiv(liquidity, priceUpper - priceLower, Q96);
             }
         }
     }
@@ -67,11 +59,7 @@ library DyDxMath {
             );
         } else {
             dx =
-                PrecisionMath.mulDiv(
-                    liquidity << 96,
-                    priceUpper - priceLower,
-                    priceUpper
-                ) /
+                PrecisionMath.mulDiv(liquidity << 96, priceUpper - priceLower, priceUpper) /
                 priceLower;
         }
     }
@@ -94,21 +82,13 @@ library DyDxMath {
             } else if (currentPrice <= priceLower) {
                 liquidity = PrecisionMath.mulDiv(
                     dx,
-                    PrecisionMath.mulDiv(
-                        priceLower,
-                        priceUpper,
-                        0x1000000000000000000000000
-                    ),
+                    PrecisionMath.mulDiv(priceLower, priceUpper, 0x1000000000000000000000000),
                     priceUpper - priceLower
                 );
             } else {
                 uint256 liquidity0 = PrecisionMath.mulDiv(
                     dx,
-                    PrecisionMath.mulDiv(
-                        priceUpper,
-                        currentPrice,
-                        0x1000000000000000000000000
-                    ),
+                    PrecisionMath.mulDiv(priceUpper, currentPrice, 0x1000000000000000000000000),
                     priceUpper - currentPrice
                 );
                 uint256 liquidity1 = PrecisionMath.mulDiv(
@@ -130,22 +110,14 @@ library DyDxMath {
     ) internal pure returns (uint128 token0amount, uint128 token1amount) {
         if (currentPrice <= priceLower) {
             // token0 (X) is supplied
-            token0amount = uint128(
-                _getDx(liquidityAmount, priceLower, priceUpper, roundUp)
-            );
+            token0amount = uint128(_getDx(liquidityAmount, priceLower, priceUpper, roundUp));
         } else if (priceUpper <= currentPrice) {
             // token1 (y) is supplied
-            token1amount = uint128(
-                _getDy(liquidityAmount, priceLower, priceUpper, roundUp)
-            );
+            token1amount = uint128(_getDy(liquidityAmount, priceLower, priceUpper, roundUp));
         } else {
             // Both token0 (x) and token1 (y) are supplied
-            token0amount = uint128(
-                _getDx(liquidityAmount, currentPrice, priceUpper, roundUp)
-            );
-            token1amount = uint128(
-                _getDy(liquidityAmount, priceLower, currentPrice, roundUp)
-            );
+            token0amount = uint128(_getDx(liquidityAmount, currentPrice, priceUpper, roundUp));
+            token1amount = uint128(_getDy(liquidityAmount, priceLower, currentPrice, roundUp));
         }
     }
 }

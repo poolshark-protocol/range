@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../utils/RangePoolErrors.sol";
-import "hardhat/console.sol";
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import '../utils/RangePoolErrors.sol';
+import 'hardhat/console.sol';
 
 abstract contract SafeTransfers is CoverTransferErrors {
     /**
@@ -16,14 +16,9 @@ abstract contract SafeTransfers is CoverTransferErrors {
      *            See here: https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
      */
     // slither-disable-next-line assembly
-    function _transferIn(address token, uint256 amount)
-        internal
-        virtual
-        returns (uint256)
-    {
+    function _transferIn(address token, uint256 amount) internal virtual returns (uint256) {
         if (token == address(0)) {
-            if (msg.value < amount)
-                revert TransferFailed(msg.sender, address(this));
+            if (msg.value < amount) revert TransferFailed(msg.sender, address(this));
             return amount;
         }
         IERC20 erc20Token = IERC20(token);
@@ -75,8 +70,7 @@ abstract contract SafeTransfers is CoverTransferErrors {
         uint256 amount
     ) internal virtual {
         if (token == address(0)) {
-            if (address(this).balance < amount)
-                revert TransferFailed(address(this), to);
+            if (address(this).balance < amount) revert TransferFailed(address(this), to);
             payable(to).transfer(amount);
             return;
         }

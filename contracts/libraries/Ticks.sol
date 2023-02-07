@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.13;
 
-import "./TickMath.sol";
-import "../interfaces/IRangePoolStructs.sol";
-import "../utils/RangePoolErrors.sol";
-import "./PrecisionMath.sol";
-import "./DyDxMath.sol";
-import "hardhat/console.sol";
+import './TickMath.sol';
+import '../interfaces/IRangePoolStructs.sol';
+import '../utils/RangePoolErrors.sol';
+import './PrecisionMath.sol';
+import './DyDxMath.sol';
+import 'hardhat/console.sol';
 
 /// @notice Tick management library for ranged llibrary Tilibrary Ticks
 library Ticks {
@@ -34,9 +34,7 @@ library Ticks {
         return uint128(type(int128).max);
     }
 
-    function initialize(mapping(int24 => IRangePoolStructs.Tick) storage ticks)
-        external
-    {
+    function initialize(mapping(int24 => IRangePoolStructs.Tick) storage ticks) external {
         ticks[TickMath.MIN_TICK] = IRangePoolStructs.Tick(
             TickMath.MIN_TICK,
             TickMath.MAX_TICK,
@@ -64,16 +62,10 @@ library Ticks {
     )
         external
         view
-        returns (
-            IRangePoolStructs.PoolState memory,
-            IRangePoolStructs.SwapCache memory
-        )
+        returns (IRangePoolStructs.PoolState memory, IRangePoolStructs.SwapCache memory)
     {
-        if (
-            zeroForOne
-                ? priceLimit >= pool.price
-                : priceLimit <= pool.price || pool.price == 0
-        ) return (pool, cache);
+        if (zeroForOne ? priceLimit >= pool.price : priceLimit <= pool.price || pool.price == 0)
+            return (pool, cache);
         uint256 nextTickPrice = TickMath.getSqrtRatioAtTick(
             zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick
         );
@@ -85,12 +77,7 @@ library Ticks {
             if (nextPrice < priceLimit) {
                 nextPrice = priceLimit;
             }
-            uint256 maxDx = DyDxMath.getDx(
-                pool.liquidity,
-                nextPrice,
-                pool.price,
-                false
-            );
+            uint256 maxDx = DyDxMath.getDx(pool.liquidity, nextPrice, pool.price, false);
             if (cache.input <= maxDx) {
                 // We can swap within the current range.
                 uint256 liquidityPadded = pool.liquidity << 96;
@@ -104,21 +91,11 @@ library Ticks {
                 // if (!(nextTickPrice <= newPrice && newPrice < pool.price)) {
                 //     newPrice = uint160(PrecisionMath.divRoundingUp(liquidityPadded, liquidityPadded / pool.price + cache.input));
                 // }
-                cache.output += DyDxMath.getDy(
-                    pool.liquidity,
-                    newPrice,
-                    pool.price,
-                    false
-                );
+                cache.output += DyDxMath.getDy(pool.liquidity, newPrice, pool.price, false);
                 pool.price = uint160(newPrice);
                 cache.input = 0;
             } else {
-                cache.output += DyDxMath.getDy(
-                    pool.liquidity,
-                    nextPrice,
-                    pool.price,
-                    false
-                );
+                cache.output += DyDxMath.getDy(pool.liquidity, nextPrice, pool.price, false);
                 pool.price = uint160(nextPrice);
                 cache.input -= maxDx;
             }
@@ -127,34 +104,19 @@ library Ticks {
             if (nextPrice > priceLimit) {
                 nextPrice = priceLimit;
             }
-            uint256 maxDy = DyDxMath.getDy(
-                pool.liquidity,
-                pool.price,
-                nextTickPrice,
-                false
-            );
+            uint256 maxDy = DyDxMath.getDy(pool.liquidity, pool.price, nextTickPrice, false);
             if (cache.input <= maxDy) {
                 // We can swap within the current range.
                 // Calculate new price after swap: ΔP = Δy/L.
                 uint256 newPrice = pool.price +
                     PrecisionMath.mulDiv(cache.input, Q96, pool.liquidity);
                 // Calculate output of swap
-                cache.output += DyDxMath.getDx(
-                    pool.liquidity,
-                    pool.price,
-                    newPrice,
-                    false
-                );
+                cache.output += DyDxMath.getDx(pool.liquidity, pool.price, newPrice, false);
                 pool.price = uint160(newPrice);
                 cache.input = 0;
             } else {
                 // Swap & cross the tick.
-                cache.output += DyDxMath.getDx(
-                    pool.liquidity,
-                    pool.price,
-                    nextTickPrice,
-                    false
-                );
+                cache.output += DyDxMath.getDx(pool.liquidity, pool.price, nextTickPrice, false);
                 pool.price = uint160(nextPrice);
                 cache.input -= maxDy;
             }
@@ -180,9 +142,7 @@ library Ticks {
 
         if (zeroForOne) {
             unchecked {
-                currentLiquidity -= uint128(
-                    ticks[nextTickToCross].liquidityDelta
-                );
+                currentLiquidity -= uint128(ticks[nextTickToCross].liquidityDelta);
             }
             ticks[nextTickToCross].feeGrowthOutside0 =
                 feeGrowthGlobalIn -
@@ -193,9 +153,7 @@ library Ticks {
             nextTickToCross = ticks[nextTickToCross].previousTick;
         } else {
             unchecked {
-                currentLiquidity += uint128(
-                    ticks[nextTickToCross].liquidityDelta
-                );
+                currentLiquidity += uint128(ticks[nextTickToCross].liquidityDelta);
             }
             ticks[nextTickToCross].feeGrowthOutside1 =
                 feeGrowthGlobalIn -
@@ -230,8 +188,7 @@ library Ticks {
         }
         //check for amount to overflow liquidity delta & global
         if (amount > uint128(type(int128).max)) revert LiquidityOverflow();
-        if (type(uint128).max - state.liquidityGlobal < amount)
-            revert LiquidityOverflow();
+        if (type(uint128).max - state.liquidityGlobal < amount) revert LiquidityOverflow();
 
         if (ticks[lower].previousTick != ticks[lower].nextTick) {
             ticks[lower].liquidityDelta += int128(amount);
@@ -339,21 +296,15 @@ library Ticks {
         if (amount > state.liquidityGlobal) revert LiquidityUnderflow();
         IRangePoolStructs.Tick storage current = ticks[lower];
 
-        if (
-            lower != TickMath.MIN_TICK &&
-            current.liquidityDelta == int128(amount)
-        ) {
+        if (lower != TickMath.MIN_TICK && current.liquidityDelta == int128(amount)) {
             // Delete lower tick.
-            IRangePoolStructs.Tick storage previous = ticks[
-                current.previousTick
-            ];
+            IRangePoolStructs.Tick storage previous = ticks[current.previousTick];
             IRangePoolStructs.Tick storage next = ticks[current.nextTick];
             //TODO: handle lower and upper being next to each other
             previous.nextTick = current.nextTick;
             next.previousTick = current.previousTick;
 
-            if (state.nearestTick == lower)
-                state.nearestTick = current.previousTick;
+            if (state.nearestTick == lower) state.nearestTick = current.previousTick;
 
             delete ticks[lower];
         } else {
@@ -364,21 +315,15 @@ library Ticks {
 
         current = ticks[upper];
 
-        if (
-            upper != TickMath.MAX_TICK &&
-            current.liquidityDelta == -int128(amount)
-        ) {
+        if (upper != TickMath.MAX_TICK && current.liquidityDelta == -int128(amount)) {
             // Delete upper tick.
-            IRangePoolStructs.Tick storage previous = ticks[
-                current.previousTick
-            ];
+            IRangePoolStructs.Tick storage previous = ticks[current.previousTick];
             IRangePoolStructs.Tick storage next = ticks[current.nextTick];
 
             previous.nextTick = current.nextTick;
             next.previousTick = current.previousTick;
 
-            if (state.nearestTick == upper)
-                state.nearestTick = current.previousTick;
+            if (state.nearestTick == upper) state.nearestTick = current.previousTick;
 
             delete ticks[upper];
         } else {

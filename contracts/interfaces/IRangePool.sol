@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "./IRangePoolStructs.sol";
+import './IRangePoolStructs.sol';
 
 /// @notice Range Pool Interface
 interface IRangePool is IRangePoolStructs {
-    function collect(int24 lower, int24 upper)
-        external
-        returns (uint256 amount0, uint256 amount1);
+    function collect(int24 lower, int24 upper) external returns (uint256 amount0, uint256 amount1);
 
     function mint(
         address recipient,

@@ -1,21 +1,16 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.13;
 
-import "./interfaces/IRangePool.sol";
-import "./interfaces/IRangePool.sol";
-import "./base/RangePoolStorage.sol";
-import "./base/RangePoolEvents.sol";
-import "./utils/SafeTransfers.sol";
-import "./utils/RangePoolErrors.sol";
-import "./libraries/Ticks.sol";
-import "./libraries/Positions.sol";
+import './interfaces/IRangePool.sol';
+import './interfaces/IRangePool.sol';
+import './base/RangePoolStorage.sol';
+import './base/RangePoolEvents.sol';
+import './utils/SafeTransfers.sol';
+import './utils/RangePoolErrors.sol';
+import './libraries/Ticks.sol';
+import './libraries/Positions.sol';
 
-contract RangePool is
-    IRangePool,
-    RangePoolStorage,
-    RangePoolEvents,
-    SafeTransfers
-{
+contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfers {
     uint16 internal constant MAX_FEE = 10000;
     address internal immutable factory;
     address internal immutable token0;
@@ -69,15 +64,7 @@ contract RangePool is
         PoolState memory pool = poolState;
         uint256 liquidityMinted;
         (amount0, amount1, liquidityMinted) = Positions.validate(
-            ValidateParams(
-                lowerOld,
-                lower,
-                upper,
-                upperOld,
-                amount0,
-                amount1,
-                pool
-            )
+            ValidateParams(lowerOld, lower, upper, upperOld, amount0, amount1, pool)
         );
 
         _transferIn(token0, amount0);
@@ -99,14 +86,7 @@ contract RangePool is
                 positions,
                 ticks,
                 pool,
-                AddParams(
-                    recipient,
-                    lowerOld,
-                    lower,
-                    upper,
-                    upperOld,
-                    uint128(liquidityMinted)
-                )
+                AddParams(recipient, lowerOld, lower, upper, upperOld, uint128(liquidityMinted))
             );
         }
         emit Mint(recipient, lower, upper, uint128(liquidityMinted));
@@ -125,8 +105,14 @@ contract RangePool is
         // update position and get new lower and upper
         uint128 amount0;
         uint128 amount1;
-        (positions[msg.sender][lower][upper], amount0, amount1) = Positions
-            .update(ticks, positions, pool, msg.sender, lower, upper);
+        (positions[msg.sender][lower][upper], amount0, amount1) = Positions.update(
+            ticks,
+            positions,
+            pool,
+            msg.sender,
+            lower,
+            upper
+        );
         //TODO: add PositionUpdated event
         (pool, amount0, amount1) = Positions.remove(
             positions,
@@ -192,60 +178,36 @@ contract RangePool is
         SwapCache memory cache = SwapCache({
             input: amountIn,
             output: 0,
-            feeAmount: PrecisionMath.mulDivRoundingUp(
-                amountIn,
-                pool.swapFee,
-                1e6
-            )
+            feeAmount: PrecisionMath.mulDivRoundingUp(amountIn, pool.swapFee, 1e6)
         });
 
         cache.input -= cache.feeAmount;
         while (pool.price != priceLimit && cache.input != 0) {
-            (pool, cache) = Ticks.quote(
-                ticks,
-                zeroForOne,
-                priceLimit,
-                pool,
-                cache
-            );
+            (pool, cache) = Ticks.quote(ticks, zeroForOne, priceLimit, pool, cache);
         }
 
         if (zeroForOne) {
             if (cache.input > 0) {
                 uint128 feeReturn = uint128(
-                    (((cache.input * 1e18) / (amountIn - cache.feeAmount)) *
-                        cache.feeAmount) / 1e18
+                    (((cache.input * 1e18) / (amountIn - cache.feeAmount)) * cache.feeAmount) / 1e18
                 );
                 cache.feeAmount -= feeReturn;
                 pool.feeGrowthGlobal0 += uint128(cache.feeAmount);
                 _transferOut(recipient, token0, cache.input + feeReturn);
             }
             _transferOut(recipient, token1, cache.output);
-            emit Swap(
-                recipient,
-                token0,
-                token1,
-                amountIn - cache.input,
-                cache.output
-            );
+            emit Swap(recipient, token0, token1, amountIn - cache.input, cache.output);
         } else {
             if (cache.input > 0) {
                 uint128 feeReturn = uint128(
-                    (((cache.input * 1e18) / (amountIn - cache.feeAmount)) *
-                        cache.feeAmount) / 1e18
+                    (((cache.input * 1e18) / (amountIn - cache.feeAmount)) * cache.feeAmount) / 1e18
                 );
                 cache.feeAmount -= feeReturn;
                 pool.feeGrowthGlobal1 += uint128(cache.feeAmount);
                 _transferOut(recipient, token1, cache.input + feeReturn);
             }
             _transferOut(recipient, token0, cache.output);
-            emit Swap(
-                recipient,
-                token1,
-                token0,
-                amountIn - cache.input,
-                cache.output
-            );
+            emit Swap(recipient, token1, token0, amountIn - cache.input, cache.output);
         }
         poolState = pool;
         return (amountIn - cache.input, cache.output);
@@ -261,37 +223,25 @@ contract RangePool is
         SwapCache memory cache = SwapCache({
             input: amountIn,
             output: 0,
-            feeAmount: PrecisionMath.mulDivRoundingUp(
-                amountIn,
-                pool.swapFee,
-                1e6
-            )
+            feeAmount: PrecisionMath.mulDivRoundingUp(amountIn, pool.swapFee, 1e6)
         });
 
         cache.input -= cache.feeAmount;
 
         while (pool.price != priceLimit && cache.input != 0) {
-            (pool, cache) = Ticks.quote(
-                ticks,
-                zeroForOne,
-                priceLimit,
-                pool,
-                cache
-            );
+            (pool, cache) = Ticks.quote(ticks, zeroForOne, priceLimit, pool, cache);
         }
         if (zeroForOne) {
             if (cache.input > 0) {
                 uint128 feeReturn = uint128(
-                    (((cache.input * 1e18) / (amountIn - cache.feeAmount)) *
-                        cache.feeAmount) / 1e18
+                    (((cache.input * 1e18) / (amountIn - cache.feeAmount)) * cache.feeAmount) / 1e18
                 );
                 cache.input += feeReturn;
             }
         } else {
             if (cache.input > 0) {
                 uint128 feeReturn = uint128(
-                    (((cache.input * 1e18) / (amountIn - cache.feeAmount)) *
-                        cache.feeAmount) / 1e18
+                    (((cache.input * 1e18) / (amountIn - cache.feeAmount)) * cache.feeAmount) / 1e18
                 );
                 cache.input += feeReturn;
             }

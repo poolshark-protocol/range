@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./RangePool.sol";
-import "./interfaces/IRangePoolFactory.sol";
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import './RangePool.sol';
+import './interfaces/IRangePoolFactory.sol';
 
 contract RangePoolFactory is IRangePoolFactory {
     error IdenticalTokenAddresses();
@@ -54,15 +54,7 @@ contract RangePoolFactory is IRangePoolFactory {
         }
 
         // launch pool and save address
-        pool = address(
-            new RangePool(
-                token0,
-                token1,
-                int24(tickSpacing),
-                swapFee,
-                startPrice
-            )
-        );
+        pool = address(new RangePool(token0, token1, int24(tickSpacing), swapFee, startPrice));
 
         rangePoolMapping[key] = pool;
 
