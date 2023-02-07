@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 abstract contract RangePoolEvents {
-
     event Mint(
         address indexed owner,
         int24 indexed lower,
@@ -18,16 +17,12 @@ abstract contract RangePoolEvents {
     );
 
     //TODO: implement Collect event for subgraph
-    event Collect(
-        address indexed sender, 
-        uint256 amount0, 
-        uint256 amount1
-    );
+    event Collect(address indexed sender, uint256 amount0, uint256 amount1);
 
     event Swap(
-        address indexed recipient, 
-        address indexed tokenIn, 
-        address indexed tokenOut, 
+        address indexed recipient,
+        address indexed tokenIn,
+        address indexed tokenOut,
         uint256 amountIn,
         uint256 amountOut
     );

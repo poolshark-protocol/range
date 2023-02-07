@@ -4,12 +4,10 @@ pragma solidity ^0.8.13;
 import "./IRangePoolStructs.sol";
 
 /// @notice Range Pool Interface
-interface IRangePool is  IRangePoolStructs {
-
-    function collect(
-        int24 lower,
-        int24 upper
-    ) external returns (uint256 amount0, uint256 amount1);
+interface IRangePool is IRangePoolStructs {
+    function collect(int24 lower, int24 upper)
+        external
+        returns (uint256 amount0, uint256 amount1);
 
     function mint(
         address recipient,
@@ -32,6 +30,11 @@ interface IRangePool is  IRangePoolStructs {
         bool zeroForOne,
         uint256 amountIn,
         uint160 priceLimit
-        // bytes calldata data
-    ) external returns (uint256 inputAmount, uint256 outputAmount);
+    )
+        external
+        returns (
+            // bytes calldata data
+            uint256 inputAmount,
+            uint256 outputAmount
+        );
 }

@@ -2,18 +2,17 @@
 pragma solidity ^0.8.13;
 
 interface IRangePoolStructs {
-    
     //TODO: adjust nearestTick if someone burns all liquidity from current nearestTick
     struct PoolState {
-        uint8   unlocked;
-        uint16  swapFee;
-        int24   tickSpacing;
-        int24   nearestTick;
-        uint32  observationIndex;
-        uint128 liquidity;             /// @dev Liquidity currently active
-        uint128 liquidityGlobal;       /// @dev Globally deposited liquidity
-        uint160 price;                 /// @dev Starting price current
-        uint160 secondsGrowthGlobal;   /// @dev Multiplied by 2^128.
+        uint8 unlocked;
+        uint16 swapFee;
+        int24 tickSpacing;
+        int24 nearestTick;
+        uint32 observationIndex;
+        uint128 liquidity; /// @dev Liquidity currently active
+        uint128 liquidityGlobal; /// @dev Globally deposited liquidity
+        uint160 price; /// @dev Starting price current
+        uint160 secondsGrowthGlobal; /// @dev Multiplied by 2^128.
         uint216 feeGrowthGlobal0;
         uint216 feeGrowthGlobal1;
     }
@@ -105,5 +104,3 @@ interface IRangePoolStructs {
         int128 amountOutDelta;
     }
 }
-    
-    

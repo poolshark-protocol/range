@@ -5,7 +5,7 @@ import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 require("solidity-coverage");
-require('hardhat-contract-sizer');
+require("hardhat-contract-sizer");
 import { handleHardhatTasks } from "./taskHandler";
 
 handleHardhatTasks();
@@ -15,7 +15,7 @@ dotenv.config();
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
- const config: HardhatUserConfig = {
+const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
@@ -37,12 +37,12 @@ dotenv.config();
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
       timeout: 60000,
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
     },
   },
   etherscan: {
-    apiKey: process.env.ETHEREUM_API_KEY
-  }
+    apiKey: process.env.ETHEREUM_API_KEY,
+  },
 };
 
 export default config;

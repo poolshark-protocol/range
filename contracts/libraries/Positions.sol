@@ -8,8 +8,7 @@ import "./PrecisionMath.sol";
 import "./DyDxMath.sol";
 
 /// @notice Position management library for ranged liquidity.
-library Positions
-{
+library Positions {
     error NotEnoughPositionLiquidity();
     error InvalidClaimTick();
     error LiquidityOverflow();
@@ -22,22 +21,36 @@ library Positions
     error InvalidPositionBoundsTwap();
     error NotImplementedYet();
 
-    uint256 internal constant Q96  = 0x1000000000000000000000000;
+    uint256 internal constant Q96 = 0x1000000000000000000000000;
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 
     using Positions for mapping(int24 => IRangePoolStructs.Tick);
 
-    function getMaxLiquidity(int24 tickSpacing) external pure returns (uint128) {
-        return type(uint128).max / uint128(uint24(TickMath.MAX_TICK) / (2 * uint24(tickSpacing)));
+    function getMaxLiquidity(int24 tickSpacing)
+        external
+        pure
+        returns (uint128)
+    {
+        return
+            type(uint128).max /
+            uint128(uint24(TickMath.MAX_TICK) / (2 * uint24(tickSpacing)));
     }
 
-    function validate(
-        IRangePoolStructs.ValidateParams memory params
-    ) external pure returns (uint128, uint128, uint256 liquidityMinted) {
+    function validate(IRangePoolStructs.ValidateParams memory params)
+        external
+        pure
+        returns (
+            uint128,
+            uint128,
+            uint256 liquidityMinted
+        )
+    {
         //TODO: check amount is < max int128
-        if (params.lower % int24(params.state.tickSpacing) != 0) revert InvalidLowerTick();
+        if (params.lower % int24(params.state.tickSpacing) != 0)
+            revert InvalidLowerTick();
         if (params.lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
-        if (params.upper % int24(params.state.tickSpacing) != 0) revert InvalidUpperTick();
+        if (params.upper % int24(params.state.tickSpacing) != 0)
+            revert InvalidUpperTick();
         if (params.upper <= TickMath.MAX_TICK) revert InvalidUpperTick();
         if (params.lower >= params.upper) revert InvalidPositionBoundsOrder();
         uint256 priceLower = uint256(TickMath.getSqrtRatioAtTick(params.lower));
@@ -52,23 +65,25 @@ library Positions
         );
         //TODO: handle partial mints due to incorrect reserve ratio
 
-        if (liquidityMinted > uint128(type(int128).max)) revert LiquidityOverflow();
+        if (liquidityMinted > uint128(type(int128).max))
+            revert LiquidityOverflow();
 
         return (params.amount0, params.amount1, liquidityMinted);
     }
 
     function add(
-        mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position))) storage positions,
+        mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position)))
+            storage positions,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.AddParams memory params
     ) external returns (IRangePoolStructs.PoolState memory) {
-
-        IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
-            position: positions[params.owner][params.lower][params.upper],
-            priceLower: TickMath.getSqrtRatioAtTick(params.lower),
-            priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
-        });
+        IRangePoolStructs.PositionCache memory cache = IRangePoolStructs
+            .PositionCache({
+                position: positions[params.owner][params.lower][params.upper],
+                priceLower: TickMath.getSqrtRatioAtTick(params.lower),
+                priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
+            });
 
         if (params.amount == 0) return (state);
 
@@ -90,16 +105,25 @@ library Positions
     }
 
     function remove(
-        mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position))) storage positions,
+        mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position)))
+            storage positions,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.RemoveParams memory params
-    ) external returns (IRangePoolStructs.PoolState memory, uint128, uint128) {
-        IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
-            position: positions[params.owner][params.lower][params.upper],
-            priceLower: TickMath.getSqrtRatioAtTick(params.lower),
-            priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
-        });
+    )
+        external
+        returns (
+            IRangePoolStructs.PoolState memory,
+            uint128,
+            uint128
+        )
+    {
+        IRangePoolStructs.PositionCache memory cache = IRangePoolStructs
+            .PositionCache({
+                position: positions[params.owner][params.lower][params.upper],
+                priceLower: TickMath.getSqrtRatioAtTick(params.lower),
+                priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
+            });
 
         if (params.amount == 0) return (state, params.amount0, params.amount1);
 
@@ -111,14 +135,15 @@ library Positions
             uint128(params.amount)
         );
 
-        uint128 amount0Removed; uint128 amount1Removed;
+        uint128 amount0Removed;
+        uint128 amount1Removed;
         (amount0Removed, amount1Removed) = DyDxMath.getAmountsForLiquidity(
-                                                        cache.priceLower,
-                                                        cache.priceUpper,
-                                                        state.price,
-                                                        params.amount,
-                                                        false
-                                                    );
+            cache.priceLower,
+            cache.priceUpper,
+            state.price,
+            params.amount,
+            false
+        );
         params.amount0 += amount0Removed;
         params.amount1 += amount1Removed;
 
@@ -133,27 +158,45 @@ library Positions
 
     function update(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
-        mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position))) storage positions,
+        mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position)))
+            storage positions,
         IRangePoolStructs.PoolState memory state,
         address owner,
         int24 lower,
         int24 upper
-    ) internal view returns (IRangePoolStructs.Position memory position, uint128 amount0Fees, uint128 amount1Fees) {
+    )
+        internal
+        view
+        returns (
+            IRangePoolStructs.Position memory position,
+            uint128 amount0Fees,
+            uint128 amount1Fees
+        )
+    {
         position = positions[owner][lower][upper];
 
-        (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(ticks, state, lower, upper);
+        (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
+            ticks,
+            state,
+            lower,
+            upper
+        );
 
-        amount0Fees = uint128(PrecisionMath.mulDiv(
-            rangeFeeGrowth0 - position.feeGrowthInside0Last,
-            position.liquidity,
-            Q128
-        ));
+        amount0Fees = uint128(
+            PrecisionMath.mulDiv(
+                rangeFeeGrowth0 - position.feeGrowthInside0Last,
+                position.liquidity,
+                Q128
+            )
+        );
 
-        amount1Fees = uint128(PrecisionMath.mulDiv(
-            rangeFeeGrowth1 - position.feeGrowthInside1Last,
-            position.liquidity,
-            Q128
-        ));
+        amount1Fees = uint128(
+            PrecisionMath.mulDiv(
+                rangeFeeGrowth1 - position.feeGrowthInside1Last,
+                position.liquidity,
+                Q128
+            )
+        );
 
         position.amount0 += uint128(amount0Fees);
         position.amount1 += uint128(amount1Fees);
@@ -164,8 +207,8 @@ library Positions
     function rangeFeeGrowth(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
-        int24 lower, 
-        int24 upper        
+        int24 lower,
+        int24 upper
     ) public view returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
         int24 current = state.nearestTick;
 
@@ -195,7 +238,13 @@ library Positions
             feeGrowthAbove1 = _feeGrowthGlobal1 - upperTick.feeGrowthOutside1;
         }
 
-        feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
-        feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
+        feeGrowthInside0 =
+            _feeGrowthGlobal0 -
+            feeGrowthBelow0 -
+            feeGrowthAbove0;
+        feeGrowthInside1 =
+            _feeGrowthGlobal1 -
+            feeGrowthBelow1 -
+            feeGrowthAbove1;
     }
 }

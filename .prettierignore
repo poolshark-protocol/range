@@ -1,0 +1,5 @@
+# Ignore artifacts:
+artifacts
+cache
+coverage
+typechain

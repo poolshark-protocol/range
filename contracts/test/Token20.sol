@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 contract Token20 is ERC20, ERC20Burnable {
-
     uint8 _decimals;
 
     constructor(

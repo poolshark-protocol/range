@@ -5,15 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./RangePool.sol";
 import "./interfaces/IRangePoolFactory.sol";
 
-contract RangePoolFactory is 
-    IRangePoolFactory
-{
+contract RangePoolFactory is IRangePoolFactory {
     error IdenticalTokenAddresses();
     error InvalidTokenDecimals();
     error PoolAlreadyExists();
     error FeeTierNotSupported();
     error WaitUntilEnoughObservations();
-    
+
     constructor() {
         owner = msg.sender;
         emit OwnerChanged(address(0), msg.sender);
@@ -34,19 +32,18 @@ contract RangePoolFactory is
         uint16 swapFee,
         uint160 startPrice
     ) external override returns (address pool) {
-        
         // validate token pair
         if (fromToken == destToken) {
             revert IdenticalTokenAddresses();
         }
         address token0 = fromToken < destToken ? fromToken : destToken;
         address token1 = fromToken < destToken ? destToken : fromToken;
-        if(ERC20(token0).decimals() == 0) revert InvalidTokenDecimals();
-        if(ERC20(token1).decimals() == 0) revert InvalidTokenDecimals();
+        if (ERC20(token0).decimals() == 0) revert InvalidTokenDecimals();
+        if (ERC20(token1).decimals() == 0) revert InvalidTokenDecimals();
 
         // generate key for pool
         bytes32 key = keccak256(abi.encode(token0, token1, swapFee));
-        if (rangePoolMapping[key] != address(0)){
+        if (rangePoolMapping[key] != address(0)) {
             revert PoolAlreadyExists();
         }
 
@@ -57,18 +54,18 @@ contract RangePoolFactory is
         }
 
         // launch pool and save address
-        pool =  address(
-                    new RangePool(
-                        token0,
-                        token1,
-                        int24(tickSpacing),
-                        swapFee,
-                        startPrice
-                    )
-                );
+        pool = address(
+            new RangePool(
+                token0,
+                token1,
+                int24(tickSpacing),
+                swapFee,
+                startPrice
+            )
+        );
 
         rangePoolMapping[key] = pool;
-        
+
         // emit event for indexers
         emit RangePoolCreated(token0, token1, swapFee, pool);
     }
@@ -77,8 +74,7 @@ contract RangePoolFactory is
         address fromToken,
         address destToken,
         uint256 fee
-    ) public override view returns (address) {
-
+    ) public view override returns (address) {
         // set lexographical token address ordering
         address token0 = fromToken < destToken ? fromToken : destToken;
         address token1 = fromToken < destToken ? destToken : fromToken;
