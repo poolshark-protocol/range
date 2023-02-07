@@ -66,7 +66,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         (amount0, amount1, liquidityMinted) = Positions.validate(
             ValidateParams(lowerOld, lower, upper, upperOld, amount0, amount1, pool)
         );
-
         _transferIn(token0, amount0);
         _transferIn(token1, amount1);
         //TODO: is this dangerous?
@@ -81,7 +80,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                 lower,
                 upper
             );
-
             pool = Positions.add(
                 positions,
                 ticks,
@@ -98,10 +96,8 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         uint128 amount
     ) external lock {
         PoolState memory pool = poolState;
-
         // Ensure no overflow happens when we cast from uint128 to int128.
         if (amount > uint128(type(int128).max)) revert LiquidityOverflow();
-
         // update position and get new lower and upper
         uint128 amount0;
         uint128 amount1;
@@ -120,7 +116,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             pool,
             RemoveParams(msg.sender, lower, upper, amount, amount0, amount1)
         );
-
         emit Burn(msg.sender, lower, upper, amount);
         poolState = pool;
     }
@@ -130,29 +125,26 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         lock
         returns (uint256 amount0, uint256 amount1)
     {
-        PoolState memory state = poolState;
+        PoolState memory pool = poolState;
         (positions[msg.sender][lower][upper], , ) = Positions.update(
             ticks,
             positions,
-            state,
+            pool,
             msg.sender,
             lower,
             upper
         );
-
         amount0 = positions[msg.sender][lower][upper].amount0;
         amount1 = positions[msg.sender][lower][upper].amount1;
-
         /// zero out balances
         positions[msg.sender][lower][upper].amount0 = 0;
         positions[msg.sender][lower][upper].amount1 = 0;
-
         /// transfer out balances
         _transferOut(msg.sender, token0, amount0);
         _transferOut(msg.sender, token1, amount1);
 
         emit Collect(msg.sender, amount0, amount1);
-        state = state;
+        poolState = pool;
     }
 
     //TODO: block the swap if there is an overflow on fee growth
@@ -170,9 +162,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
     {
         PoolState memory pool = poolState;
         TickMath.validatePrice(priceLimit);
-
         if (amountIn == 0) return (0, 0);
-
         _transferIn(zeroForOne ? token0 : token1, amountIn);
 
         SwapCache memory cache = SwapCache({
@@ -180,12 +170,13 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             output: 0,
             feeAmount: PrecisionMath.mulDivRoundingUp(amountIn, pool.swapFee, 1e6)
         });
-
+        // take fee from input amount
         cache.input -= cache.feeAmount;
+
         while (pool.price != priceLimit && cache.input != 0) {
             (pool, cache) = Ticks.quote(ticks, zeroForOne, priceLimit, pool, cache);
         }
-
+        // handle fee return and transfer out
         if (zeroForOne) {
             if (cache.input > 0) {
                 uint128 feeReturn = uint128(
@@ -217,15 +208,14 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         bool zeroForOne,
         uint256 amountIn,
         uint160 priceLimit
-    ) external view returns (uint256 inAmount, uint256 outAmount) {
-        // TODO: make override
+    ) external view override returns (uint256 inAmount, uint256 outAmount) {
         PoolState memory pool = poolState;
         SwapCache memory cache = SwapCache({
             input: amountIn,
             output: 0,
             feeAmount: PrecisionMath.mulDivRoundingUp(amountIn, pool.swapFee, 1e6)
         });
-
+        // take fee from inputAmount
         cache.input -= cache.feeAmount;
 
         while (pool.price != priceLimit && cache.input != 0) {
@@ -246,7 +236,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                 cache.input += feeReturn;
             }
         }
-
         inAmount = amountIn - cache.input;
         outAmount = cache.output;
     }

@@ -5,8 +5,6 @@ import './IRangePoolStructs.sol';
 
 /// @notice Range Pool Interface
 interface IRangePool is IRangePoolStructs {
-    function collect(int24 lower, int24 upper) external returns (uint256 amount0, uint256 amount1);
-
     function mint(
         address recipient,
         int24 lowerOld,
@@ -23,6 +21,8 @@ interface IRangePool is IRangePoolStructs {
         uint128 amount
     ) external;
 
+    function collect(int24 lower, int24 upper) external returns (uint256 amount0, uint256 amount1);
+
     function swap(
         address recipient,
         bool zeroForOne,
@@ -35,4 +35,10 @@ interface IRangePool is IRangePoolStructs {
             uint256 inputAmount,
             uint256 outputAmount
         );
+
+    function quote(
+        bool zeroForOne,
+        uint256 amountIn,
+        uint160 priceLimit
+    ) external view returns (uint256 inAmount, uint256 outAmount);
 }
