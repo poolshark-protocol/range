@@ -98,7 +98,10 @@ library Positions {
             storage positions,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
-        IRangePoolStructs.RemoveParams memory params
+        IRangePoolStructs.BurnParams memory params,
+        address owner,
+        uint128 amount0,
+        uint128 amount1
     )
         external
         returns (
@@ -108,12 +111,12 @@ library Positions {
         )
     {
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
-            position: positions[params.owner][params.lower][params.upper],
+            position: positions[params.to][params.lower][params.upper],
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
         });
 
-        if (params.amount == 0) return (state, params.amount0, params.amount1);
+        if (params.amount == 0) return (state, amount0, amount1);
 
         Ticks.remove(ticks, state, params.lower, params.upper, uint128(params.amount));
 
@@ -126,16 +129,16 @@ library Positions {
             params.amount,
             false
         );
-        params.amount0 += amount0Removed;
-        params.amount1 += amount1Removed;
+        amount0 += amount0Removed;
+        amount1 += amount1Removed;
 
         cache.position.amount0 += amount0Removed;
         cache.position.amount1 += amount1Removed;
         cache.position.liquidity -= uint128(params.amount);
 
-        positions[params.owner][params.lower][params.upper] = cache.position;
+        positions[owner][params.lower][params.upper] = cache.position;
 
-        return (state, params.amount0, params.amount1);
+        return (state, amount0, amount1);
     }
 
     function update(
@@ -143,28 +146,26 @@ library Positions {
         mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position)))
             storage positions,
         IRangePoolStructs.PoolState memory state,
-        address owner,
-        int24 lower,
-        int24 upper
+        IRangePoolStructs.UpdateParams memory params
     )
         internal
         view
         returns (
             IRangePoolStructs.Position memory position,
-            uint128 amount0Fees,
-            uint128 amount1Fees
+            uint128,
+            uint128
         )
     {
-        position = positions[owner][lower][upper];
+        position = positions[params.owner][params.lower][params.upper];
 
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
             ticks,
             state,
-            lower,
-            upper
+            params.lower,
+            params.upper
         );
 
-        amount0Fees = uint128(
+        uint128 amount0Fees = uint128(
             PrecisionMath.mulDiv(
                 rangeFeeGrowth0 - position.feeGrowthInside0Last,
                 position.liquidity,
@@ -172,7 +173,7 @@ library Positions {
             )
         );
 
-        amount1Fees = uint128(
+        uint128 amount1Fees = uint128(
             PrecisionMath.mulDiv(
                 rangeFeeGrowth1 - position.feeGrowthInside1Last,
                 position.liquidity,
@@ -180,10 +181,26 @@ library Positions {
             )
         );
 
-        position.amount0 += uint128(amount0Fees);
-        position.amount1 += uint128(amount1Fees);
         position.feeGrowthInside0Last = rangeFeeGrowth0;
         position.feeGrowthInside1Last = rangeFeeGrowth1;
+
+        if (params.fungible) {
+            uint128 feesBurned0 = uint128(uint256(amount0Fees) * uint256(uint128(params.amount)) / position.liquidity);
+            uint128 feesBurned1 = uint128(uint256(amount1Fees) * uint256(uint128(params.amount)) / position.liquidity);
+            amount0Fees -= feesBurned0;
+            amount1Fees -= feesBurned1; 
+            position.amount0 += uint128(amount0Fees);
+            position.amount1 += uint128(amount1Fees);
+            return(position, feesBurned0, feesBurned1);
+        }
+
+        position.amount0 += uint128(amount0Fees);
+        position.amount1 += uint128(amount1Fees);
+        return(position, amount0Fees, amount1Fees);
+
+
+
+
     }
 
     function rangeFeeGrowth(

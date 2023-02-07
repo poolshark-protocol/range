@@ -56,6 +56,14 @@ interface IRangePoolStructs {
         bool fungible;
     }
 
+    struct BurnParams {
+        address to;
+        int24 lower;
+        int24 upper;
+        uint128 amount;
+        bool fungible;
+    }
+
     //TODO: should we have a recipient field here?
     struct AddParams {
         address owner;
@@ -79,7 +87,8 @@ interface IRangePoolStructs {
         address owner;
         int24 lower;
         int24 upper;
-        int128 amount;
+        uint128 amount;
+        bool fungible;
     }
 
     struct ValidateParams {

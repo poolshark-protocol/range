@@ -10,10 +10,7 @@ interface IRangePool is IRangePoolStructs {
     ) external;
 
     function burn(
-        int24 lower,
-        int24 upper,
-        uint128 amount,
-        bool fungible
+        BurnParams calldata burnParams
     ) external;
 
     function collect(int24 lower, int24 upper) external returns (uint256 amount0, uint256 amount1);

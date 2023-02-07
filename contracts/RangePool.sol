@@ -2,13 +2,11 @@
 pragma solidity ^0.8.13;
 
 import './interfaces/IRangePool.sol';
-import './interfaces/IRangePool.sol';
 import './base/RangePoolStorage.sol';
 import './base/RangePoolEvents.sol';
-import './utils/SafeTransfers.sol';
-import './utils/RangePoolErrors.sol';
 import './libraries/Ticks.sol';
 import './libraries/Positions.sol';
+import './utils/SafeTransfers.sol';
 import "./RangePoolERC20.sol";
 
 contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfers {
@@ -71,9 +69,13 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                 ticks,
                 positions,
                 pool,
-                params.to,
-                params.lower,
-                params.upper
+                UpdateParams(
+                    params.fungible ? address(this) : params.to,
+                    params.lower,
+                    params.upper,
+                    uint128(liquidityMinted),
+                    params.fungible
+                )
             );
             pool = Positions.add(
                 positions,
@@ -85,42 +87,65 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         }
 
         if (params.fungible) {
-            address positionToken = tokens[params.lower][params.upper];
-            if (positionToken == address(0)) {
-                positionToken = address(new RangePoolERC20());
-            } 
+            IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
+            if (address(positionToken) == address(0)) {
+                positionToken = new RangePoolERC20();
+                tokens[params.lower][params.upper] = positionToken;
+            }
+            positionToken.mint(params.to, liquidityMinted);
         }
-
         emit Mint(params.to, params.lower, params.upper, uint128(liquidityMinted));
     }
 
     function burn(
-        int24 lower,
-        int24 upper,
-        uint128 amount
+        BurnParams calldata burnParams
     ) external lock {
         PoolState memory pool = poolState;
+        BurnParams memory params = burnParams;
+        IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
+        if (params.fungible) {
+            if (address(positionToken) == address(0)) {
+                revert RangeErc20NotFound();
+            }
+            /// @dev - burn will revert if insufficient balance
+            positionToken.burn(msg.sender, params.amount);
+        }
+
         // Ensure no overflow happens when we cast from uint128 to int128.
-        if (amount > uint128(type(int128).max)) revert LiquidityOverflow();
-        // update position and get new lower and upper
+        if (params.amount > uint128(type(int128).max)) revert LiquidityOverflow();
+        // update position and get new params.lower and params.upper
         uint128 amount0;
         uint128 amount1;
-        (positions[msg.sender][lower][upper], amount0, amount1) = Positions.update(
+        (positions[params.fungible ? address(this) : msg.sender][params.lower][params.upper], amount0, amount1) = Positions.update(
             ticks,
             positions,
             pool,
-            msg.sender,
-            lower,
-            upper
+            UpdateParams(
+                params.fungible ? address(this) : msg.sender,
+                params.lower,
+                params.upper,
+                uint128(params.amount),
+                params.fungible
+            )
         );
+        //TODO: fungible position only gets fraction of fees
         //TODO: add PositionUpdated event
         (pool, amount0, amount1) = Positions.remove(
             positions,
             ticks,
             pool,
-            RemoveParams(msg.sender, lower, upper, amount, amount0, amount1)
+            params,
+            params.fungible ? address(this) : msg.sender,
+            amount0,
+            amount1
         );
-        emit Burn(msg.sender, lower, upper, amount);
+
+        if (params.fungible) {
+            _transferOut(params.to, token0, amount0);
+            _transferOut(params.to, token1, amount1);
+        }
+
+        emit Burn(msg.sender, params.lower, params.upper, params.amount);
         poolState = pool;
     }
 
@@ -133,9 +158,13 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             ticks,
             positions,
             poolState,
-            msg.sender,
-            lower,
-            upper
+            UpdateParams(
+                msg.sender,
+                lower,
+                upper,
+                0,
+                false
+            )
         );
         amount0 = positions[msg.sender][lower][upper].amount0;
         amount1 = positions[msg.sender][lower][upper].amount1;

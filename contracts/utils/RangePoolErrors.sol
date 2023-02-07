@@ -8,6 +8,8 @@ abstract contract RangePoolErrors {
     error InvalidSwapFee();
     error InvalidTickSpread();
     error LiquidityOverflow();
+    error RangeErc20NotFound();
+    error RangeErc20InsufficientBalance();
     error Token0Missing();
     error Token1Missing();
     error InvalidTick();
