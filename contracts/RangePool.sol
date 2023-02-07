@@ -58,7 +58,6 @@ contract RangePool is
 
     //TODO: add ERC-721 interface
 
-    /// @dev Mints LP tokens - should be called via the CL pool manager contract.
     function mint(
         address recipient,
         int24 lowerOld,
@@ -103,10 +102,7 @@ contract RangePool is
                     lower,
                     upper
             );
-            //TODO: check amount consumed from return value
-            //TODO: would be nice to reject invalid claim ticks on mint
-            //      don't think we can because of the 'double mint' scenario
-            // creates new position
+
             pool = Positions.add(
                 positions,
                 ticks,
@@ -120,15 +116,13 @@ contract RangePool is
                     uint128(liquidityMinted)
                 )
             );
-            /// @dev - pool current liquidity should never be increased on mint
         }
         emit Mint(
             recipient,
             lower,
             upper,
             uint128(liquidityMinted)
-        ); /// @dev - amount0 and amount1 can be calculated using getAmountsForLiquidity
-        // state = state;
+        );
     }
 
     function burn(
@@ -137,7 +131,6 @@ contract RangePool is
         uint128 amount
     ) external lock {
         PoolState memory pool = poolState;
-        //TODO: burning liquidity should take liquidity out past the current auction
         
         // Ensure no overflow happens when we cast from uint128 to int128.
         if (amount > uint128(type(int128).max)) revert LiquidityOverflow();
@@ -157,7 +150,6 @@ contract RangePool is
                     upper
         );
         //TODO: add PositionUpdated event
-        // if position hasn't changed remove liquidity
         (
             pool,
             amount0,
@@ -214,7 +206,6 @@ contract RangePool is
     }
 
     //TODO: block the swap if there is an overflow on fee growth
-    /// @dev Swaps one token for another. The router must prefund this contract and ensure there isn't too much slippage.
     function swap(
         address recipient,
         bool zeroForOne,
@@ -222,8 +213,6 @@ contract RangePool is
         uint160 priceLimit
         // bytes calldata data
     ) external override lock returns (uint256, uint256) {
-        //TODO: is this needed?
-        //TODO: implement stopPrice for pool/1
         PoolState memory pool = poolState;
         TickMath.validatePrice(priceLimit);
 
@@ -333,15 +322,3 @@ contract RangePool is
     }
 
     //TODO: zap into LP position
-    //TODO: use bitmaps to naiively search for the tick closest to the new TWAP
-    //TODO: assume everything will get filled for now
-    //TODO: remove old latest tick if necessary
-    //TODO: after accumulation, all liquidity below old latest tick is removed
-    //TODO: don't update pool.latestTick until TWAP has moved +/- tickSpacing
-    //TODO: pool.latestTick needs to be a multiple of tickSpacing
-    
-
-    //TODO: factor in swapFee
-    //TODO: consider partial fills and how that impacts claims
-    //TODO: consider current price...we might have to skip claims/burns from current tick
-}
