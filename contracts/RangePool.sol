@@ -128,10 +128,11 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
     function burn(BurnParams calldata burnParams) external lock {
         PoolState memory pool = poolState;
         BurnParams memory params = burnParams;
+        Position memory position = positions[params.fungible ? address(this) 
+                                                             : msg.sender]
+                                                             [params.lower]
+                                                             [params.upper];
         IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
-        Position memory position = positions[params.fungible ? address(this) : msg.sender][
-            params.lower
-        ][params.upper];
         if (params.fungible) {
             if (address(positionToken) == address(0)) {
                 revert RangeErc20NotFound();
@@ -176,6 +177,14 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         //TODO: implement autocompounding
 
         if (params.fungible) {
+            if (position.amount0 > 0 || position.amount1 > 0) {
+                (position, pool) = Positions.compound(
+                    position,
+                    ticks,
+                    pool,
+                    CompoundParams(params.lower, params.upper, params.fungible)
+                );
+            }
             _transferOut(params.to, token0, amount0);
             _transferOut(params.to, token1, amount1);
         }
