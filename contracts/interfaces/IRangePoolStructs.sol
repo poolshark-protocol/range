@@ -95,6 +95,7 @@ interface IRangePoolStructs {
         int24 upper;
         uint128 amount;
         bool fungible;
+        uint256 totalSupply; /// @dev - totalSupply of the position token if fungible
     }
 
     struct ValidateParams {

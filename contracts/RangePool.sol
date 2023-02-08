@@ -62,6 +62,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         Position memory position = positions[params.fungible ? msg.sender : params.to][
             params.lower
         ][params.upper];
+        IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
         //TODO: is this dangerous?
         unchecked {
             //TODO: if fees > 0 emit PositionUpdated event
@@ -76,7 +77,8 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     params.lower,
                     params.upper,
                     uint128(liquidityMinted),
-                    params.fungible
+                    params.fungible,
+                    params.fungible ? positionToken.totalSupply() : 0
                 )
             );
             pool = Positions.add(positions, ticks, pool, params, uint128(liquidityMinted));
@@ -91,7 +93,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     CompoundParams(params.lower, params.upper, params.fungible)
                 );
             }
-            IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
             if (address(positionToken) == address(0)) {
                 positionToken = new RangePoolERC20();
                 tokens[params.lower][params.upper] = positionToken;
@@ -117,7 +118,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             ticks,
             position,
             poolState,
-            UpdateParams(msg.sender, params.lower, params.upper, 0, false)
+            UpdateParams(msg.sender, params.lower, params.upper, 0, false, 0)
         );
 
         (position, pool) = Positions.compound(position, ticks, pool, params);
@@ -159,7 +160,8 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                 params.lower,
                 params.upper,
                 uint128(params.amount),
-                params.fungible
+                params.fungible,
+                params.fungible ? positionToken.totalSupply() : 0
             )
         );
         //TODO: fungible position only gets fraction of fees
@@ -202,7 +204,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             ticks,
             position,
             poolState,
-            UpdateParams(msg.sender, lower, upper, 0, false)
+            UpdateParams(msg.sender, lower, upper, 0, false, 0)
         );
         amount0 = positions[msg.sender][lower][upper].amount0;
         amount1 = positions[msg.sender][lower][upper].amount1;

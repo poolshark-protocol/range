@@ -199,14 +199,12 @@ library Positions {
         position.feeGrowthInside0Last = rangeFeeGrowth0;
         position.feeGrowthInside1Last = rangeFeeGrowth1;
 
-        //TODO: handle amount0 and amount1 on position not being zero
-        //TODO: should this be added back as liquidity?
         if (params.fungible) {
             uint128 feesBurned0 = uint128(
-                (uint256(amount0Fees) * uint256(uint128(params.amount))) / position.liquidity
+                (uint256(amount0Fees) * uint256(uint128(params.amount))) / params.totalSupply
             );
             uint128 feesBurned1 = uint128(
-                (uint256(amount1Fees) * uint256(uint128(params.amount))) / position.liquidity
+                (uint256(amount1Fees) * uint256(uint128(params.amount))) / params.totalSupply
             );
 
             amount0Fees -= feesBurned0;
