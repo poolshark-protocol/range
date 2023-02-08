@@ -30,14 +30,10 @@ library Positions {
         return type(uint128).max / uint128(uint24(TickMath.MAX_TICK) / (2 * uint24(tickSpacing)));
     }
 
-    function validate(IRangePoolStructs.MintParams memory params, IRangePoolStructs.PoolState memory state)
-        external
-        pure
-        returns (
-            IRangePoolStructs.MintParams memory,
-            uint256 liquidityMinted
-        )
-    {
+    function validate(
+        IRangePoolStructs.MintParams memory params,
+        IRangePoolStructs.PoolState memory state
+    ) external pure returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
         //TODO: check amount is < max int128
         if (params.lower % int24(state.tickSpacing) != 0) revert InvalidLowerTick();
         if (params.lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
@@ -69,7 +65,9 @@ library Positions {
         uint128 amount
     ) external returns (IRangePoolStructs.PoolState memory) {
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
-            position: positions[params.fungible ? msg.sender : params.to][params.lower][params.upper],
+            position: positions[params.fungible ? msg.sender : params.to][params.lower][
+                params.upper
+            ],
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
         });
@@ -88,7 +86,8 @@ library Positions {
 
         cache.position.liquidity += uint128(amount);
 
-        positions[params.fungible ? msg.sender : params.to][params.lower][params.upper] = cache.position;
+        positions[params.fungible ? msg.sender : params.to][params.lower][params.upper] = cache
+            .position;
 
         return (state);
     }
@@ -102,14 +101,7 @@ library Positions {
         address owner,
         uint128 amount0,
         uint128 amount1
-    )
-        external
-        returns (
-            IRangePoolStructs.PoolState memory,
-            uint128,
-            uint128
-        )
-    {
+    ) external returns (IRangePoolStructs.PoolState memory, uint128, uint128) {
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
             position: positions[params.to][params.lower][params.upper],
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
@@ -146,7 +138,7 @@ library Positions {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.CompoundParams memory params
-    ) external returns (IRangePoolStructs.Position memory, IRangePoolStructs.PoolState memory) {  
+    ) external returns (IRangePoolStructs.Position memory, IRangePoolStructs.PoolState memory) {
         uint160 priceLower = TickMath.getSqrtRatioAtTick(params.lower);
         uint160 priceUpper = TickMath.getSqrtRatioAtTick(params.upper);
 
@@ -180,15 +172,7 @@ library Positions {
         IRangePoolStructs.Position memory position,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.UpdateParams memory params
-    )
-        internal
-        view
-        returns (
-            IRangePoolStructs.Position memory,
-            uint128,
-            uint128
-        )
-    {
+    ) internal view returns (IRangePoolStructs.Position memory, uint128, uint128) {
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
             ticks,
             state,
@@ -218,21 +202,25 @@ library Positions {
         //TODO: handle amount0 and amount1 on position not being zero
         //TODO: should this be added back as liquidity?
         if (params.fungible) {
-            uint128 feesBurned0 = uint128(uint256(amount0Fees) * uint256(uint128(params.amount)) / position.liquidity);
-            uint128 feesBurned1 = uint128(uint256(amount1Fees) * uint256(uint128(params.amount)) / position.liquidity);
-            
+            uint128 feesBurned0 = uint128(
+                (uint256(amount0Fees) * uint256(uint128(params.amount))) / position.liquidity
+            );
+            uint128 feesBurned1 = uint128(
+                (uint256(amount1Fees) * uint256(uint128(params.amount))) / position.liquidity
+            );
+
             amount0Fees -= feesBurned0;
-            amount1Fees -= feesBurned1; 
-            
+            amount1Fees -= feesBurned1;
+
             position.amount0 += uint128(amount0Fees);
             position.amount1 += uint128(amount1Fees);
-            
-            return(position, feesBurned0, feesBurned1);
+
+            return (position, feesBurned0, feesBurned1);
         }
         position.amount0 += uint128(amount0Fees);
         position.amount1 += uint128(amount1Fees);
-        
-        return(position, amount0Fees, amount1Fees);
+
+        return (position, amount0Fees, amount1Fees);
     }
 
     function rangeFeeGrowth(

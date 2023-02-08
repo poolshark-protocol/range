@@ -5,13 +5,9 @@ import './IRangePoolStructs.sol';
 
 /// @notice Range Pool Interface
 interface IRangePool is IRangePoolStructs {
-    function mint(
-        MintParams calldata mintParams
-    ) external;
+    function mint(MintParams calldata mintParams) external;
 
-    function burn(
-        BurnParams calldata burnParams
-    ) external;
+    function burn(BurnParams calldata burnParams) external;
 
     function collect(int24 lower, int24 upper) external returns (uint256 amount0, uint256 amount1);
 

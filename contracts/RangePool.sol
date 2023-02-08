@@ -7,7 +7,7 @@ import './base/RangePoolEvents.sol';
 import './libraries/Ticks.sol';
 import './libraries/Positions.sol';
 import './utils/SafeTransfers.sol';
-import "./RangePoolERC20.sol";
+import './RangePoolERC20.sol';
 
 contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfers {
     uint16 internal constant MAX_FEE = 10000;
@@ -51,9 +51,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
 
     //TODO: add ERC-721 interface
     //TODO: add documentation here to note params
-    function mint(
-        MintParams calldata mintParams
-    ) external lock {
+    function mint(MintParams calldata mintParams) external lock {
         PoolState memory pool = poolState;
         MintParams memory params = mintParams;
         uint256 liquidityMinted;
@@ -61,13 +59,15 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         _transferIn(token0, params.amount0);
         _transferIn(token1, params.amount1);
 
-        Position memory position = positions[params.fungible ? msg.sender : params.to][params.lower][params.upper];
+        Position memory position = positions[params.fungible ? msg.sender : params.to][
+            params.lower
+        ][params.upper];
         //TODO: is this dangerous?
         unchecked {
             //TODO: if fees > 0 emit PositionUpdated event
             // update position with latest fees accrued
 
-            (position,,) = Positions.update(
+            (position, , ) = Positions.update(
                 ticks,
                 position,
                 pool,
@@ -79,13 +79,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     params.fungible
                 )
             );
-            pool = Positions.add(
-                positions,
-                ticks,
-                pool,
-                params,
-                uint128(liquidityMinted)
-            );
+            pool = Positions.add(positions, ticks, pool, params, uint128(liquidityMinted));
         }
 
         if (params.fungible) {
@@ -94,11 +88,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     position,
                     ticks,
                     pool,
-                    CompoundParams(
-                        params.lower,
-                        params.upper,
-                        params.fungible
-                    )
+                    CompoundParams(params.lower, params.upper, params.fungible)
                 );
             }
             IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
@@ -108,48 +98,40 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             }
             positionToken.mint(params.to, liquidityMinted);
         }
-        positions[params.fungible ? address(this) : params.to][params.lower][params.upper] = position;
-        
+        positions[params.fungible ? address(this) : params.to][params.lower][
+            params.upper
+        ] = position;
+
         emit Mint(params.to, params.lower, params.upper, uint128(liquidityMinted));
     }
 
-    function compound(
-        CompoundParams calldata params
-    ) public lock {
+    function compound(CompoundParams calldata params) public lock {
         PoolState memory pool = poolState;
 
-        uint128 amount0; uint128 amount1;
-        Position memory position = positions[params.fungible ? address(this) : msg.sender][params.lower][params.upper];
+        uint128 amount0;
+        uint128 amount1;
+        Position memory position = positions[params.fungible ? address(this) : msg.sender][
+            params.lower
+        ][params.upper];
         (position, amount0, amount1) = Positions.update(
             ticks,
             position,
             poolState,
-            UpdateParams(
-                msg.sender,
-                params.lower,
-                params.upper,
-                0,
-                false
-            )
+            UpdateParams(msg.sender, params.lower, params.upper, 0, false)
         );
-        
-        (position, pool) = Positions.compound(
-                    position,
-                    ticks,
-                    pool,
-                    params
-        );
+
+        (position, pool) = Positions.compound(position, ticks, pool, params);
 
         //TODO: Compound event
     }
 
-    function burn(
-        BurnParams calldata burnParams
-    ) external lock {
+    function burn(BurnParams calldata burnParams) external lock {
         PoolState memory pool = poolState;
         BurnParams memory params = burnParams;
         IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
-        Position memory position = positions[params.fungible ? address(this) : msg.sender][params.lower][params.upper];
+        Position memory position = positions[params.fungible ? address(this) : msg.sender][
+            params.lower
+        ][params.upper];
         if (params.fungible) {
             if (address(positionToken) == address(0)) {
                 revert RangeErc20NotFound();
@@ -163,7 +145,11 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         // update position and get new params.lower and params.upper
         uint128 amount0;
         uint128 amount1;
-        (positions[params.fungible ? address(this) : msg.sender][params.lower][params.upper], amount0, amount1) = Positions.update(
+        (
+            positions[params.fungible ? address(this) : msg.sender][params.lower][params.upper],
+            amount0,
+            amount1
+        ) = Positions.update(
             ticks,
             position,
             pool,
@@ -187,6 +173,8 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             amount1
         );
 
+        //TODO: implement autocompounding
+
         if (params.fungible) {
             _transferOut(params.to, token0, amount0);
             _transferOut(params.to, token1, amount1);
@@ -196,23 +184,16 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         poolState = pool;
     }
 
-    function collect(int24 lower, int24 upper)
-        public
-        lock
-        returns (uint256 amount0, uint256 amount1)
-    {
+    function collect(
+        int24 lower,
+        int24 upper
+    ) public lock returns (uint256 amount0, uint256 amount1) {
         Position memory position = positions[msg.sender][lower][upper];
         (positions[msg.sender][lower][upper], , ) = Positions.update(
             ticks,
             position,
             poolState,
-            UpdateParams(
-                msg.sender,
-                lower,
-                upper,
-                0,
-                false
-            )
+            UpdateParams(msg.sender, lower, upper, 0, false)
         );
         amount0 = positions[msg.sender][lower][upper].amount0;
         amount1 = positions[msg.sender][lower][upper].amount1;

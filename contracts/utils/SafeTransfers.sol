@@ -64,11 +64,7 @@ abstract contract SafeTransfers is CoverTransferErrors {
      *            See here: https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
      */
     // slither-disable-next-line assembly
-    function _transferOut(
-        address to,
-        address token,
-        uint256 amount
-    ) internal virtual {
+    function _transferOut(address to, address token, uint256 amount) internal virtual {
         if (token == address(0)) {
             if (address(this).balance < amount) revert TransferFailed(address(this), to);
             payable(to).transfer(amount);
