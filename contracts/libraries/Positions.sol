@@ -141,23 +141,54 @@ library Positions {
         return (state, amount0, amount1);
     }
 
+    function compound(
+        IRangePoolStructs.Position memory position,
+        mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.PoolState memory state,
+        IRangePoolStructs.CompoundParams memory params
+    ) external returns (IRangePoolStructs.Position memory, IRangePoolStructs.PoolState memory) {  
+        uint160 priceLower = TickMath.getSqrtRatioAtTick(params.lower);
+        uint160 priceUpper = TickMath.getSqrtRatioAtTick(params.upper);
+
+        uint256 liquidityMinted = DyDxMath.getLiquidityForAmounts(
+            priceLower,
+            priceUpper,
+            state.price,
+            position.amount1,
+            position.amount0
+        );
+
+        state = Ticks.insert(
+            ticks,
+            state,
+            -887272,
+            params.lower,
+            887272,
+            params.upper,
+            uint128(liquidityMinted)
+        );
+
+        position.amount0 = 0;
+        position.amount1 = 0;
+        position.liquidity += uint128(liquidityMinted);
+
+        return (position, state);
+    }
+
     function update(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
-        mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position)))
-            storage positions,
+        IRangePoolStructs.Position memory position,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.UpdateParams memory params
     )
         internal
         view
         returns (
-            IRangePoolStructs.Position memory position,
+            IRangePoolStructs.Position memory,
             uint128,
             uint128
         )
     {
-        position = positions[params.owner][params.lower][params.upper];
-
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
             ticks,
             state,
@@ -184,23 +215,24 @@ library Positions {
         position.feeGrowthInside0Last = rangeFeeGrowth0;
         position.feeGrowthInside1Last = rangeFeeGrowth1;
 
+        //TODO: handle amount0 and amount1 on position not being zero
+        //TODO: should this be added back as liquidity?
         if (params.fungible) {
             uint128 feesBurned0 = uint128(uint256(amount0Fees) * uint256(uint128(params.amount)) / position.liquidity);
             uint128 feesBurned1 = uint128(uint256(amount1Fees) * uint256(uint128(params.amount)) / position.liquidity);
+            
             amount0Fees -= feesBurned0;
             amount1Fees -= feesBurned1; 
+            
             position.amount0 += uint128(amount0Fees);
             position.amount1 += uint128(amount1Fees);
+            
             return(position, feesBurned0, feesBurned1);
         }
-
         position.amount0 += uint128(amount0Fees);
         position.amount1 += uint128(amount1Fees);
+        
         return(position, amount0Fees, amount1Fees);
-
-
-
-
     }
 
     function rangeFeeGrowth(

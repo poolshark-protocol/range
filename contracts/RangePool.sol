@@ -61,13 +61,15 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         _transferIn(token0, params.amount0);
         _transferIn(token1, params.amount1);
 
+        Position memory position = positions[params.fungible ? msg.sender : params.to][params.lower][params.upper];
         //TODO: is this dangerous?
         unchecked {
             //TODO: if fees > 0 emit PositionUpdated event
             // update position with latest fees accrued
-            (positions[params.fungible ? address(this) : params.to][params.lower][params.upper], , ) = Positions.update(
+
+            (position,,) = Positions.update(
                 ticks,
-                positions,
+                position,
                 pool,
                 UpdateParams(
                     params.fungible ? address(this) : params.to,
@@ -87,6 +89,18 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         }
 
         if (params.fungible) {
+            if (position.amount0 > 0 || position.amount1 > 0) {
+                (position, pool) = Positions.compound(
+                    position,
+                    ticks,
+                    pool,
+                    CompoundParams(
+                        params.lower,
+                        params.upper,
+                        params.fungible
+                    )
+                );
+            }
             IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
             if (address(positionToken) == address(0)) {
                 positionToken = new RangePoolERC20();
@@ -94,7 +108,39 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             }
             positionToken.mint(params.to, liquidityMinted);
         }
+        positions[params.fungible ? address(this) : params.to][params.lower][params.upper] = position;
+        
         emit Mint(params.to, params.lower, params.upper, uint128(liquidityMinted));
+    }
+
+    function compound(
+        CompoundParams calldata params
+    ) public lock {
+        PoolState memory pool = poolState;
+
+        uint128 amount0; uint128 amount1;
+        Position memory position = positions[params.fungible ? address(this) : msg.sender][params.lower][params.upper];
+        (position, amount0, amount1) = Positions.update(
+            ticks,
+            position,
+            poolState,
+            UpdateParams(
+                msg.sender,
+                params.lower,
+                params.upper,
+                0,
+                false
+            )
+        );
+        
+        (position, pool) = Positions.compound(
+                    position,
+                    ticks,
+                    pool,
+                    params
+        );
+
+        //TODO: Compound event
     }
 
     function burn(
@@ -103,6 +149,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         PoolState memory pool = poolState;
         BurnParams memory params = burnParams;
         IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
+        Position memory position = positions[params.fungible ? address(this) : msg.sender][params.lower][params.upper];
         if (params.fungible) {
             if (address(positionToken) == address(0)) {
                 revert RangeErc20NotFound();
@@ -118,7 +165,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         uint128 amount1;
         (positions[params.fungible ? address(this) : msg.sender][params.lower][params.upper], amount0, amount1) = Positions.update(
             ticks,
-            positions,
+            position,
             pool,
             UpdateParams(
                 params.fungible ? address(this) : msg.sender,
@@ -154,9 +201,10 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         lock
         returns (uint256 amount0, uint256 amount1)
     {
+        Position memory position = positions[msg.sender][lower][upper];
         (positions[msg.sender][lower][upper], , ) = Positions.update(
             ticks,
-            positions,
+            position,
             poolState,
             UpdateParams(
                 msg.sender,

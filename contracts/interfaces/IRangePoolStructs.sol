@@ -64,6 +64,12 @@ interface IRangePoolStructs {
         bool fungible;
     }
 
+    struct CompoundParams {
+        int24 lower;
+        int24 upper;
+        bool fungible;
+    }
+
     //TODO: should we have a recipient field here?
     struct AddParams {
         address owner;
