@@ -97,8 +97,10 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                 positionToken = new RangePoolERC20();
                 tokens[params.lower][params.upper] = positionToken;
             }
-            liquidityMinted = (liquidityMinted * positionToken.totalSupply() /
+            if (position.liquidity != liquidityMinted) {
+                liquidityMinted = (liquidityMinted * positionToken.totalSupply() /
                     (position.liquidity - liquidityMinted));  /// @dev - fees existed prior to mint => mint less tokens
+            }
             positionToken.mint(
                 params.to,
                 liquidityMinted
