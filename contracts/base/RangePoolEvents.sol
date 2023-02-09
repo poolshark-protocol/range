@@ -6,7 +6,8 @@ abstract contract RangePoolEvents {
         address indexed owner,
         int24 indexed lower,
         int24 indexed upper,
-        uint128 liquidityMinted
+        uint128 liquidityMinted,
+        bool fungible
     );
 
     event Burn(

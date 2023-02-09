@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.13;
 
+import "./IRangePoolERC20.sol";
+
 interface IRangePoolStructs {
     //TODO: adjust nearestTick if someone burns all liquidity from current nearestTick
     struct PoolState {
@@ -108,7 +110,13 @@ interface IRangePoolStructs {
         PoolState state;
     }
 
-    //TODO: optimize this struct
+    struct MintCache {
+        PoolState pool;
+        MintParams params;
+        Position position;
+        IRangePoolERC20 positionToken;
+    }
+
     struct SwapCache {
         uint256 input;
         uint256 output;
