@@ -14,6 +14,8 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
     address internal immutable factory;
     address internal immutable token0;
     address internal immutable token1;
+    uint16 public immutable swapFee;
+    int24 public immutable tickSpacing;
 
     modifier lock() {
         if (poolState.unlocked != 1) revert Locked();
@@ -39,23 +41,29 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         feeTo = IRangePoolFactory(msg.sender).owner();
 
         // set global state
-        PoolState memory pool = PoolState(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-        pool.swapFee = _swapFee;
-        pool.tickSpacing = _tickSpacing;
+        PoolState memory pool = PoolState(0, 0, 0, 0, 0, 0, 0, 0, 0);
         pool.price = _startPrice;
         pool.unlocked = 1;
 
+        // set immutables
+        swapFee = _swapFee;
+        tickSpacing = _tickSpacing;
+
         // create min and max ticks
         Ticks.initialize(ticks);
+
+        poolState = pool;
     }
 
+    //TODO: handle support of calldata and memory params
+    //TODO: handle incorrect ratio of assets deposited
     //TODO: add ERC-721 interface
     //TODO: add documentation here to note params
     function mint(MintParams calldata mintParams) external lock {
         PoolState memory pool = poolState;
         MintParams memory params = mintParams;
         uint256 liquidityMinted;
-        (params, liquidityMinted) = Positions.validate(params, pool);
+        (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
         _transferIn(token0, params.amount0);
         _transferIn(token1, params.amount1);
 
@@ -67,7 +75,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         unchecked {
             //TODO: if fees > 0 emit PositionUpdated event
             // update position with latest fees accrued
-
             (position, , ) = Positions.update(
                 ticks,
                 position,
@@ -81,7 +88,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     params.fungible ? positionToken.totalSupply() : 0
                 )
             );
-            pool = Positions.add(positions, ticks, pool, params, uint128(liquidityMinted));
+            (pool, position) = Positions.add(position, ticks, pool, params, uint128(liquidityMinted));
         }
 
         if (params.fungible) {
@@ -109,6 +116,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         positions[params.fungible ? address(this) : params.to][params.lower][
             params.upper
         ] = position;
+        poolState = pool;
 
         emit Mint(params.to, params.lower, params.upper, uint128(liquidityMinted), params.fungible);
     }
@@ -129,10 +137,11 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         );
 
         (position, pool) = Positions.compound(position, ticks, pool, params);
-
+        poolState = pool;
         //TODO: Compound event
     }
 
+    //TODO: support both calldata and memory params
     function burn(BurnParams calldata burnParams) external lock {
         PoolState memory pool = poolState;
         BurnParams memory params = burnParams;
@@ -155,26 +164,26 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         uint128 amount0;
         uint128 amount1;
         (
-            positions[params.fungible ? address(this) : msg.sender][params.lower][params.upper],
+            position,
             amount0,
             amount1
         ) = Positions.update(
-            ticks,
-            position,
-            pool,
-            UpdateParams(
-                params.fungible ? address(this) : msg.sender,
-                params.lower,
-                params.upper,
-                uint128(params.amount),
-                params.fungible,
-                params.fungible ? positionToken.totalSupply() : 0
-            )
+                ticks,
+                position,
+                pool,
+                UpdateParams(
+                    params.fungible ? address(this) : msg.sender,
+                    params.lower,
+                    params.upper,
+                    uint128(params.amount),
+                    params.fungible,
+                    params.fungible ? positionToken.totalSupply() : 0
+                )
         );
         //TODO: fungible position only gets fraction of fees
         //TODO: add PositionUpdated event
-        (pool, amount0, amount1) = Positions.remove(
-            positions,
+        (pool, position, amount0, amount1) = Positions.remove(
+            position,
             ticks,
             pool,
             params,
@@ -182,8 +191,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             amount0,
             amount1
         );
-
-        //TODO: implement autocompounding
 
         if (params.fungible) {
             if (position.amount0 > 0 || position.amount1 > 0) {
@@ -196,33 +203,25 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             }
             _transferOut(params.to, token0, amount0);
             _transferOut(params.to, token1, amount1);
+        } 
+        else if (params.collect) {
+            amount0 = position.amount0;
+            amount1 = position.amount1;
+            // zero out balances
+            position.amount0 = 0;
+            position.amount1 = 0;
+            // transfer out balances
+            _transferOut(msg.sender, token0, amount0);
+            _transferOut(msg.sender, token1, amount1);
+            // emit collect event 
+            emit Collect(msg.sender, amount0, amount1);
         }
-
-        emit Burn(params.fungible ? address(this) : msg.sender, params.lower, params.upper, params.amount);
         poolState = pool;
-    }
-
-    function collect(
-        int24 lower,
-        int24 upper
-    ) public lock returns (uint256 amount0, uint256 amount1) {
-        Position memory position = positions[msg.sender][lower][upper];
-        (positions[msg.sender][lower][upper], , ) = Positions.update(
-            ticks,
-            position,
-            poolState,
-            UpdateParams(msg.sender, lower, upper, 0, false, 0)
-        );
-        amount0 = positions[msg.sender][lower][upper].amount0;
-        amount1 = positions[msg.sender][lower][upper].amount1;
-        /// zero out balances
-        positions[msg.sender][lower][upper].amount0 = 0;
-        positions[msg.sender][lower][upper].amount1 = 0;
-        /// transfer out balances
-        _transferOut(msg.sender, token0, amount0);
-        _transferOut(msg.sender, token1, amount1);
-
-        emit Collect(msg.sender, amount0, amount1);
+        positions[params.fungible ? address(this) : msg.sender][
+            params.lower
+        ][params.upper] = position;
+        emit Burn(params.fungible ? address(this) : msg.sender, params.lower, params.upper, params.amount);
+        
     }
 
     //TODO: block the swap if there is an overflow on fee growth
@@ -234,7 +233,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
     )
         external
         override
-        // bytes calldata data
         lock
         returns (uint256, uint256)
     {
@@ -246,7 +244,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         SwapCache memory cache = SwapCache({
             input: amountIn,
             output: 0,
-            feeAmount: PrecisionMath.mulDivRoundingUp(amountIn, pool.swapFee, 1e6)
+            feeAmount: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6)
         });
         // take fee from input amount
         cache.input -= cache.feeAmount;
@@ -291,7 +289,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         SwapCache memory cache = SwapCache({
             input: amountIn,
             output: 0,
-            feeAmount: PrecisionMath.mulDivRoundingUp(amountIn, pool.swapFee, 1e6)
+            feeAmount: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6)
         });
         // take fee from inputAmount
         cache.input -= cache.feeAmount;

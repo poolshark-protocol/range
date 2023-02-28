@@ -10,7 +10,6 @@ contract RangePoolFactory is IRangePoolFactory {
     error InvalidTokenDecimals();
     error PoolAlreadyExists();
     error FeeTierNotSupported();
-    error WaitUntilEnoughObservations();
 
     constructor() {
         owner = msg.sender;

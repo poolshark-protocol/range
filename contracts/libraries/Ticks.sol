@@ -264,7 +264,7 @@ library Ticks {
             ticks[upperOld].previousTick = upper;
         }
 
-        state.liquidityGlobal -= amount;
+        state.liquidityGlobal += amount;
 
         // get tick at current price
         int24 tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);

@@ -7,8 +7,6 @@ interface IRangePoolStructs {
     //TODO: adjust nearestTick if someone burns all liquidity from current nearestTick
     struct PoolState {
         uint8 unlocked;
-        uint16 swapFee;
-        int24 tickSpacing;
         int24 nearestTick;
         uint32 observationIndex;
         uint128 liquidity; /// @dev Liquidity currently active
@@ -64,6 +62,7 @@ interface IRangePoolStructs {
         int24 upper;
         uint128 amount;
         bool fungible;
+        bool collect;
     }
 
     struct CompoundParams {
@@ -124,7 +123,6 @@ interface IRangePoolStructs {
     }
 
     struct PositionCache {
-        Position position;
         uint160 priceLower;
         uint160 priceUpper;
     }

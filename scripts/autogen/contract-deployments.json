@@ -1,0 +1,104 @@
+{
+  "goerli": {
+    "tokenA": {
+      "contractName": "Token20",
+      "contractAddress": "0xdcF62D25FD6aD48277989E93827fD9CCf650975f",
+      "constructorArguments": ["Token20A", "TOKEN20A", 18],
+      "created": "2023-01-15T22:40:48.926Z"
+    },
+    "tokenB": {
+      "contractName": "Token20",
+      "contractAddress": "0x52167F1EC8940e5b8FC642bB86F3c0C6F0A4899D",
+      "constructorArguments": ["Token20B", "TOKEN20B", 18],
+      "created": "2023-01-15T22:41:02.670Z"
+    },
+    "token0": {
+      "contractName": "Token20",
+      "contractAddress": "0x52167F1EC8940e5b8FC642bB86F3c0C6F0A4899D",
+      "constructorArguments": ["Token20B", "TOKEN20B", 18],
+      "created": "2023-01-15T22:41:02.710Z"
+    },
+    "token1": {
+      "contractName": "Token20",
+      "contractAddress": "0xdcF62D25FD6aD48277989E93827fD9CCf650975f",
+      "constructorArguments": ["Token20A", "TOKEN20A", 18],
+      "created": "2023-01-15T22:41:02.715Z"
+    },
+    "concentratedFactoryMock": {
+      "contractName": "ConcentratedFactoryMock",
+      "contractAddress": "0x50a012e4473b9b856eEF172C8ef1d54f34972e8E",
+      "constructorArguments": [
+        "0x52167F1EC8940e5b8FC642bB86F3c0C6F0A4899D",
+        "0xdcF62D25FD6aD48277989E93827fD9CCf650975f"
+      ],
+      "created": "2023-01-15T22:41:16.129Z"
+    },
+    "concentratedPoolMock": {
+      "contractName": "ConcentratedPoolMock",
+      "contractAddress": "0x5DF6FfB4523d029D363A44AEd7E00B759E238d55",
+      "constructorArguments": [
+        "0x52167F1EC8940e5b8FC642bB86F3c0C6F0A4899D",
+        "0xdcF62D25FD6aD48277989E93827fD9CCf650975f",
+        "500"
+      ],
+      "created": "2023-01-15T22:41:16.659Z"
+    },
+    "hedgePoolFactory": {
+      "contractName": "PoolsharkHedgePoolFactory",
+      "contractAddress": "0x4cBEA8D79A8e5a79999B496B5Ad4332279CF8fDe",
+      "constructorArguments": [
+        "0x50a012e4473b9b856eEF172C8ef1d54f34972e8E",
+        "0xA76DBEeA79A11e91D6055810a55738e7991F5ee2"
+      ],
+      "created": "2023-01-15T22:43:15.245Z"
+    },
+    "hedgePool": {
+      "contractName": "PoolsharkHedgePool",
+      "contractAddress": "0xCC4C513D3B2A0B765141031C012C5cafFbD0aF47",
+      "constructorArguments": [
+        "0x5DF6FfB4523d029D363A44AEd7E00B759E238d55",
+        "0xA76DBEeA79A11e91D6055810a55738e7991F5ee2",
+        "500",
+        "10"
+      ],
+      "created": "2023-01-15T22:43:49.430Z"
+    },
+    "hedgePoolUtils": {
+      "contractName": "PoolsharkHedgePoolUtils",
+      "contractAddress": "0xA76DBEeA79A11e91D6055810a55738e7991F5ee2",
+      "constructorArguments": [],
+      "created": "2023-01-15T22:41:26.344Z"
+    },
+    "tickMathLib": {
+      "contractName": "TickMath",
+      "contractAddress": "0x78161775EdbA0E405C35569D4F9bddB5ddbEe57e",
+      "constructorArguments": [],
+      "created": "2023-01-15T22:42:03.833Z"
+    },
+    "fullPrecisionMathLib": {
+      "contractName": "PrecisionMath",
+      "contractAddress": "0xF47Ed2A39Bd65FbECf43880e2128Ff9Aa80e9714",
+      "constructorArguments": [],
+      "created": "2023-01-15T22:42:17.101Z"
+    },
+    "dydxMathLib": {
+      "contractName": "DyDxMath",
+      "contractAddress": "0x4c73F3345f2dC01F7f142eF676B2d9BC10Bc7904",
+      "constructorArguments": [],
+      "created": "2023-01-15T22:42:38.371Z"
+    },
+    "ticksLib": {
+      "contractName": "Ticks",
+      "contractAddress": "0x7d22A1334735012Aef6994c77b79aC3E9144Eca3",
+      "constructorArguments": [],
+      "created": "2023-01-15T22:42:51.862Z"
+    },
+    "positionsLib": {
+      "contractName": "Positions",
+      "contractAddress": "0x49A58A1f7eFfBE77f8a6a2B36177F84b4681f9E7",
+      "constructorArguments": [],
+      "created": "2023-01-15T22:43:01.703Z"
+    }
+  },
+  "hardhat": {}
+}

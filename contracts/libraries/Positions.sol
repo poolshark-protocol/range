@@ -6,6 +6,7 @@ import './Ticks.sol';
 import '../interfaces/IRangePoolStructs.sol';
 import './PrecisionMath.sol';
 import './DyDxMath.sol';
+import 'hardhat/console.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -32,13 +33,14 @@ library Positions {
 
     function validate(
         IRangePoolStructs.MintParams memory params,
-        IRangePoolStructs.PoolState memory state
+        IRangePoolStructs.PoolState memory state,
+        int24 tickSpacing
     ) external pure returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
         //TODO: check amount is < max int128
-        if (params.lower % int24(state.tickSpacing) != 0) revert InvalidLowerTick();
+        if (params.lower % int24(tickSpacing) != 0) revert InvalidLowerTick();
         if (params.lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
-        if (params.upper % int24(state.tickSpacing) != 0) revert InvalidUpperTick();
-        if (params.upper <= TickMath.MAX_TICK) revert InvalidUpperTick();
+        if (params.upper % int24(tickSpacing) != 0) revert InvalidUpperTick();
+        if (params.upper >= TickMath.MAX_TICK) revert InvalidUpperTick();
         if (params.lower >= params.upper) revert InvalidPositionBoundsOrder();
         uint256 priceLower = uint256(TickMath.getSqrtRatioAtTick(params.lower));
         uint256 priceUpper = uint256(TickMath.getSqrtRatioAtTick(params.upper));
@@ -57,22 +59,21 @@ library Positions {
     }
 
     function add(
-        mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position)))
-            storage positions,
+        IRangePoolStructs.Position memory position,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.MintParams memory params,
         uint128 amount
-    ) external returns (IRangePoolStructs.PoolState memory) {
+    ) external returns (
+        IRangePoolStructs.PoolState memory,
+        IRangePoolStructs.Position memory
+    ) {
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
-            position: positions[params.fungible ? msg.sender : params.to][params.lower][
-                params.upper
-            ],
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
         });
 
-        if (params.amount0 == 0 && params.amount1 == 0) return (state);
+        if (params.amount0 == 0 && params.amount1 == 0) return (state, position);
 
         Ticks.insert(
             ticks,
@@ -84,31 +85,31 @@ library Positions {
             amount
         );
 
-        cache.position.liquidity += uint128(amount);
+        position.liquidity += uint128(amount);
 
-        positions[params.fungible ? msg.sender : params.to][params.lower][params.upper] = cache
-            .position;
-
-        return (state);
+        return (state, position);
     }
 
     function remove(
-        mapping(address => mapping(int24 => mapping(int24 => IRangePoolStructs.Position)))
-            storage positions,
+        IRangePoolStructs.Position memory position,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.BurnParams memory params,
         address owner,
         uint128 amount0,
         uint128 amount1
-    ) external returns (IRangePoolStructs.PoolState memory, uint128, uint128) {
+    ) external returns (
+        IRangePoolStructs.PoolState memory,
+        IRangePoolStructs.Position memory,
+        uint128,
+        uint128
+    ) {
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
-            position: positions[params.to][params.lower][params.upper],
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
         });
 
-        if (params.amount == 0) return (state, amount0, amount1);
+        if (params.amount == 0) return (state, position, amount0, amount1);
 
         Ticks.remove(ticks, state, params.lower, params.upper, uint128(params.amount));
 
@@ -124,13 +125,11 @@ library Positions {
         amount0 += amount0Removed;
         amount1 += amount1Removed;
 
-        cache.position.amount0 += amount0Removed;
-        cache.position.amount1 += amount1Removed;
-        cache.position.liquidity -= uint128(params.amount);
+        position.amount0 += amount0Removed;
+        position.amount1 += amount1Removed;
+        position.liquidity -= uint128(params.amount);
 
-        positions[owner][params.lower][params.upper] = cache.position;
-
-        return (state, amount0, amount1);
+        return (state, position, amount0, amount1);
     }
 
     function compound(
