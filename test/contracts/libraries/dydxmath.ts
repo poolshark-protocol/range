@@ -57,4 +57,15 @@ describe('DyDxMath Library Tests', function () {
       )
     ).to.be.equal(BigNumber.from('199102091646158105193'))
   })
+
+  it('Should get accurate liquidity amounts', async function () {
+    expect(
+      await hre.props.dydxMathLib.getDx(
+        BigNumber.from('99855108194609381495771'),
+        BigNumber.from('79386769463160146968577785965'),
+        BigNumber.from('79545693927487839655804034729'),
+        true
+      )
+    ).to.be.equal(BigNumber.from('199102091646158105193'))
+  })
 })

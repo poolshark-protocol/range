@@ -35,7 +35,7 @@ library Positions {
         IRangePoolStructs.MintParams memory params,
         IRangePoolStructs.PoolState memory state,
         int24 tickSpacing
-    ) external pure returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
+    ) external view returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
         //TODO: check amount is < max int128
         if (params.lower % int24(tickSpacing) != 0) revert InvalidLowerTick();
         if (params.lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
@@ -51,6 +51,17 @@ library Positions {
             state.price,
             params.amount1,
             params.amount0
+        );
+        console.log('price check');
+        console.log(state.price);
+        console.log(priceUpper);
+        console.log(priceLower);
+        (params.amount0, params.amount1) = DyDxMath.getAmountsForLiquidity(
+            priceLower,
+            priceUpper,
+            state.price,
+            liquidityMinted,
+            true
         );
         //TODO: handle partial mints due to incorrect reserve ratio
         if (liquidityMinted > uint128(type(int128).max)) revert LiquidityOverflow();
@@ -68,14 +79,9 @@ library Positions {
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.Position memory
     ) {
-        IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
-            priceLower: TickMath.getSqrtRatioAtTick(params.lower),
-            priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
-        });
-
         if (params.amount0 == 0 && params.amount1 == 0) return (state, position);
 
-        Ticks.insert(
+        state = Ticks.insert(
             ticks,
             state,
             params.lowerOld,
@@ -95,7 +101,6 @@ library Positions {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.BurnParams memory params,
-        address owner,
         uint128 amount0,
         uint128 amount1
     ) external returns (
@@ -110,6 +115,7 @@ library Positions {
         });
 
         if (params.amount == 0) return (state, position, amount0, amount1);
+        if (params.amount > position.liquidity) revert NotEnoughPositionLiquidity();
 
         Ticks.remove(ticks, state, params.lower, params.upper, uint128(params.amount));
 
@@ -120,7 +126,7 @@ library Positions {
             cache.priceUpper,
             state.price,
             params.amount,
-            false
+            true
         );
         amount0 += amount0Removed;
         amount1 += amount1Removed;
@@ -171,7 +177,8 @@ library Positions {
         IRangePoolStructs.Position memory position,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.UpdateParams memory params
-    ) internal view returns (IRangePoolStructs.Position memory, uint128, uint128) {
+    ) internal view returns (
+        IRangePoolStructs.Position memory, uint128, uint128) {
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
             ticks,
             state,
@@ -182,7 +189,7 @@ library Positions {
         uint128 amount0Fees = uint128(
             PrecisionMath.mulDiv(
                 rangeFeeGrowth0 - position.feeGrowthInside0Last,
-                position.liquidity,
+                uint256(position.liquidity),
                 Q128
             )
         );

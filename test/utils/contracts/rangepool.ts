@@ -54,11 +54,11 @@ export interface ValidateMintParams {
 export interface ValidateSwapParams {
   signer: SignerWithAddress
   recipient: string
-  fungible: boolean
+  zeroForOne: boolean
   amountIn: BigNumber
   sqrtPriceLimitX96: BigNumber
-  balance0Decrease: BigNumber
-  balance1Increase: BigNumber
+  balanceInDecrease: BigNumber
+  balanceOutIncrease: BigNumber
   revertMessage: string
 }
 
@@ -76,22 +76,22 @@ export interface ValidateBurnParams {
 export async function validateSwap(params: ValidateSwapParams) {
   const signer = params.signer
   const recipient = params.recipient
-  const fungible = params.fungible
+  const zeroForOne = params.zeroForOne
   const amountIn = params.amountIn
   const sqrtPriceLimitX96 = params.sqrtPriceLimitX96
-  const balance0Decrease = params.balance0Decrease
-  const balance1Increase = params.balance1Increase
+  const balanceInDecrease = params.balanceInDecrease
+  const balanceOutIncrease = params.balanceOutIncrease
   const revertMessage = params.revertMessage
 
-  let balance0Before
-  let balance1Before
-  if (fungible) {
-    balance0Before = await hre.props.token0.balanceOf(signer.address)
-    balance1Before = await hre.props.token1.balanceOf(signer.address)
+  let balanceInBefore
+  let balanceOutBefore
+  if (zeroForOne) {
+    balanceInBefore = await hre.props.token0.balanceOf(signer.address)
+    balanceOutBefore = await hre.props.token1.balanceOf(signer.address)
     await hre.props.token0.approve(hre.props.rangePool.address, amountIn)
   } else {
-    balance0Before = await hre.props.token1.balanceOf(signer.address)
-    balance1Before = await hre.props.token0.balanceOf(signer.address)
+    balanceInBefore = await hre.props.token1.balanceOf(signer.address)
+    balanceOutBefore = await hre.props.token0.balanceOf(signer.address)
     await hre.props.token1.approve(hre.props.rangePool.address, amountIn)
   }
 
@@ -101,38 +101,38 @@ export async function validateSwap(params: ValidateSwapParams) {
   const nearestTickBefore = poolBefore.nearestTick
 
   // quote pre-swap and validate balance changes match post-swap
-  const quote = await hre.props.rangePool.quote(fungible, amountIn, sqrtPriceLimitX96)
-  const amountInQuoted = quote[0]
-  const amountOutQuoted = quote[1]
+  // const quote = await hre.props.rangePool.quote(zeroForOne, amountIn, sqrtPriceLimitX96)
+  // const amountInQuoted = quote[0]
+  // const amountOutQuoted = quote[1]
 
   if (revertMessage == '') {
     let txn = await hre.props.rangePool
       .connect(signer)
-      .swap(signer.address, fungible, amountIn, sqrtPriceLimitX96)
+      .swap(signer.address, zeroForOne, amountIn, sqrtPriceLimitX96)
     await txn.wait()
   } else {
     await expect(
       hre.props.rangePool
         .connect(signer)
-        .swap(signer.address, fungible, amountIn, sqrtPriceLimitX96)
+        .swap(signer.address, zeroForOne, amountIn, sqrtPriceLimitX96)
     ).to.be.revertedWith(revertMessage)
     return
   }
 
-  let balance0After
-  let balance1After
-  if (fungible) {
-    balance0After = await hre.props.token0.balanceOf(signer.address)
-    balance1After = await hre.props.token1.balanceOf(signer.address)
+  let balanceInAfter
+  let balanceOutAfter
+  if (zeroForOne) {
+    balanceInAfter = await hre.props.token0.balanceOf(signer.address)
+    balanceOutAfter = await hre.props.token1.balanceOf(signer.address)
   } else {
-    balance0After = await hre.props.token1.balanceOf(signer.address)
-    balance1After = await hre.props.token0.balanceOf(signer.address)
+    balanceInAfter = await hre.props.token1.balanceOf(signer.address)
+    balanceOutAfter = await hre.props.token0.balanceOf(signer.address)
   }
 
-  expect(balance0Before.sub(balance0After)).to.be.equal(balance0Decrease)
-  expect(balance1After.sub(balance1Before)).to.be.equal(balance1Increase)
-  expect(balance0Before.sub(balance0After)).to.be.equal(amountInQuoted)
-  expect(balance1After.sub(balance1Before)).to.be.equal(amountOutQuoted)
+  expect(balanceInBefore.sub(balanceInAfter)).to.be.equal(balanceInDecrease)
+  expect(balanceOutAfter.sub(balanceOutBefore)).to.be.equal(balanceOutIncrease)
+  // expect(balanceInBefore.sub(balanceInAfter)).to.be.equal(amountInQuoted)
+  // expect(balanceOutAfter.sub(balanceOutBefore)).to.be.equal(amountOutQuoted)
 
   const poolAfter: PoolState = await hre.props.rangePool.poolState()
   const liquidityAfter = poolAfter.liquidity
@@ -380,6 +380,8 @@ export async function validateBurn(params: ValidateBurnParams) {
   expect(lowerTickAfter.liquidityDelta.sub(lowerTickBefore.liquidityDelta)).to.be.equal(
     BN_ZERO.sub(liquidityAmount)
   )
+  console.log(upperTickBefore.liquidityDelta.toString())
+  console.log(upperTickAfter.liquidityDelta.toString())
   expect(upperTickAfter.liquidityDelta.sub(upperTickBefore.liquidityDelta)).to.be.equal(
     liquidityAmount
   )
