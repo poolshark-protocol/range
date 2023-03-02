@@ -88,10 +88,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         unchecked {
             //TODO: if fees > 0 emit PositionUpdated event
             // update position with latest fees accrued
-            console.log('nearest tick check');
-            console.logInt(pool.nearestTick);
-            console.log('nearest tick check');
-            console.logInt(pool.nearestTick);
             (pool, position) = Positions.add(position, ticks, pool, params, uint128(liquidityMinted));
         }
 
@@ -174,11 +170,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             amount0,
             amount1
         );
-        // console.log('amount checks');
-        // console.log(ERC20(token0).balanceOf(address(this)));
-        // console.log(position.amount0);
-        // console.log(ERC20(token1).balanceOf(address(this)));
-        // console.log(position.amount1);
         if (params.fungible) {
             if (position.amount0 > 0 || position.amount1 > 0) {
                 (position, pool) = Positions.compound(
@@ -194,10 +185,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             amount0 = position.amount0;
             amount1 = position.amount1;
             // zero out balances
-            console.log(ERC20(token0).balanceOf(address(this)));
-            console.log(position.amount0);
-            console.log(ERC20(token1).balanceOf(address(this)));
-            console.log(position.amount1);
             position.amount0 = 0;
             position.amount1 = 0;
             // transfer out balances

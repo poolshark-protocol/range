@@ -36,8 +36,7 @@ library Positions {
         IRangePoolStructs.MintParams memory params,
         IRangePoolStructs.PoolState memory state,
         int24 tickSpacing
-    ) external view returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
-        //TODO: check amount is < max int128
+    ) external pure returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
         if (params.lower % int24(tickSpacing) != 0) revert InvalidLowerTick();
         if (params.lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
         if (params.upper % int24(tickSpacing) != 0) revert InvalidUpperTick();
@@ -53,8 +52,6 @@ library Positions {
             params.amount1,
             params.amount0
         );
-        console.log('liquidity minted');
-        console.log(liquidityMinted);
         (params.amount0, params.amount1) = DyDxMath.getAmountsForLiquidity(
             priceLower,
             priceUpper,
@@ -62,8 +59,6 @@ library Positions {
             liquidityMinted,
             true
         );
-        console.log('liquidity minted');
-        console.log(params.amount0, params.amount1);
         //TODO: handle partial mints due to incorrect reserve ratio
         if (liquidityMinted > uint128(type(int128).max)) revert LiquidityOverflow();
 
@@ -244,11 +239,6 @@ library Positions {
         IRangePoolStructs.Tick memory lowerTick = ticks[lower];
         IRangePoolStructs.Tick memory upperTick = ticks[upper];
 
-        console.log('state check');
-        console.log(state.feeGrowthGlobal0);
-        console.log(lowerTick.feeGrowthOutside0);
-        console.logInt(state.nearestTick);
-        console.log(upperTick.feeGrowthOutside0);
         uint256 _feeGrowthGlobal0 = state.feeGrowthGlobal0;
         uint256 _feeGrowthGlobal1 = state.feeGrowthGlobal1;
         uint256 feeGrowthBelow0;
@@ -274,6 +264,5 @@ library Positions {
 
         feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
         feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
-        console.log('fee growth output', _feeGrowthGlobal0, feeGrowthBelow0, feeGrowthAbove0);
     }
 }

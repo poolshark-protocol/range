@@ -71,7 +71,6 @@ library Ticks {
     {
         while (pool.price != priceLimit && cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
-            console.log('pool fee growth', pool.feeGrowthGlobal0, cache.cross);
             if (cache.cross) {
                 (pool, cache) = _cross(
                     ticks,
@@ -127,7 +126,7 @@ library Ticks {
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache
-    ) internal view returns (
+    ) internal pure returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
     ) {
@@ -225,9 +224,6 @@ library Ticks {
         ticks[cache.crossTick].feeGrowthOutside1 =
                 pool.feeGrowthGlobal1 -
                 ticks[cache.crossTick].feeGrowthOutside1;
-        console.log('cross tick fee growth');
-        console.log(ticks[cache.crossTick].feeGrowthOutside0);
-        console.log(pool.feeGrowthGlobal0);
         if (zeroForOne) {
             unchecked {
                 pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
@@ -308,8 +304,6 @@ library Ticks {
             if (lowerOld >= lower || lower >= oldNextTick) {
                 revert WrongTickLowerOld();
             }
-            console.log('nearest tick check');
-            console.logInt(state.nearestTick);
             if (lower <= state.nearestTick) {
                 ticks[lower] = IRangePoolStructs.Tick(
                     lowerOld,
@@ -396,7 +390,6 @@ library Ticks {
         }
         //check for amount to overflow liquidity delta & global
         if (amount > state.liquidityGlobal) revert LiquidityUnderflow();
-        console.log('modify liquidity');
         if (state.nearestTick >= lower && state.nearestTick < upper) {
             state.liquidity -= amount;
         }
@@ -413,14 +406,10 @@ library Ticks {
             if (state.nearestTick == lower) {
                 state.nearestTick = current.previousTick;
                 if (state.liquidity == 0) {
-                console.log('modify price');
                     state.price = TickMath.getSqrtRatioAtTick(state.nearestTick);
-                    console.log(state.price);
                 }
             } 
             // price; pool liquidity
-            console.log('set nearestTick to previous');
-            console.logInt(state.nearestTick);
             delete ticks[lower];
         } else {
             unchecked {

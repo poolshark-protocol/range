@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 import './PrecisionMath.sol';
-import 'hardhat/console.sol';
 
 /// @notice Math library that facilitates ranged liquidity calculations.
 library DyDxMath {

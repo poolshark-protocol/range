@@ -120,9 +120,7 @@ describe('RangePool Tests', function () {
   })
 
   it('pool0 - Should swap with zero output', async function () {
-    console.log((await hre.props.rangePool.ticks("20")).toString())
     const pool: PoolState = await hre.props.rangePool.poolState()
-    console.log(pool.price.toString())
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,

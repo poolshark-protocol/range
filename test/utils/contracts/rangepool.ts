@@ -373,8 +373,6 @@ export async function validateBurn(params: ValidateBurnParams) {
   expect(lowerTickAfter.liquidityDelta.sub(lowerTickBefore.liquidityDelta)).to.be.equal(
     BN_ZERO.sub(liquidityAmount)
   )
-  console.log(upperTickBefore.liquidityDelta.toString())
-  console.log(upperTickAfter.liquidityDelta.toString())
   expect(upperTickAfter.liquidityDelta.sub(upperTickBefore.liquidityDelta)).to.be.equal(
     liquidityAmount
   )
