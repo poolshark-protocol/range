@@ -127,7 +127,7 @@ library Positions {
             params.amount,
             true
         );
-        console.log('amount removed', amount0Removed, amount1Removed);
+
         amount0 += amount0Removed;
         amount1 += amount1Removed;
 

@@ -139,7 +139,7 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: ''
     })
-    console.log((await hre.props.rangePool.ticks("20")).toString())
+
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
