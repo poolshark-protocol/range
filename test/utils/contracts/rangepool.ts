@@ -191,8 +191,6 @@ export async function validateMint(params: ValidateMintParams) {
   await hre.props.token0
     .connect(params.signer)
     .approve(hre.props.rangePool.address, amount0)
-  balance0Before = await hre.props.token1.balanceOf(params.signer.address)
-  balance1Before = await hre.props.token0.balanceOf(params.signer.address)
   await hre.props.token1
     .connect(params.signer)
     .approve(hre.props.rangePool.address, amount1)
@@ -253,13 +251,8 @@ export async function validateMint(params: ValidateMintParams) {
 
   let balance0After
   let balance1After
-  if (fungible) {
-    balance0After = await hre.props.token0.balanceOf(params.signer.address)
-    balance1After = await hre.props.token1.balanceOf(params.signer.address)
-  } else {
-    balance0After = await hre.props.token1.balanceOf(params.signer.address)
-    balance1After = await hre.props.token0.balanceOf(params.signer.address)
-  }
+  balance0After = await hre.props.token0.balanceOf(params.signer.address)
+  balance1After = await hre.props.token1.balanceOf(params.signer.address)
 
   expect(balance0Before.sub(balance0After)).to.be.equal(balance0Decrease)
   expect(balance1Before.sub(balance1After)).to.be.equal(balance1Decrease)
@@ -364,7 +357,7 @@ export async function validateBurn(params: ValidateBurnParams) {
     balance1After = await hre.props.token1.balanceOf(signer.address)
   }
 
-  expect(balance0After.sub(balance0Before)).to.be.equal(balance0Increase)
+  expect(balance0After.sub(balance0Before)).to.be. equal(balance0Increase)
   expect(balance1After.sub(balance1Before)).to.be.equal(balance1Increase)
 
   let lowerTickAfter: Tick

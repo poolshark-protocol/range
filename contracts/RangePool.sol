@@ -61,19 +61,13 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
     function mint(MintParams calldata mintParams) external lock {
         PoolState memory pool = poolState;
         MintParams memory params = mintParams;
-        uint256 liquidityMinted;
-        (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
-        _transferIn(token0, params.amount0);
-        _transferIn(token1, params.amount1);
+        
         Position memory position = positions[params.fungible ? msg.sender : params.to][
             params.lower
         ][params.upper];
         IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
-        //TODO: is this dangerous?
-        unchecked {
-            //TODO: if fees > 0 emit PositionUpdated event
-            // update position with latest fees accrued
-            (position, , ) = Positions.update(
+        uint256 liquidityMinted;
+        (position, , ) = Positions.update(
                 ticks,
                 position,
                 pool,
@@ -81,11 +75,23 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     params.fungible ? address(this) : params.to,
                     params.lower,
                     params.upper,
-                    uint128(liquidityMinted),
+                    0,
                     params.fungible,
                     params.fungible ? positionToken.totalSupply() : 0
                 )
-            );
+        );
+
+        (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
+        _transferIn(token0, params.amount0);
+        _transferIn(token1, params.amount1);
+        //TODO: is this dangerous?
+        unchecked {
+            //TODO: if fees > 0 emit PositionUpdated event
+            // update position with latest fees accrued
+            console.log('nearest tick check');
+            console.logInt(pool.nearestTick);
+            console.log('nearest tick check');
+            console.logInt(pool.nearestTick);
             (pool, position) = Positions.add(position, ticks, pool, params, uint128(liquidityMinted));
         }
 
@@ -140,6 +146,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         // update position and get new params.lower and params.upper
         uint128 amount0;
         uint128 amount1;
+
         (
             position,
             amount0,
@@ -167,11 +174,11 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             amount0,
             amount1
         );
-        console.log('amount checks');
-        console.log(ERC20(token0).balanceOf(address(this)));
-        console.log(position.amount0);
-        console.log(ERC20(token1).balanceOf(address(this)));
-        console.log(position.amount1);
+        // console.log('amount checks');
+        // console.log(ERC20(token0).balanceOf(address(this)));
+        // console.log(position.amount0);
+        // console.log(ERC20(token1).balanceOf(address(this)));
+        // console.log(position.amount1);
         if (params.fungible) {
             if (position.amount0 > 0 || position.amount1 > 0) {
                 (position, pool) = Positions.compound(
@@ -187,6 +194,10 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             amount0 = position.amount0;
             amount1 = position.amount1;
             // zero out balances
+            console.log(ERC20(token0).balanceOf(address(this)));
+            console.log(position.amount0);
+            console.log(ERC20(token1).balanceOf(address(this)));
+            console.log(position.amount1);
             position.amount0 = 0;
             position.amount1 = 0;
             // transfer out balances
@@ -220,14 +231,17 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         PoolState memory pool = poolState;
         SwapCache memory cache = SwapCache({
             cross: true,
+            crossTick: zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick,
+            swapFee: swapFee,
             input: amountIn,
             output: 0,
-            feeAmount: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6),
-            crossTick: zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick,
-            amountIn: amountIn
+            amountIn: amountIn,
+            tickInput: 0,
+            feeReturn: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6),
+            feeGrowthGlobalIn: zeroForOne ? pool.feeGrowthGlobal0 : pool.feeGrowthGlobal1
         });
         // take fee from input amount
-        cache.input -= cache.feeAmount;
+        cache.input -= cache.feeReturn;
 
         (pool, cache) = Ticks.swap(ticks, zeroForOne, priceLimit, pool, cache);
 
@@ -237,10 +251,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                 _transferOut(recipient, token0, cache.input);
             }
             _transferOut(recipient, token1, cache.output);
-            console.log('cache check');
-            console.log(cache.input);
-            console.log(cache.amountIn);
-            console.log(cache.output);
             emit Swap(recipient, token0, token1, amountIn - cache.input, cache.output);
         } else {
             if (cache.input > 0) {
@@ -264,14 +274,17 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         PoolState memory pool = poolState;
         SwapCache memory cache = SwapCache({
             cross: true,
+            crossTick: zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick,
+            swapFee: swapFee,
             input: amountIn,
             output: 0,
-            feeAmount: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6),
-            crossTick: zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick,
-            amountIn: amountIn
+            amountIn: amountIn,
+            tickInput: 0,
+            feeReturn: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6),
+            feeGrowthGlobalIn: zeroForOne ? pool.feeGrowthGlobal0 : pool.feeGrowthGlobal1
         });
         // take fee from inputAmount
-        cache.input -= cache.feeAmount;
+        cache.input -= cache.feeReturn;
         (pool, cache) = Ticks.quote(ticks, zeroForOne, priceLimit, pool, cache);
         
         cache.input  = amountIn - cache.input;

@@ -79,8 +79,8 @@ describe('RangePool Tests', function () {
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: false,
-      balance0Decrease: tokenAmount,
-      balance1Decrease: BigNumber.from('0'),
+      balance0Decrease: BN_ZERO,
+      balance1Decrease: tokenAmount,
       liquidityIncrease: liquidityAmount,
       revertMessage: '',
     })
@@ -95,7 +95,7 @@ describe('RangePool Tests', function () {
       balanceOutIncrease: BigNumber.from('10053127661680239327'),
       revertMessage: '',
     })
-  
+
     await validateBurn({
       signer: hre.props.alice,
       lower: '20',
@@ -113,14 +113,16 @@ describe('RangePool Tests', function () {
       upper: '60',
       liquidityAmount: liquidityAmount,
       fungible: false,
-      balance0Increase: BigNumber.from('9995000000000000000'),
+      balance0Increase: BigNumber.from('9999999999999999999'),
       balance1Increase: BigNumber.from('89946872338319760673'),
       revertMessage: '',
     })
   })
 
-  it.skip('pool0 - Should swap with zero output', async function () {
-
+  it('pool0 - Should swap with zero output', async function () {
+    console.log((await hre.props.rangePool.ticks("20")).toString())
+    const pool: PoolState = await hre.props.rangePool.poolState()
+    console.log(pool.price.toString())
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -129,15 +131,15 @@ describe('RangePool Tests', function () {
       upper: '60',
       upperOld: '887272',
       amount0: tokenAmount,
-      amount1: tokenAmount,
+      amount1: BN_ZERO,
       fungible: false,
       balance0Decrease: BigNumber.from('100000000000000000000'),
-      balance1Decrease: BigNumber.from('11112115118806486928'),
-      liquidityIncrease: BigNumber.from('55480074262884464235373'),
+      balance1Decrease: BigNumber.from('0'),
+      liquidityIncrease: BigNumber.from('50102591670431696268925'),
       revertMessage: '',
       collectRevertMessage: ''
     })
-
+    console.log((await hre.props.rangePool.ticks("20")).toString())
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -145,7 +147,7 @@ describe('RangePool Tests', function () {
       amountIn: tokenAmount.div(10),
       sqrtPriceLimitX96: maxPrice,
       balanceInDecrease: BigNumber.from('10000000000000000000'),
-      balanceOutIncrease: BigNumber.from('9937219975646688619'),
+      balanceOutIncrease: BigNumber.from('9973043433352095283'),
       revertMessage: '',
     })
 
@@ -153,10 +155,10 @@ describe('RangePool Tests', function () {
       signer: hre.props.alice,
       lower: '20',
       upper: '60',
-      liquidityAmount: liquidityAmount,
+      liquidityAmount: BigNumber.from('50102591670431696268925'),
       fungible: false,
-      balance0Increase: BigNumber.from('0'),
-      balance1Increase: BigNumber.from('100000000000000000000'),
+      balance0Increase: BigNumber.from('90026956566647904717'),
+      balance1Increase: BigNumber.from('9999999999999999999'),
       revertMessage: '',
     })
   })

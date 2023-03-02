@@ -1,3 +1,4 @@
+import { BigNumber } from 'ethers'
 import { ethers } from 'hardhat'
 import { task } from 'hardhat/config'
 import { MINT_TOKENS } from '../constants/taskNames'
@@ -23,7 +24,7 @@ task(MINT_TOKENS, 'mint tokens for user')
 
     tokenAContract.mint(
       args.address,
-      ethers.utils.parseUnits(args.amount, await tokenAContract.decimals()),
+      ethers.utils.parseUnits(args.amount, await tokenAContract.decimals()).mul(BigNumber.from('2').pow('96')),
       {
         nonce: nonce,
       }

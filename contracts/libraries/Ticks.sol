@@ -6,6 +6,8 @@ import '../interfaces/IRangePoolStructs.sol';
 import '../utils/RangePoolErrors.sol';
 import './PrecisionMath.sol';
 import './DyDxMath.sol';
+import './FeeMath.sol';
+import './Positions.sol';
 import 'hardhat/console.sol';
 
 /// @notice Tick management library for ranged llibrary Tilibrary Ticks
@@ -68,7 +70,8 @@ library Ticks {
         )
     {
         while (pool.price != priceLimit && cache.cross) {
-            (pool, cache) = _quoteSingle(ticks, zeroForOne, priceLimit, pool, cache);
+            (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
+            console.log('pool fee growth', pool.feeGrowthGlobal0, cache.cross);
             if (cache.cross) {
                 (pool, cache) = _cross(
                     ticks,
@@ -78,23 +81,8 @@ library Ticks {
                 );
             }
         }
-        if (zeroForOne) {
-            if (cache.input > 0) {
-                uint128 feeReturn = uint128(
-                    (((cache.input * 1e18) / (cache.amountIn - cache.feeAmount)) * cache.feeAmount) / 1e18
-                );
-                    cache.feeAmount -= feeReturn;
-                    cache.input += feeReturn;
-                }
-                pool.feeGrowthGlobal0 += uint128(cache.feeAmount);
-            } else {
-                if (cache.input > 0) {
-                    uint128 feeReturn = uint128(
-                        (((cache.input * 1e18) / (cache.amountIn - cache.feeAmount)) * cache.feeAmount) / 1e18
-                    );
-                    cache.feeAmount -= feeReturn;
-                }
-                pool.feeGrowthGlobal1 += uint128(cache.feeAmount);
+        if (cache.input > 0) {
+                    cache.input += cache.feeReturn;
         }
         return (pool, cache);
     }
@@ -112,7 +100,7 @@ library Ticks {
         )
     {
         while (pool.price != priceLimit && cache.cross) {
-            (pool, cache) = _quoteSingle(ticks, zeroForOne, priceLimit, pool, cache);
+            (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
                 (pool, cache) = _pass(
                     ticks,
@@ -124,24 +112,17 @@ library Ticks {
         }
         if (zeroForOne) {
             if (cache.input > 0) {
-                uint128 feeReturn = uint128(
-                    (((cache.input * 1e18) / (cache.amountIn - cache.feeAmount)) * cache.feeAmount) / 1e18
-                );
-                cache.input += feeReturn;
+                cache.input += cache.feeReturn;
             }
         } else {
             if (cache.input > 0) {
-                uint128 feeReturn = uint128(
-                    (((cache.input * 1e18) / (cache.amountIn - cache.feeAmount)) * cache.feeAmount) / 1e18
-                );
-                cache.input += feeReturn;
+                cache.input += cache.feeReturn;
             }
         }
         return (pool, cache);
     }
 
     function _quoteSingle(
-        mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         bool zeroForOne,
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
@@ -179,11 +160,13 @@ library Ticks {
                 // if (!(nextTickPrice <= newPrice && newPrice < pool.price)) {
                 //     newPrice = uint160(PrecisionMath.divRoundingUp(liquidityPadded, liquidityPadded / pool.price + cache.input));
                 //  }23626289714699386012
+                cache.tickInput = cache.input;
                 cache.input = 0;
                 cache.output += DyDxMath.getDy(pool.liquidity, newPrice, uint256(pool.price), false);
                 cache.cross = false;
                 pool.price = uint160(newPrice);
             } else {
+                cache.tickInput = maxDx;
                 cache.input -= maxDx;
                 cache.output += DyDxMath.getDy(pool.liquidity, nextPrice, pool.price, false);
                 if (nextPrice == nextTickPrice) { cache.cross = true; }
@@ -205,6 +188,7 @@ library Ticks {
                 cache.output += DyDxMath.getDx(pool.liquidity, pool.price, newPrice, false);
                 pool.price = uint160(newPrice);
                 cache.cross = false;
+                cache.tickInput = cache.input;
                 cache.input = 0;
             } else {
                 // Swap & cross the tick.
@@ -213,8 +197,10 @@ library Ticks {
                 if (nextPrice == nextTickPrice) { cache.cross = true; }
                 else cache.cross = false;
                 cache.input -= maxDy;
+                cache.tickInput = maxDy;
             }
         }
+        (pool, cache) = FeeMath.calculate(pool, cache, zeroForOne);
         return (pool, cache);
     }
 
@@ -239,6 +225,9 @@ library Ticks {
         ticks[cache.crossTick].feeGrowthOutside1 =
                 pool.feeGrowthGlobal1 -
                 ticks[cache.crossTick].feeGrowthOutside1;
+        console.log('cross tick fee growth');
+        console.log(ticks[cache.crossTick].feeGrowthOutside0);
+        console.log(pool.feeGrowthGlobal0);
         if (zeroForOne) {
             unchecked {
                 pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
@@ -319,7 +308,8 @@ library Ticks {
             if (lowerOld >= lower || lower >= oldNextTick) {
                 revert WrongTickLowerOld();
             }
-
+            console.log('nearest tick check');
+            console.logInt(state.nearestTick);
             if (lower <= state.nearestTick) {
                 ticks[lower] = IRangePoolStructs.Tick(
                     lowerOld,
@@ -406,6 +396,10 @@ library Ticks {
         }
         //check for amount to overflow liquidity delta & global
         if (amount > state.liquidityGlobal) revert LiquidityUnderflow();
+        console.log('modify liquidity');
+        if (state.nearestTick >= lower && state.nearestTick < upper) {
+            state.liquidity -= amount;
+        }
         IRangePoolStructs.Tick storage current = ticks[lower];
 
         if (lower != TickMath.MIN_TICK && current.liquidityDelta == int128(amount)) {
@@ -416,8 +410,17 @@ library Ticks {
             previous.nextTick = current.nextTick;
             next.previousTick = current.previousTick;
 
-            if (state.nearestTick == lower) state.nearestTick = current.previousTick;
-
+            if (state.nearestTick == lower) {
+                state.nearestTick = current.previousTick;
+                if (state.liquidity == 0) {
+                console.log('modify price');
+                    state.price = TickMath.getSqrtRatioAtTick(state.nearestTick);
+                    console.log(state.price);
+                }
+            } 
+            // price; pool liquidity
+            console.log('set nearestTick to previous');
+            console.logInt(state.nearestTick);
             delete ticks[lower];
         } else {
             unchecked {

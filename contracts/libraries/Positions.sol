@@ -6,6 +6,7 @@ import './Ticks.sol';
 import '../interfaces/IRangePoolStructs.sol';
 import './PrecisionMath.sol';
 import './DyDxMath.sol';
+import './FeeMath.sol';
 import 'hardhat/console.sol';
 
 /// @notice Position management library for ranged liquidity.
@@ -52,10 +53,8 @@ library Positions {
             params.amount1,
             params.amount0
         );
-        console.log('price check');
-        console.log(state.price);
-        console.log(priceUpper);
-        console.log(priceLower);
+        console.log('liquidity minted');
+        console.log(liquidityMinted);
         (params.amount0, params.amount1) = DyDxMath.getAmountsForLiquidity(
             priceLower,
             priceUpper,
@@ -63,6 +62,8 @@ library Positions {
             liquidityMinted,
             true
         );
+        console.log('liquidity minted');
+        console.log(params.amount0, params.amount1);
         //TODO: handle partial mints due to incorrect reserve ratio
         if (liquidityMinted > uint128(type(int128).max)) revert LiquidityOverflow();
 
@@ -117,8 +118,6 @@ library Positions {
         if (params.amount == 0) return (state, position, amount0, amount1);
         if (params.amount > position.liquidity) revert NotEnoughPositionLiquidity();
 
-        Ticks.remove(ticks, state, params.lower, params.upper, uint128(params.amount));
-
         uint128 amount0Removed;
         uint128 amount1Removed;
         (amount0Removed, amount1Removed) = DyDxMath.getAmountsForLiquidity(
@@ -128,12 +127,19 @@ library Positions {
             params.amount,
             true
         );
+        console.log('amount removed', amount0Removed, amount1Removed);
         amount0 += amount0Removed;
         amount1 += amount1Removed;
 
         position.amount0 += amount0Removed;
         position.amount1 += amount1Removed;
         position.liquidity -= uint128(params.amount);
+        if (position.liquidity == 0) {
+            position.feeGrowthInside0Last = 0;
+            position.feeGrowthInside1Last = 0;
+        }
+
+        state = Ticks.remove(ticks, state, params.lower, params.upper, uint128(params.amount));
 
         return (state, position, amount0, amount1);
     }
@@ -227,7 +233,7 @@ library Positions {
         return (position, amount0Fees, amount1Fees);
     }
 
-    function rangeFeeGrowth(
+        function rangeFeeGrowth(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         int24 lower,
@@ -238,6 +244,11 @@ library Positions {
         IRangePoolStructs.Tick memory lowerTick = ticks[lower];
         IRangePoolStructs.Tick memory upperTick = ticks[upper];
 
+        console.log('state check');
+        console.log(state.feeGrowthGlobal0);
+        console.log(lowerTick.feeGrowthOutside0);
+        console.logInt(state.nearestTick);
+        console.log(upperTick.feeGrowthOutside0);
         uint256 _feeGrowthGlobal0 = state.feeGrowthGlobal0;
         uint256 _feeGrowthGlobal1 = state.feeGrowthGlobal1;
         uint256 feeGrowthBelow0;
@@ -263,5 +274,6 @@ library Positions {
 
         feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
         feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
+        console.log('fee growth output', _feeGrowthGlobal0, feeGrowthBelow0, feeGrowthAbove0);
     }
 }
