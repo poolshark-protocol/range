@@ -394,7 +394,6 @@ library Ticks {
             state.liquidity -= amount;
         }
         IRangePoolStructs.Tick storage current = ticks[lower];
-
         if (lower != TickMath.MIN_TICK && current.liquidityDelta == int128(amount)) {
             // Delete lower tick.
             IRangePoolStructs.Tick storage previous = ticks[current.previousTick];

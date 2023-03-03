@@ -61,12 +61,17 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
     function mint(MintParams calldata mintParams) external lock {
         PoolState memory pool = poolState;
         MintParams memory params = mintParams;
-        
         Position memory position = positions[params.fungible ? msg.sender : params.to][
             params.lower
         ][params.upper];
         IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
-        uint256 liquidityMinted;
+        
+        if(params.fungible) {
+            if (address(positionToken) == address(0)) {
+                    positionToken = new RangePoolERC20();
+                    tokens[params.lower][params.upper] = positionToken;
+            }
+        }
         (position, , ) = Positions.update(
                 ticks,
                 position,
@@ -80,7 +85,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     params.fungible ? positionToken.totalSupply() : 0
                 )
         );
-
+        uint256 liquidityMinted;
         (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
         _transferIn(token0, params.amount0);
         _transferIn(token1, params.amount1);
@@ -99,10 +104,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     pool,
                     CompoundParams(params.lower, params.upper, params.fungible)
                 );
-            }
-            if (address(positionToken) == address(0)) {
-                positionToken = new RangePoolERC20();
-                tokens[params.lower][params.upper] = positionToken;
             }
             if (position.liquidity != liquidityMinted) {
                 liquidityMinted = (liquidityMinted * positionToken.totalSupply() /
@@ -134,7 +135,7 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             }
             /// @dev - burn will revert if insufficient balance
             positionToken.burn(msg.sender, params.amount);
-            params.amount = uint128(params.amount * position.liquidity / positionToken.totalSupply());
+            params.amount = uint128(uint256(params.amount) * uint256(position.liquidity) / (positionToken.totalSupply() + params.amount));
         }
 
         // Ensure no overflow happens when we cast from uint128 to int128.
@@ -142,7 +143,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
         // update position and get new params.lower and params.upper
         uint128 amount0;
         uint128 amount1;
-
         (
             position,
             amount0,
@@ -171,6 +171,8 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             amount1
         );
         if (params.fungible) {
+            position.amount0 -= amount0;
+            position.amount1 -= amount1;
             if (position.amount0 > 0 || position.amount1 > 0) {
                 (position, pool) = Positions.compound(
                     position,

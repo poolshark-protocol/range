@@ -7,7 +7,6 @@ import '../interfaces/IRangePoolStructs.sol';
 import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
-import 'hardhat/console.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -77,6 +76,11 @@ library Positions {
     ) {
         if (params.amount0 == 0 && params.amount1 == 0) return (state, position);
 
+        IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
+            priceLower: TickMath.getSqrtRatioAtTick(params.lower),
+            priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
+        });
+
         state = Ticks.insert(
             ticks,
             state,
@@ -88,6 +92,10 @@ library Positions {
         );
 
         position.liquidity += uint128(amount);
+
+        if (cache.priceLower < state.price && state.price < cache.priceUpper) {
+            state.liquidity += amount;
+        }
 
         return (state, position);
     }
@@ -179,7 +187,11 @@ library Positions {
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.UpdateParams memory params
     ) internal view returns (
-        IRangePoolStructs.Position memory, uint128, uint128) {
+        IRangePoolStructs.Position memory, 
+        uint128, 
+        uint128
+    ) {
+        if (params.fungible && params.totalSupply == 0) return (position, 0, 0);
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
             ticks,
             state,
@@ -207,13 +219,13 @@ library Positions {
         position.feeGrowthInside1Last = rangeFeeGrowth1;
 
         if (params.fungible) {
-            uint128 feesBurned0 = uint128(
+            uint128 feesBurned0; uint128 feesBurned1;
+            feesBurned0 = uint128(
                 (uint256(amount0Fees) * uint256(uint128(params.amount))) / params.totalSupply
             );
-            uint128 feesBurned1 = uint128(
+            feesBurned1 = uint128(
                 (uint256(amount1Fees) * uint256(uint128(params.amount))) / params.totalSupply
             );
-
             amount0Fees -= feesBurned0;
             amount1Fees -= feesBurned1;
 
@@ -228,7 +240,7 @@ library Positions {
         return (position, amount0Fees, amount1Fees);
     }
 
-        function rangeFeeGrowth(
+    function rangeFeeGrowth(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         int24 lower,
