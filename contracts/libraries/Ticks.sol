@@ -32,10 +32,6 @@ library Ticks {
 
     using Ticks for mapping(int24 => IRangePoolStructs.Tick);
 
-    function getMaxLiquidity() external pure returns (uint128) {
-        return uint128(type(int128).max);
-    }
-
     function initialize(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks
     ) external {

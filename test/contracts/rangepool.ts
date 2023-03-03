@@ -67,6 +67,10 @@ describe('RangePool Tests', function () {
     await mintSigners20(hre.props.token1, tokenAmount.mul(10), [hre.props.alice, hre.props.bob])
   })
 
+  //TODO: add liquidity in-range
+  //TODO: price limit hit mid-tick zeroForOne true & false
+  //TODO: add liquidity to existing tick
+
   it('token1 - Should mint, swap, and burn', async function () {
 
     await validateMint({
@@ -225,8 +229,72 @@ describe('RangePool Tests', function () {
       balance1Increase: BigNumber.from('0'),
       revertMessage: '',
     })
+  })
 
-    170245243948753558591
-    170245243942753558591
-})
+  it('token0 - Should add in-range liquidity', async function () {
+    const pool: PoolState = await hre.props.rangePool.poolState()
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lowerOld: '-887272',
+      lower: '10000',
+      upper: '20000',
+      upperOld: '887272',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      fungible: true,
+      balance0Decrease: BigNumber.from('100000000000000000000'),
+      balance1Decrease: BigNumber.from('0'),
+      liquidityIncrease: BigNumber.from('419027207938949970576'),
+      revertMessage: '',
+      collectRevertMessage: 'RangeErc20NotFound()'
+    })
+
+  //   await validateSwap({
+  //     signer: hre.props.alice,
+  //     recipient: hre.props.alice.address,
+  //     zeroForOne: false,
+  //     amountIn: tokenAmount,
+  //     sqrtPriceLimitX96: maxPrice,
+  //     balanceInDecrease: BigNumber.from('100000000000000000000'),
+  //     balanceOutIncrease: BigNumber.from('99551911445300376661'),
+  //     revertMessage: '',
+  //   })
+
+    // reverts because fungible passed as false
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '10000',
+      upper: '20000',
+      liquidityAmount: BigNumber.from('170245243948753558591'),
+      fungible: false,
+      balance0Increase: BN_ZERO,
+      balance1Increase: BN_ZERO,
+      revertMessage: 'NotEnoughPositionLiquidity()',
+    })
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '10000',
+      upper: '20000',
+      liquidityAmount: BigNumber.from('419027207938949970577'),
+      fungible: true,
+      balance0Increase: BN_ZERO,
+      balance1Increase: BN_ZERO,
+      revertMessage: 'ERC20: burn amount exceeds balance',
+    })
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '10000',
+      upper: '20000',
+      tokenAmount: BigNumber.from('419027207938949970576'),
+      liquidityAmount: BigNumber.from('419027207938949970576'),
+      fungible: true,
+      balance0Increase: BigNumber.from('100000000000000000000'),
+      balance1Increase: BigNumber.from('0'),
+      revertMessage: '',
+    })
+  })
+
 })
