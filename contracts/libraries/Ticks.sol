@@ -8,7 +8,6 @@ import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
 import './Positions.sol';
-import 'hardhat/console.sol';
 
 /// @notice Tick management library for ranged llibrary Tilibrary Ticks
 library Ticks {
@@ -323,7 +322,7 @@ library Ticks {
         }
 
         if (ticks[upper].nextTick != ticks[upper].previousTick) {
-            ticks[lower].liquidityDelta -= int128(amount);
+            ticks[upper].liquidityDelta -= int128(amount);
         } else {
             int24 oldPrevTick = ticks[upperOld].previousTick;
             if (lower > oldPrevTick) oldPrevTick = lower;

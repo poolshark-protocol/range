@@ -31,6 +31,7 @@ describe('RangePool Tests', function () {
   let carol: SignerWithAddress
 
   const liquidityAmount = BigNumber.from('49902591570441687020675')
+  const liquidityAmount2 = BigNumber.from('50102591670431696268925')
   const minTickIdx = BigNumber.from('-887272')
   const maxTickIdx = BigNumber.from('887272')
 
@@ -247,7 +248,7 @@ describe('RangePool Tests', function () {
       balance1Decrease: BigNumber.from('0'),
       liquidityIncrease: BigNumber.from('419027207938949970576'),
       revertMessage: '',
-      collectRevertMessage: 'RangeErc20NotFound()'
+      collectRevertMessage: ''
     })
 
   //   await validateSwap({
@@ -293,6 +294,116 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Increase: BigNumber.from('100000000000000000000'),
       balance1Increase: BigNumber.from('0'),
+      revertMessage: '',
+    })
+  })
+
+  it('token1 - Should mint, swap, and burn', async function () {
+    const liquidityAmount2 = BigNumber.from('50102591670431696268925')
+
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lowerOld: '-887272',
+      lower: '20',
+      upper: '60',
+      upperOld: '887272',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      fungible: false,
+      balance0Decrease: tokenAmount,
+      balance1Decrease: BN_ZERO,
+      liquidityIncrease: liquidityAmount2,
+      revertMessage: '',
+    })
+
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount.div(10),
+      sqrtPriceLimitX96: maxPrice,
+      balanceInDecrease: BigNumber.from('10000000000000000000'),
+      balanceOutIncrease: BigNumber.from('9973043433352095283'),
+      revertMessage: '',
+    })
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '20',
+      upper: '40',
+      liquidityAmount: liquidityAmount2,
+      fungible: false,
+      balance0Increase: BN_ZERO,
+      balance1Increase: tokenAmount.sub(1),
+      revertMessage: 'NotEnoughPositionLiquidity()',
+    })
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '20',
+      upper: '60',
+      liquidityAmount: liquidityAmount2,
+      fungible: false,
+      balance0Increase: BigNumber.from('90026956566647904717'),
+      balance1Increase: BigNumber.from('9999999999999999999'),
+      revertMessage: '',
+    })
+  })
+
+  it('token1 - Should mint, swap, and burn custom position while in range', async function () {
+
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lowerOld: '-887272',
+      lower: '20',
+      upper: '60',
+      upperOld: '887272',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      fungible: false,
+      balance0Decrease: tokenAmount,
+      balance1Decrease: BN_ZERO,
+      liquidityIncrease: liquidityAmount2,
+      revertMessage: '',
+    })
+
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount.div(10),
+      sqrtPriceLimitX96: maxPrice,
+      balanceInDecrease: BigNumber.from('10000000000000000000'),
+      balanceOutIncrease: BigNumber.from('9973043433352095283'),
+      revertMessage: '',
+    })
+
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lowerOld: '-887272',
+      lower: '20',
+      upper: '60',
+      upperOld: '887272',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      fungible: false,
+      balance0Decrease: BigNumber.from('100000000000000000000'),
+      balance1Decrease: BigNumber.from('11102230244338645576'),
+      liquidityIncrease: BigNumber.from('55652877294969112542792'),
+      revertMessage: '',
+    })
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '20',
+      upper: '60',
+      liquidityAmount: liquidityAmount.mul(2),
+      fungible: false,
+      balance0Increase: BigNumber.from('179335171858051487859'),
+      balance1Increase: BigNumber.from('19910203688761279660'),
       revertMessage: '',
     })
   })

@@ -135,7 +135,10 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
             }
             /// @dev - burn will revert if insufficient balance
             positionToken.burn(msg.sender, params.amount);
-            params.amount = uint128(uint256(params.amount) * uint256(position.liquidity) / (positionToken.totalSupply() + params.amount));
+            if (params.amount > 0)
+                params.amount = uint128(uint256(params.amount) 
+                                        * uint256(position.liquidity) 
+                                        / (positionToken.totalSupply() + params.amount));
         }
 
         // Ensure no overflow happens when we cast from uint128 to int128.
