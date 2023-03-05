@@ -32,6 +32,7 @@ describe('RangePool Tests', function () {
 
   const liquidityAmount = BigNumber.from('49902591570441687020675')
   const liquidityAmount2 = BigNumber.from('50102591670431696268925')
+  const liquidityAmount3 = BigNumber.from('3852877204305891777654')
   const minTickIdx = BigNumber.from('-887272')
   const maxTickIdx = BigNumber.from('887272')
 
@@ -400,10 +401,81 @@ describe('RangePool Tests', function () {
       signer: hre.props.alice,
       lower: '20',
       upper: '60',
-      liquidityAmount: liquidityAmount.mul(2),
+      liquidityAmount: liquidityAmount2.add(BigNumber.from('55652877294969112542792')),
       fungible: false,
-      balance0Increase: BigNumber.from('179335171858051487859'),
-      balance1Increase: BigNumber.from('19910203688761279660'),
+      balance0Increase: BigNumber.from('190026956566647904717'),
+      balance1Increase: BigNumber.from('21097230244338645576'),
+      revertMessage: '',
+    })
+  })
+
+  it('token0 - Should autocompound fungible position', async function () {
+    const pool: PoolState = await hre.props.rangePool.poolState()
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lowerOld: '-887272',
+      lower: '500',
+      upper: '1000',
+      upperOld: '887272',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      fungible: true,
+      balance0Decrease: BigNumber.from('100000000000000000000'),
+      balance1Decrease: BigNumber.from('0'),
+      liquidityIncrease: BigNumber.from('4152939701311089823384'),
+      revertMessage: '',
+      collectRevertMessage: 'RangeErc20NotFound()'
+    })
+
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount.div(2),
+      sqrtPriceLimitX96: maxPrice,
+      balanceInDecrease: BigNumber.from('50000000000000000000'),
+      balanceOutIncrease: BigNumber.from('46986351779677708075'),
+      revertMessage: '',
+    })
+
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lowerOld: '-887272',
+      lower: '500',
+      upper: '1000',
+      upperOld: '887272',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      fungible: true,
+      balance0Decrease: BigNumber.from('100000000000000000000'),
+      balance1Decrease: BigNumber.from('94268177493286617045'),
+      liquidityIncrease: BigNumber.from('7833717996640530737050'),
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+
+    // await validateBurn({
+    //   signer: hre.props.alice,
+    //   lower: '10000',
+    //   upper: '20000',
+    //   liquidityAmount: BigNumber.from('419027207938949970577'),
+    //   fungible: true,
+    //   balance0Increase: BN_ZERO,
+    //   balance1Increase: BN_ZERO,
+    //   revertMessage: 'ERC20: burn amount exceeds balance',
+    // })
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '500',
+      upper: '1000',
+      tokenAmount: BigNumber.from('11562486417524284529337'),
+      liquidityAmount: BigNumber.from('11562486417524284529337'),
+      fungible: true,
+      balance0Increase: BigNumber.from('147598961597581458468'),
+      balance1Increase: BigNumber.from('139138851097056041446'),
       revertMessage: '',
     })
   })

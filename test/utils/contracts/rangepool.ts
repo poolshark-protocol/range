@@ -325,13 +325,14 @@ export async function validateBurn(params: ValidateBurnParams) {
   upperTickBefore = await hre.props.rangePool.ticks(upper)
   if (fungible) {
     const positionTokenAddress  = await hre.props.rangePool.tokens(lower, upper);
+    console.log(positionTokenAddress)
     positionToken = await hre.ethers.getContractAt('RangePoolERC20', positionTokenAddress);
     positionTokenBalanceBefore = await positionToken.balanceOf(signer.address);
     positionBefore = await hre.props.rangePool.positions(hre.props.rangePool.address, lower, upper)
   } else {
     positionBefore = await hre.props.rangePool.positions(signer.address, lower, upper)
   }
-
+ 
   if (revertMessage == '') {
     const burnTxn = await hre.props.rangePool
       .connect(signer)

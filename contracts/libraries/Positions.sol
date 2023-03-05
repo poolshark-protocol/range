@@ -7,6 +7,7 @@ import '../interfaces/IRangePoolStructs.sol';
 import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
+import 'hardhat/console.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -86,7 +87,8 @@ library Positions {
             params.upper,
             amount
         );
-
+        console.log(amount);
+        console.log(position.liquidity);
         position.liquidity += uint128(amount);
 
         if (cache.priceLower < state.price && state.price < cache.priceUpper) {

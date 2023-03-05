@@ -61,16 +61,18 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
     function mint(MintParams calldata mintParams) external lock {
         PoolState memory pool = poolState;
         MintParams memory params = mintParams;
-        Position memory position = positions[params.fungible ? msg.sender : params.to][
+        Position memory position = positions[params.fungible ? address(this) : params.to][
             params.lower
         ][params.upper];
-        IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
-        
+        IRangePoolERC20 positionToken;
         if(params.fungible) {
+            positionToken = tokens[params.lower][params.upper];
             if (address(positionToken) == address(0)) {
-                    positionToken = new RangePoolERC20();
-                    tokens[params.lower][params.upper] = positionToken;
+                positionToken = new RangePoolERC20();
+                tokens[params.lower][params.upper] = positionToken;
             }
+                        console.log('token check');
+            console.log(address(positionToken));
         }
         (position, , ) = Positions.update(
                 ticks,
@@ -85,6 +87,8 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     params.fungible ? positionToken.totalSupply() : 0
                 )
         );
+                console.log('liquidity check 2');
+        console.log(position.liquidity);
         uint256 liquidityMinted;
         (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
         _transferIn(token0, params.amount0);
