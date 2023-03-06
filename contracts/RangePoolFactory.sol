@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.13;
 
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import './RangePool.sol';
 import './interfaces/IRangePoolFactory.sol';
 
-contract RangePoolFactory is IRangePoolFactory {
+contract RangePoolFactory is
+    IRangePoolFactory
+{
     error IdenticalTokenAddresses();
     error InvalidTokenDecimals();
     error PoolAlreadyExists();
     error FeeTierNotSupported();
 
     constructor() {
-        owner = msg.sender;
-        emit OwnerChanged(address(0), msg.sender);
+        _transferOwnership(msg.sender);
 
         feeTierTickSpacing[500] = 10;
         emit FeeTierEnabled(500, 10);
