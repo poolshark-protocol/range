@@ -252,16 +252,16 @@ describe('RangePool Tests', function () {
       collectRevertMessage: ''
     })
 
-  //   await validateSwap({
-  //     signer: hre.props.alice,
-  //     recipient: hre.props.alice.address,
-  //     zeroForOne: false,
-  //     amountIn: tokenAmount,
-  //     sqrtPriceLimitX96: maxPrice,
-  //     balanceInDecrease: BigNumber.from('100000000000000000000'),
-  //     balanceOutIncrease: BigNumber.from('99551911445300376661'),
-  //     revertMessage: '',
-  //   })
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount,
+      sqrtPriceLimitX96: maxPrice,
+      balanceInDecrease: BigNumber.from('100000000000000000000'),
+      balanceOutIncrease: BigNumber.from('32123767917803283704'),
+      revertMessage: '',
+    })
 
     // reverts because fungible passed as false
     await validateBurn({
@@ -293,8 +293,8 @@ describe('RangePool Tests', function () {
       tokenAmount: BigNumber.from('419027207938949970576'),
       liquidityAmount: BigNumber.from('419027207938949970576'),
       fungible: true,
-      balance0Increase: BigNumber.from('100000000000000000000'),
-      balance1Increase: BigNumber.from('0'),
+      balance0Increase: BigNumber.from('67876232082196716296'),
+      balance1Increase: BigNumber.from('99950000000000000000'),
       revertMessage: '',
     })
   })
@@ -411,6 +411,7 @@ describe('RangePool Tests', function () {
 
   it('token0 - Should autocompound fungible position', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
+
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -455,17 +456,6 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: ''
     })
-
-    // await validateBurn({
-    //   signer: hre.props.alice,
-    //   lower: '10000',
-    //   upper: '20000',
-    //   liquidityAmount: BigNumber.from('419027207938949970577'),
-    //   fungible: true,
-    //   balance0Increase: BN_ZERO,
-    //   balance1Increase: BN_ZERO,
-    //   revertMessage: 'ERC20: burn amount exceeds balance',
-    // })
 
     await validateBurn({
       signer: hre.props.alice,

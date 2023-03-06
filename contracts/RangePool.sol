@@ -71,8 +71,6 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                 positionToken = new RangePoolERC20();
                 tokens[params.lower][params.upper] = positionToken;
             }
-                        console.log('token check');
-            console.log(address(positionToken));
         }
         (position, , ) = Positions.update(
                 ticks,
@@ -87,18 +85,11 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     params.fungible ? positionToken.totalSupply() : 0
                 )
         );
-                console.log('liquidity check 2');
-        console.log(position.liquidity);
         uint256 liquidityMinted;
+        //TODO: check fees and modify liquidity accordingly
         (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
         _transferIn(token0, params.amount0);
         _transferIn(token1, params.amount1);
-        //TODO: is this dangerous?
-        unchecked {
-            //TODO: if fees > 0 emit PositionUpdated event
-            // update position with latest fees accrued
-            (pool, position) = Positions.add(position, ticks, pool, params, uint128(liquidityMinted));
-        }
 
         if (params.fungible) {
             if (position.amount0 > 0 || position.amount1 > 0) {
@@ -109,14 +100,21 @@ contract RangePool is IRangePool, RangePoolStorage, RangePoolEvents, SafeTransfe
                     CompoundParams(params.lower, params.upper, params.fungible)
                 );
             }
-            if (position.liquidity != liquidityMinted) {
-                liquidityMinted = (liquidityMinted * positionToken.totalSupply() /
-                    (position.liquidity - liquidityMinted));  /// @dev - fees existed prior to mint => mint less tokens
+            if (position.liquidity > positionToken.totalSupply()) {
+                // modify liquidityMinted based on autocompounded fees
+                liquidityMinted = liquidityMinted * positionToken.totalSupply() /
+                    (position.liquidity);
             }
             positionToken.mint(
                 params.to,
                 liquidityMinted
             );
+        }
+
+        unchecked {
+            //TODO: if fees > 0 emit PositionUpdated event
+            // update position with latest fees accrued
+            (pool, position) = Positions.add(position, ticks, pool, params, uint128(liquidityMinted));
         }
         positions[params.fungible ? address(this) : params.to][params.lower][
             params.upper

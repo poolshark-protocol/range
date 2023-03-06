@@ -15,6 +15,7 @@ library Positions {
     error InvalidClaimTick();
     error LiquidityOverflow();
     error WrongTickClaimedAt();
+    error NoLiquidityBeingAdded();
     error PositionNotUpdated();
     error InvalidLowerTick();
     error InvalidUpperTick();
@@ -48,6 +49,7 @@ library Positions {
             params.amount1,
             params.amount0
         );
+        if (liquidityMinted == 0) revert NoLiquidityBeingAdded();
         (params.amount0, params.amount1) = DyDxMath.getAmountsForLiquidity(
             priceLower,
             priceUpper,
@@ -87,8 +89,7 @@ library Positions {
             params.upper,
             amount
         );
-        console.log(amount);
-        console.log(position.liquidity);
+
         position.liquidity += uint128(amount);
 
         if (cache.priceLower < state.price && state.price < cache.priceUpper) {
@@ -154,6 +155,7 @@ library Positions {
         uint160 priceLower = TickMath.getSqrtRatioAtTick(params.lower);
         uint160 priceUpper = TickMath.getSqrtRatioAtTick(params.upper);
 
+        // price tells you the ratio so you need to swap into the correct ratio and add liquidity
         uint256 liquidityMinted = DyDxMath.getLiquidityForAmounts(
             priceLower,
             priceUpper,
