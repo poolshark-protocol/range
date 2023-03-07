@@ -77,4 +77,11 @@ describe('RangePoolFactory Tests', function () {
     ).to.be.revertedWith('InvalidTokenDecimals()')
     await hre.props.token1.connect(hre.props.admin).setDecimals(18)
   })
+
+  it('Should get valid owner', async function () {
+    expect(await
+      hre.props.rangePoolFactory
+        .owner()
+    ).to.be.equal(hre.props.rangePoolAdmin.address)
+  })
 })

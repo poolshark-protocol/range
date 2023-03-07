@@ -326,6 +326,7 @@ export async function validateBurn(params: ValidateBurnParams) {
   if (fungible) {
     const positionTokenAddress  = await hre.props.rangePool.tokens(lower, upper);
     positionToken = await hre.ethers.getContractAt('RangePoolERC20', positionTokenAddress);
+    expect(await positionToken.decimals()).to.be.equal(18)
     positionTokenBalanceBefore = await positionToken.balanceOf(signer.address);
     positionBefore = await hre.props.rangePool.positions(hre.props.rangePool.address, lower, upper)
   } else {

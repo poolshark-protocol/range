@@ -251,6 +251,8 @@ describe('RangePool Tests', function () {
       collectRevertMessage: ''
     })
 
+    expect(hre.props.rangePool.tokens('10000', '20000'))
+
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
