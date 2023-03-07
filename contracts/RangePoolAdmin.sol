@@ -3,28 +3,41 @@
 
 pragma solidity ^0.8.0;
 
+import './interfaces/IRangePool.sol';
+import './interfaces/IRangePoolAdmin.sol';
+
 /**
- * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an owner) that can be granted exclusive access to
- * specific functions.
- *
- * By default, the owner account will be the one that deploys the contract. This
- * can later be changed with {transferOwnership}.
- *
- * This module is used through inheritance. It will make available the modifier
- * `onlyOwner`, which can be applied to your functions to restrict their use to
- * the owner.
+ * @dev Defines the actions which can be executed by the factory admin.
  */
-abstract contract RangePoolFactoryAdmin {
+contract RangePoolAdmin is IRangePoolAdmin {
     address public _owner;
     address private _feeTo;
+
+    mapping(uint16 => int24) public feeTierTickSpacing;
+    mapping(address => uint16) public protocolFees;
 
     error OwnerOnly();
     error FeeToOnly();
     error TransferredToZeroAddress();
 
+    event FeeTierEnabled(uint16 swapFee, int24 tickSpacing);
     event OwnerTransfer(address indexed previousOwner, address indexed newOwner);
     event FeeToTransfer(address indexed previousFeeTo, address indexed newFeeTo);
+    
+    constructor() {
+        _owner = msg.sender;
+        _feeTo = msg.sender;
+        emit OwnerTransfer(address(0), msg.sender);
+
+        feeTierTickSpacing[500] = 10;
+        emit FeeTierEnabled(500, 10);
+
+        feeTierTickSpacing[3000] = 60;
+        emit FeeTierEnabled(3000, 60);
+
+        feeTierTickSpacing[10000] = 200;
+        emit FeeTierEnabled(10000, 200);
+    }
     /**
      * @dev Throws if called by any account other than the owner.
      */
@@ -86,7 +99,7 @@ abstract contract RangePoolFactoryAdmin {
         _transferOwnership(newOwner);
     }
 
-    function transferFeeTo(address newFeeTo) public virtual onlyOwner {
+    function transferFeeTo(address newFeeTo) public virtual onlyFeeTo {
         if(newFeeTo == address(0)) revert TransferredToZeroAddress();
         _transferFeeTo(newFeeTo);
     }
@@ -110,4 +123,27 @@ abstract contract RangePoolFactoryAdmin {
         _feeTo = newFeeTo;
         emit OwnerTransfer(oldFeeTo, newFeeTo);
     }
+
+    function setTopPools(
+        address[] calldata removePools,
+        address[] calldata addPools,
+        uint16 protocolFee
+    ) external onlyOwner {
+        for (uint i; i < removePools.length; i++) {
+            protocolFees[removePools[i]] = 0;
+        }
+        for (uint i; i < removePools.length; i++) {
+            protocolFees[addPools[i]] = protocolFee;
+        }
+    }
+
+    function collectRangePools(
+        address[] calldata collectPools
+    ) external onlyFeeTo {
+        for (uint i; i < collectPools.length; i++) {
+            IRangePool(collectPools[i]).collectFees();
+        }
+    }
+    // loop over each pool in the list and set protocol fee on old pools and new pools
+    // can call the mapping on the factory to get the protocol fee instead of updating it on the pool
 }

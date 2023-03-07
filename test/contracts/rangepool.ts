@@ -65,7 +65,6 @@ describe('RangePool Tests', function () {
 
   this.beforeEach(async function () {
     await mintSigners20(hre.props.token0, tokenAmount.mul(10), [hre.props.alice, hre.props.bob])
-
     await mintSigners20(hre.props.token1, tokenAmount.mul(10), [hre.props.alice, hre.props.bob])
   })
 

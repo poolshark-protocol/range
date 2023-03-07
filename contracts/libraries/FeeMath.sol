@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "./PrecisionMath.sol";
 import "../interfaces/IRangePoolStructs.sol";
 
-/// @notice Math library that facilitates fee handling for Trident Concentrated Liquidity Pools.
+/// @notice Math library that facilitates fee handling.
 library FeeMath {
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 

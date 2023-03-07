@@ -200,7 +200,7 @@ library Positions {
         IRangePoolStructs.Position memory position,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.UpdateParams memory params
-    ) internal view returns (
+    ) external view returns (
         IRangePoolStructs.Position memory, 
         uint128, 
         uint128

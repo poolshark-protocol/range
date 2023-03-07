@@ -7,7 +7,6 @@ interface IRangePoolStructs {
     //TODO: adjust nearestTick if someone burns all liquidity from current nearestTick
     struct PoolState {
         uint8 unlocked;
-        uint16 protocolFee;
         int24  nearestTick;
         uint32 observationIndex;
         uint128 liquidity; /// @dev Liquidity currently active
@@ -71,6 +70,13 @@ interface IRangePoolStructs {
         int24 lower;
         int24 upper;
         bool fungible;
+    }
+
+    struct SwapParams {
+        address recipient;
+        bool zeroForOne;
+        uint160 priceLimit;
+        uint256 amountIn;
     }
 
     //TODO: should we have a recipient field here?

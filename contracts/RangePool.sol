@@ -7,13 +7,16 @@ import './libraries/Ticks.sol';
 import './libraries/Positions.sol';
 import './utils/SafeTransfers.sol';
 import './RangePoolERC20.sol';
+import './utils/RangePoolErrors.sol';
 
-contract RangePool is IRangePool, RangePoolStorage, SafeTransfers {
-    address internal immutable factory;
+contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
     address internal immutable token0;
     address internal immutable token1;
     uint16 public immutable swapFee;
     int24 public immutable tickSpacing;
+    address internal immutable _factory;
+
+    error OwnerOnly();
 
     modifier lock() {
         if (poolState.unlocked != 1) revert Locked();
@@ -22,27 +25,27 @@ contract RangePool is IRangePool, RangePoolStorage, SafeTransfers {
         poolState.unlocked = 1;
     }
 
-    modifier factoryOnly() {
-        if (factory != msg.sender) revert FactoryOnly();
+    modifier onlyOwner() {
+        if (address(_owner) != msg.sender) revert OwnerOnly();
         _;
     }
-
-    error Debug();
 
     constructor(
         address _token0,
         address _token1,
         int24 _tickSpacing,
         uint16 _swapFee,
-        uint160 _startPrice
+        uint160 _startPrice,
+        IRangePoolAdmin owner_
     ) {
         // set addresses
-        factory = msg.sender;
+        _factory = msg.sender;
         token0 = _token0;
         token1 = _token1;
+        _owner  = owner_;
 
         // set global state
-        PoolState memory pool = PoolState(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ProtocolFees(0,0));
+        PoolState memory pool = PoolState(0, 0, 0, 0, 0, 0, 0, 0, 0, ProtocolFees(0,0));
         pool.price = _startPrice;
         pool.unlocked = 1;
         pool.nearestTick = TickMath.MIN_TICK;
@@ -215,9 +218,8 @@ contract RangePool is IRangePool, RangePoolStorage, SafeTransfers {
         external
         override
         lock
-        returns (uint256, uint256)
     {
-        if (amountIn == 0) return (0, 0);
+        if (amountIn == 0) return;
         _transferIn(zeroForOne ? token0 : token1, amountIn);
 
         PoolState memory pool = poolState;
@@ -246,7 +248,6 @@ contract RangePool is IRangePool, RangePoolStorage, SafeTransfers {
             _transferOut(recipient, token0, cache.output);
         }
         poolState = pool;
-        return (amountIn - cache.input, cache.output);
     }
 
     function quote(
@@ -261,17 +262,28 @@ contract RangePool is IRangePool, RangePoolStorage, SafeTransfers {
         SwapCache memory cache;
         // take fee from inputAmount
         
-        (pool, cache) = Ticks.quote(ticks, zeroForOne, priceLimit, swapFee, amountIn, pool);
+        (pool, cache) = Ticks.quote(
+            ticks,
+            zeroForOne,
+            priceLimit,
+            swapFee,
+            amountIn,
+            pool
+        );
         
         cache.input  = amountIn - cache.input;
         cache.output = cache.output;
         return (pool, cache);
     }
 
-    function collectFees() public factoryOnly {
-        _transferOut(IRangePoolFactory(factory).feeTo(), token0, poolState.protocolFees.token0);
-        _transferOut(IRangePoolFactory(factory).feeTo(), token1, poolState.protocolFees.token1);
+    function collectFees() public onlyOwner {
+        _transferOut(_owner.feeTo(), token0, poolState.protocolFees.token0);
+        _transferOut(_owner.feeTo(), token1, poolState.protocolFees.token1);
         poolState.protocolFees.token0 = 0;
         poolState.protocolFees.token1 = 0;
+    }
+
+    function owner() external view returns (IRangePoolAdmin) {
+        return _owner;
     }
 }

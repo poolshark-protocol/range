@@ -13,6 +13,7 @@ import {
   DyDxMath__factory,
   PrecisionMath__factory,
   Positions__factory,
+  RangePoolAdmin__factory,
 } from '../../../typechain'
 
 export class InitialSetup {
@@ -138,9 +139,19 @@ export class InitialSetup {
     await this.deployAssist.deployContractWithRetry(
       network,
       // @ts-ignore
+      RangePoolAdmin__factory,
+      'rangePoolAdmin',
+      []
+    )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
       RangePoolFactory__factory,
       'rangePoolFactory',
-      [],
+      [
+        hre.props.rangePoolAdmin.address
+      ],
       {
         'contracts/libraries/Positions.sol:Positions': hre.props.positionsLib.address,
         'contracts/libraries/Ticks.sol:Ticks': hre.props.ticksLib.address,
@@ -177,7 +188,8 @@ export class InitialSetup {
       [
         hre.props.token0.address,
         hre.props.token1.address,
-        '10', '500', '177159557114295710296101716160']
+        '10', '500', '177159557114295710296101716160'
+      ]
     )
 
     return hre.nonce
