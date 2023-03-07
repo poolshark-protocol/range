@@ -26,6 +26,13 @@ library Ticks {
     error AmountInDeltaNeutral();
     error AmountOutDeltaNeutral();
 
+    event Swap(
+        address indexed recipient,
+        bool zeroForOne,
+        uint256 amountIn,
+        uint256 amountOut
+    );
+
     uint256 internal constant Q96 = 0x1000000000000000000000000;
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 
@@ -54,16 +61,31 @@ library Ticks {
 
     function swap(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        address recipient,
         bool zeroForOne,
         uint160 priceLimit,
-        IRangePoolStructs.PoolState memory pool,
-        IRangePoolStructs.SwapCache memory cache
+        uint16 swapFee,
+        uint256 amountIn,
+        IRangePoolStructs.PoolState memory pool
     )
         external returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
         )
     {
+        IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
+            cross: true,
+            crossTick: zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick,
+            swapFee: swapFee,
+            protocolFee: pool.protocolFee,
+            input: amountIn,
+            output: 0,
+            amountIn: amountIn,
+            tickInput: 0,
+            feeReturn: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6)
+        });
+        // take fee from input amount
+        cache.input -= cache.feeReturn;
         while (pool.price != priceLimit && cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
@@ -78,6 +100,7 @@ library Ticks {
         if (cache.input > 0) {
                     cache.input += cache.feeReturn;
         }
+        emit Swap(recipient, zeroForOne, amountIn - cache.input, cache.output);
         return (pool, cache);
     }
 
@@ -85,14 +108,27 @@ library Ticks {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         bool zeroForOne,
         uint160 priceLimit,
-        IRangePoolStructs.PoolState memory pool,
-        IRangePoolStructs.SwapCache memory cache
+        uint16 swapFee,
+        uint256 amountIn,
+        IRangePoolStructs.PoolState memory pool
     )
         public view returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
         )
     {
+        IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
+            cross: true,
+            crossTick: zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick,
+            swapFee: swapFee,
+            protocolFee: pool.protocolFee,
+            input: amountIn,
+            output: 0,
+            amountIn: amountIn,
+            tickInput: 0,
+            feeReturn: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6)
+        });
+        cache.input -= cache.feeReturn;
         while (pool.price != priceLimit && cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {

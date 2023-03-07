@@ -24,12 +24,15 @@ library FeeMath {
         uint256 originalAmount = PrecisionMath.mulDivRoundingUp(cache.tickInput, 1e6, (1e6 - cache.swapFee));
         uint256 feeAmount = PrecisionMath.mulDivRoundingUp(originalAmount, cache.swapFee, 1e6); 
         cache.feeReturn -= feeAmount;
+        uint256 protocolFee = PrecisionMath.mulDivRoundingUp(feeAmount, cache.protocolFee, 1e6);
+        feeAmount -= protocolFee;
         if (zeroForOne) {
+           pool.protocolFees.token0 += uint128(protocolFee);
            pool.feeGrowthGlobal0 += uint216(PrecisionMath.mulDiv(feeAmount, Q128, pool.liquidity));
         } else {
+          pool.protocolFees.token1 += uint128(protocolFee);
           pool.feeGrowthGlobal1 += uint216(PrecisionMath.mulDiv(feeAmount, Q128, pool.liquidity));
         }
-
         return (pool, cache);
     }
 }

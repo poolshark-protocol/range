@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 abstract contract RangePoolErrors {
     error Locked();
+    error FactoryOnly();
     error InvalidToken();
     error InvalidPosition();
     error InvalidSwapFee();

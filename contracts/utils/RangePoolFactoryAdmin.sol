@@ -16,18 +16,25 @@ pragma solidity ^0.8.0;
  * the owner.
  */
 abstract contract RangePoolFactoryAdmin {
-    address private _owner;
+    address public _owner;
+    address private _feeTo;
 
     error OwnerOnly();
+    error FeeToOnly();
     error TransferredToZeroAddress();
 
     event OwnerTransfer(address indexed previousOwner, address indexed newOwner);
-
+    event FeeToTransfer(address indexed previousFeeTo, address indexed newFeeTo);
     /**
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
         _checkOwner();
+        _;
+    }
+
+    modifier onlyFeeTo() {
+        _checkFeeTo();
         _;
     }
 
@@ -39,10 +46,24 @@ abstract contract RangePoolFactoryAdmin {
     }
 
     /**
+     * @dev Returns the address of the current owner.
+     */
+    function feeTo() public view virtual returns (address) {
+        return _feeTo;
+    }
+
+    /**
      * @dev Throws if the sender is not the owner.
      */
     function _checkOwner() internal view virtual {
         if (owner() != msg.sender) revert OwnerOnly();
+    }
+
+    /**
+     * @dev Throws if the sender is not the feeTo.
+     */
+    function _checkFeeTo() internal view virtual {
+        if (feeTo() != msg.sender) revert FeeToOnly();
     }
 
     /**
@@ -65,6 +86,11 @@ abstract contract RangePoolFactoryAdmin {
         _transferOwnership(newOwner);
     }
 
+    function transferFeeTo(address newFeeTo) public virtual onlyOwner {
+        if(newFeeTo == address(0)) revert TransferredToZeroAddress();
+        _transferFeeTo(newFeeTo);
+    }
+
     /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Internal function without access restriction.
@@ -73,5 +99,15 @@ abstract contract RangePoolFactoryAdmin {
         address oldOwner = _owner;
         _owner = newOwner;
         emit OwnerTransfer(oldOwner, newOwner);
+    }
+
+    /**
+     * @dev Transfers fee collection to a new account (`newFeeTo`).
+     * Internal function without access restriction.
+     */
+    function _transferFeeTo(address newFeeTo) internal virtual {
+        address oldFeeTo = _feeTo;
+        _feeTo = newFeeTo;
+        emit OwnerTransfer(oldFeeTo, newFeeTo);
     }
 }

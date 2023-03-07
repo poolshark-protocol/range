@@ -8,8 +8,6 @@ import '../utils/RangePoolErrors.sol';
 
 abstract contract RangePoolStorage is IRangePoolStructs, RangePoolErrors {
     PoolState public poolState;
-
-    address public feeTo;
     mapping(int24 => Tick) public ticks; /// @dev Ticks with liquidity and fee data
     mapping(address => mapping(int24 => mapping(int24 => Position))) public positions; /// @dev - nonfungible positions
     mapping(int24 => mapping(int24 => IRangePoolERC20)) public tokens; /// @dev - fungible positions

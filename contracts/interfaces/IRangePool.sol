@@ -28,4 +28,6 @@ interface IRangePool is IRangePoolStructs {
         PoolState memory,
         SwapCache memory
     );
+
+    function collectFees() external;
 }

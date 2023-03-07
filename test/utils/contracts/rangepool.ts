@@ -29,12 +29,12 @@ export interface SwapCache {
   cross: boolean
   crossTick: number
   swapFee: number
+  protocolFee: number
   input: BigNumber
   output: BigNumber
   amountIn: BigNumber
   tickInput: BigNumber
   feeReturn: BigNumber
-  feeGrowthGlobalIn: BigNumber
 }
 
 export interface Tick {

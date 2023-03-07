@@ -7,7 +7,7 @@ import '../interfaces/IRangePoolStructs.sol';
 import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
-import 'hardhat/console.sol';
+import '../RangePoolERC20.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -27,7 +27,13 @@ library Positions {
     uint256 internal constant Q96 = 0x1000000000000000000000000;
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 
-    using Positions for mapping(int24 => IRangePoolStructs.Tick);
+    event Mint(
+        address indexed owner,
+        int24 indexed lower,
+        int24 indexed upper,
+        uint128 liquidityMinted,
+        bool fungible
+    );
 
     function validate(
         IRangePoolStructs.MintParams memory params,
@@ -68,12 +74,14 @@ library Positions {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.MintParams memory params,
-        uint128 amount
+        uint128 amount,
+        IRangePoolERC20 positionToken
     ) external returns (
         IRangePoolStructs.PoolState memory,
-        IRangePoolStructs.Position memory
+        IRangePoolStructs.Position memory,
+        uint128
     ) {
-        if (params.amount0 == 0 && params.amount1 == 0) return (state, position);
+        if (params.amount0 == 0 && params.amount1 == 0) return (state, position, 0);
 
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
@@ -90,13 +98,19 @@ library Positions {
             amount
         );
 
-        position.liquidity += uint128(amount);
-
         if (cache.priceLower < state.price && state.price < cache.priceUpper) {
             state.liquidity += amount;
         }
-
-        return (state, position);
+        if (params.fungible) {
+            if (position.liquidity > positionToken.totalSupply()) {
+                // modify amount based on autocompounded fees
+                amount = uint128(uint256(amount) * positionToken.totalSupply() /
+                    position.liquidity);
+            }
+        }
+        position.liquidity += uint128(amount);
+        emit Mint(params.to, params.lower, params.upper, amount, params.fungible);
+        return (state, position, amount);
     }
 
     function remove(

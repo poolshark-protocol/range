@@ -75,4 +75,13 @@ contract RangePoolFactory is
 
         return rangePoolMapping[key];
     }
+
+    function collectRangePool(
+        address fromToken,
+        address destToken,
+        uint256 fee
+    ) external override {
+       address pool = getRangePool(fromToken, destToken, fee);
+       IRangePool(pool).collectFees();
+    }
 }

@@ -29,4 +29,10 @@ abstract contract IRangePoolFactory is RangePoolFactoryAdmin {
         address destToken,
         uint256 fee
     ) external view virtual returns (address);
+
+    function collectRangePool(
+        address fromToken,
+        address destToken,
+        uint256 fee
+    ) external virtual;
 }
