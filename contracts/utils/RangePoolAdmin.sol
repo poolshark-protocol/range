@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.0;
 
-import './interfaces/IRangePool.sol';
-import './interfaces/IRangePoolAdmin.sol';
+import '../interfaces/IRangePool.sol';
+import '../interfaces/IRangePoolAdmin.sol';
 
 /**
  * @dev Defines the actions which can be executed by the factory admin.
@@ -80,23 +80,12 @@ contract RangePoolAdmin is IRangePoolAdmin {
     }
 
     /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby disabling any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public virtual onlyOwner {
-        _transferOwnership(address(0));
-    }
-
-    /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.
      */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
+    function transferOwner(address newOwner) public virtual onlyOwner {
         if(newOwner == address(0)) revert TransferredToZeroAddress();
-        _transferOwnership(newOwner);
+        _transferOwner(newOwner);
     }
 
     function transferFeeTo(address newFeeTo) public virtual onlyFeeTo {
@@ -108,7 +97,7 @@ contract RangePoolAdmin is IRangePoolAdmin {
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Internal function without access restriction.
      */
-    function _transferOwnership(address newOwner) internal virtual {
+    function _transferOwner(address newOwner) internal virtual {
         address oldOwner = _owner;
         _owner = newOwner;
         emit OwnerTransfer(oldOwner, newOwner);
@@ -132,18 +121,16 @@ contract RangePoolAdmin is IRangePoolAdmin {
         for (uint i; i < removePools.length; i++) {
             protocolFees[removePools[i]] = 0;
         }
-        for (uint i; i < removePools.length; i++) {
+        for (uint i; i < addPools.length; i++) {
             protocolFees[addPools[i]] = protocolFee;
         }
     }
 
-    function collectRangePools(
+    function collectTopPools(
         address[] calldata collectPools
     ) external onlyFeeTo {
         for (uint i; i < collectPools.length; i++) {
             IRangePool(collectPools[i]).collectFees();
         }
     }
-    // loop over each pool in the list and set protocol fee on old pools and new pools
-    // can call the mapping on the factory to get the protocol fee instead of updating it on the pool
 }

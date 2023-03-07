@@ -1,10 +1,7 @@
-import { BigNumber } from 'ethers'
-import { network } from 'hardhat'
 import { SUPPORTED_NETWORKS } from '../../../scripts/constants/supportedNetworks'
 import { DeployAssist } from '../../../scripts/util/deployAssist'
 import { ContractDeploymentsKeys } from '../../../scripts/util/files/contractDeploymentKeys'
 import { ContractDeploymentsJson } from '../../../scripts/util/files/contractDeploymentsJson'
-import { readDeploymentsFile, writeDeploymentsFile } from '../../../tasks/utils'
 import {
   Token20__factory,
   RangePoolFactory__factory,
