@@ -7,6 +7,7 @@ import '../interfaces/IRangePoolStructs.sol';
 import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
+import '../RangePoolERC20.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -14,6 +15,7 @@ library Positions {
     error InvalidClaimTick();
     error LiquidityOverflow();
     error WrongTickClaimedAt();
+    error NoLiquidityBeingAdded();
     error PositionNotUpdated();
     error InvalidLowerTick();
     error InvalidUpperTick();
@@ -25,11 +27,13 @@ library Positions {
     uint256 internal constant Q96 = 0x1000000000000000000000000;
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 
-    using Positions for mapping(int24 => IRangePoolStructs.Tick);
-
-    function getMaxLiquidity(int24 tickSpacing) external pure returns (uint128) {
-        return type(uint128).max / uint128(uint24(TickMath.MAX_TICK) / (2 * uint24(tickSpacing)));
-    }
+    event Mint(
+        address indexed owner,
+        int24 indexed lower,
+        int24 indexed upper,
+        uint128 liquidityMinted,
+        bool fungible
+    );
 
     function validate(
         IRangePoolStructs.MintParams memory params,
@@ -51,6 +55,7 @@ library Positions {
             params.amount1,
             params.amount0
         );
+        if (liquidityMinted == 0) revert NoLiquidityBeingAdded();
         (params.amount0, params.amount1) = DyDxMath.getAmountsForLiquidity(
             priceLower,
             priceUpper,
@@ -69,12 +74,14 @@ library Positions {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.MintParams memory params,
-        uint128 amount
+        uint128 amount,
+        IRangePoolERC20 positionToken
     ) external returns (
         IRangePoolStructs.PoolState memory,
-        IRangePoolStructs.Position memory
+        IRangePoolStructs.Position memory,
+        uint128
     ) {
-        if (params.amount0 == 0 && params.amount1 == 0) return (state, position);
+        if (params.amount0 == 0 && params.amount1 == 0) return (state, position, 0);
 
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
@@ -91,13 +98,19 @@ library Positions {
             amount
         );
 
-        position.liquidity += uint128(amount);
-
         if (cache.priceLower < state.price && state.price < cache.priceUpper) {
             state.liquidity += amount;
         }
-
-        return (state, position);
+        if (params.fungible) {
+            if (position.liquidity > positionToken.totalSupply()) {
+                // modify amount based on autocompounded fees
+                amount = uint128(uint256(amount) * positionToken.totalSupply() /
+                    position.liquidity);
+            }
+        }
+        position.liquidity += uint128(amount);
+        emit Mint(params.to, params.lower, params.upper, amount, params.fungible);
+        return (state, position, amount);
     }
 
     function remove(
@@ -156,6 +169,7 @@ library Positions {
         uint160 priceLower = TickMath.getSqrtRatioAtTick(params.lower);
         uint160 priceUpper = TickMath.getSqrtRatioAtTick(params.upper);
 
+        // price tells you the ratio so you need to swap into the correct ratio and add liquidity
         uint256 liquidityMinted = DyDxMath.getLiquidityForAmounts(
             priceLower,
             priceUpper,
@@ -186,7 +200,7 @@ library Positions {
         IRangePoolStructs.Position memory position,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.UpdateParams memory params
-    ) internal view returns (
+    ) external view returns (
         IRangePoolStructs.Position memory, 
         uint128, 
         uint128

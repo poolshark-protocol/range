@@ -7,7 +7,7 @@ interface IRangePoolStructs {
     //TODO: adjust nearestTick if someone burns all liquidity from current nearestTick
     struct PoolState {
         uint8 unlocked;
-        int24 nearestTick;
+        int24  nearestTick;
         uint32 observationIndex;
         uint128 liquidity; /// @dev Liquidity currently active
         uint128 liquidityGlobal; /// @dev Globally deposited liquidity
@@ -15,6 +15,7 @@ interface IRangePoolStructs {
         uint160 secondsGrowthGlobal; /// @dev Multiplied by 2^128.
         uint216 feeGrowthGlobal0;
         uint216 feeGrowthGlobal1;
+        ProtocolFees protocolFees;
     }
 
     struct Tick {
@@ -71,6 +72,13 @@ interface IRangePoolStructs {
         bool fungible;
     }
 
+    struct SwapParams {
+        address recipient;
+        bool zeroForOne;
+        uint160 priceLimit;
+        uint256 amountIn;
+    }
+
     //TODO: should we have a recipient field here?
     struct AddParams {
         address owner;
@@ -120,12 +128,12 @@ interface IRangePoolStructs {
         bool    cross;
         int24   crossTick;
         uint16  swapFee;
+        uint16  protocolFee;
         uint256 input;
         uint256 output;
         uint256 amountIn;
         uint256 tickInput;
         uint256 feeReturn;
-        uint256 feeGrowthGlobalIn;
     }
 
     struct PositionCache {

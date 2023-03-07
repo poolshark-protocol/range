@@ -70,7 +70,7 @@ library DyDxMath {
         uint256 currentPrice,
         uint256 dy,
         uint256 dx
-    ) public pure returns (uint256 liquidity) {
+    ) external pure returns (uint256 liquidity) {
         unchecked {
             if (priceUpper <= currentPrice) {
                 liquidity = PrecisionMath.mulDiv(dy, Q96, priceUpper - priceLower);
@@ -98,7 +98,7 @@ library DyDxMath {
         uint256 currentPrice,
         uint256 liquidityAmount,
         bool roundUp
-    ) internal pure returns (uint128 token0amount, uint128 token1amount) {
+    ) external pure returns (uint128 token0amount, uint128 token1amount) {
         if (currentPrice <= priceLower) {
             // token0 (X) is supplied
             token0amount = uint128(_getDx(liquidityAmount, priceLower, priceUpper, roundUp));

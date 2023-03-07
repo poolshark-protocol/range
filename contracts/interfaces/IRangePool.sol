@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import './IRangePoolStructs.sol';
+import './IRangePoolAdmin.sol';
 
 /// @notice Range Pool Interface
 interface IRangePool is IRangePoolStructs {
@@ -14,11 +15,7 @@ interface IRangePool is IRangePoolStructs {
         bool zeroForOne,
         uint256 amountIn,
         uint160 priceLimit
-    ) external returns (
-        // bytes calldata data
-        uint256 inputAmount,
-        uint256 outputAmount
-    );
+    ) external;
 
     function quote(
         bool zeroForOne,
@@ -28,4 +25,8 @@ interface IRangePool is IRangePoolStructs {
         PoolState memory,
         SwapCache memory
     );
+
+    function collectFees() external;
+
+    function owner() external view returns (IRangePoolAdmin);
 }

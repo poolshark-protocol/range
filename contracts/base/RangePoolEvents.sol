@@ -2,13 +2,6 @@
 pragma solidity ^0.8.13;
 
 abstract contract RangePoolEvents {
-    event Mint(
-        address indexed owner,
-        int24 indexed lower,
-        int24 indexed upper,
-        uint128 liquidityMinted,
-        bool fungible
-    );
 
     event Burn(
         address indexed owner,

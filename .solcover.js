@@ -1,4 +1,4 @@
 module.exports = {
-  skipFiles: ['test', 'utils'],
+  skipFiles: ['test', 'utils/SafeTransfers.sol'],
   configureYulOptimizer: true,
 }

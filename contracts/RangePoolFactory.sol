@@ -1,28 +1,23 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.13;
 
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import './RangePool.sol';
 import './interfaces/IRangePoolFactory.sol';
+import './base/RangePoolFactoryStorage.sol';
+import './base/RangePoolFactoryEvents.sol';
 
-contract RangePoolFactory is IRangePoolFactory {
+contract RangePoolFactory is
+    IRangePoolFactory,
+    RangePoolFactoryStorage,
+    RangePoolFactoryEvents
+{
     error IdenticalTokenAddresses();
     error InvalidTokenDecimals();
     error PoolAlreadyExists();
     error FeeTierNotSupported();
 
-    constructor() {
-        owner = msg.sender;
-        emit OwnerChanged(address(0), msg.sender);
-
-        feeTierTickSpacing[500] = 10;
-        emit FeeTierEnabled(500, 10);
-
-        feeTierTickSpacing[3000] = 60;
-        emit FeeTierEnabled(3000, 60);
-
-        feeTierTickSpacing[10000] = 200;
-        emit FeeTierEnabled(10000, 200);
+    constructor(address owner_) {
+        _owner = IRangePoolAdmin(owner_);
     }
 
     function createRangePool(
@@ -42,20 +37,20 @@ contract RangePoolFactory is IRangePoolFactory {
 
         // generate key for pool
         bytes32 key = keccak256(abi.encode(token0, token1, swapFee));
-        if (rangePoolMapping[key] != address(0)) {
+        if (rangePools[key] != address(0)) {
             revert PoolAlreadyExists();
         }
 
         // check fee tier exists and get tick spacing
-        int24 tickSpacing = feeTierTickSpacing[swapFee];
+        int24 tickSpacing = _owner.feeTierTickSpacing(swapFee);
         if (tickSpacing == 0) {
             revert FeeTierNotSupported();
         }
 
         // launch pool and save address
-        pool = address(new RangePool(token0, token1, int24(tickSpacing), swapFee, startPrice));
+        pool = address(new RangePool(token0, token1, int24(tickSpacing), swapFee, startPrice, _owner));
 
-        rangePoolMapping[key] = pool;
+        rangePools[key] = pool;
 
         // emit event for indexers
         emit RangePoolCreated(token0, token1, swapFee, pool);
@@ -73,6 +68,10 @@ contract RangePoolFactory is IRangePoolFactory {
         // get pool address from mapping
         bytes32 key = keccak256(abi.encode(token0, token1, fee));
 
-        return rangePoolMapping[key];
+        return rangePools[key];
+    }
+
+    function owner() public view override returns (address) {
+        return address(_owner);
     }
 }

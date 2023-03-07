@@ -3,12 +3,13 @@ pragma solidity ^0.8.13;
 
 import './TickMath.sol';
 import '../interfaces/IRangePoolStructs.sol';
+import '../interfaces/IRangePoolFactory.sol';
+import '../interfaces/IRangePool.sol';
 import '../utils/RangePoolErrors.sol';
 import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
 import './Positions.sol';
-import 'hardhat/console.sol';
 
 /// @notice Tick management library for ranged llibrary Tilibrary Ticks
 library Ticks {
@@ -27,14 +28,17 @@ library Ticks {
     error AmountInDeltaNeutral();
     error AmountOutDeltaNeutral();
 
+    event Swap(
+        address indexed recipient,
+        bool zeroForOne,
+        uint256 amountIn,
+        uint256 amountOut
+    );
+
     uint256 internal constant Q96 = 0x1000000000000000000000000;
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 
     using Ticks for mapping(int24 => IRangePoolStructs.Tick);
-
-    function getMaxLiquidity() external pure returns (uint128) {
-        return uint128(type(int128).max);
-    }
 
     function initialize(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks
@@ -59,16 +63,32 @@ library Ticks {
 
     function swap(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        address recipient,
         bool zeroForOne,
         uint160 priceLimit,
-        IRangePoolStructs.PoolState memory pool,
-        IRangePoolStructs.SwapCache memory cache
+        uint16 swapFee,
+        uint256 amountIn,
+        IRangePoolStructs.PoolState memory pool
     )
         external returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
         )
     {
+        IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
+            cross: true,
+            crossTick: zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick,
+            swapFee: swapFee,
+            protocolFee: 0,
+            input: amountIn,
+            output: 0,
+            amountIn: amountIn,
+            tickInput: 0,
+            feeReturn: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6)
+        });
+        // take fee from input amount
+        cache.input -= cache.feeReturn;
+        cache.protocolFee = IRangePool(address(this)).owner().protocolFees(msg.sender);
         while (pool.price != priceLimit && cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
@@ -83,6 +103,7 @@ library Ticks {
         if (cache.input > 0) {
                     cache.input += cache.feeReturn;
         }
+        emit Swap(recipient, zeroForOne, amountIn - cache.input, cache.output);
         return (pool, cache);
     }
 
@@ -90,14 +111,28 @@ library Ticks {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         bool zeroForOne,
         uint160 priceLimit,
-        IRangePoolStructs.PoolState memory pool,
-        IRangePoolStructs.SwapCache memory cache
+        uint16 swapFee,
+        uint256 amountIn,
+        IRangePoolStructs.PoolState memory pool
     )
-        public view returns (
+        external view returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
         )
     {
+        IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
+            cross: true,
+            crossTick: zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick,
+            swapFee: swapFee,
+            protocolFee: 0,
+            input: amountIn,
+            output: 0,
+            amountIn: amountIn,
+            tickInput: 0,
+            feeReturn: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6)
+        });
+        cache.input -= cache.feeReturn;
+        cache.protocolFee = IRangePool(address(this)).owner().protocolFees(msg.sender);
         while (pool.price != priceLimit && cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
@@ -274,7 +309,7 @@ library Ticks {
         int24 upperOld,
         int24 upper,
         uint128 amount
-    ) public returns (IRangePoolStructs.PoolState memory) {
+    ) external returns (IRangePoolStructs.PoolState memory) {
         //TODO: doesn't check if upper/lowerOld is greater/less than MAX/MIN_TICK
         if (lower >= upper || lowerOld >= upperOld) {
             revert WrongTickOrder();
@@ -327,7 +362,7 @@ library Ticks {
         }
 
         if (ticks[upper].nextTick != ticks[upper].previousTick) {
-            ticks[lower].liquidityDelta -= int128(amount);
+            ticks[upper].liquidityDelta -= int128(amount);
         } else {
             int24 oldPrevTick = ticks[upperOld].previousTick;
             if (lower > oldPrevTick) oldPrevTick = lower;
@@ -378,7 +413,7 @@ library Ticks {
         int24 lower,
         int24 upper,
         uint128 amount
-    ) public returns (IRangePoolStructs.PoolState memory) {
+    ) external returns (IRangePoolStructs.PoolState memory) {
         if (lower >= upper) {
             revert WrongTickOrder();
         }

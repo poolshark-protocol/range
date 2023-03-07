@@ -29,12 +29,12 @@ export interface SwapCache {
   cross: boolean
   crossTick: number
   swapFee: number
+  protocolFee: number
   input: BigNumber
   output: BigNumber
   amountIn: BigNumber
   tickInput: BigNumber
   feeReturn: BigNumber
-  feeGrowthGlobalIn: BigNumber
 }
 
 export interface Tick {
@@ -326,12 +326,13 @@ export async function validateBurn(params: ValidateBurnParams) {
   if (fungible) {
     const positionTokenAddress  = await hre.props.rangePool.tokens(lower, upper);
     positionToken = await hre.ethers.getContractAt('RangePoolERC20', positionTokenAddress);
+    expect(await positionToken.decimals()).to.be.equal(18)
     positionTokenBalanceBefore = await positionToken.balanceOf(signer.address);
     positionBefore = await hre.props.rangePool.positions(hre.props.rangePool.address, lower, upper)
   } else {
     positionBefore = await hre.props.rangePool.positions(signer.address, lower, upper)
   }
-
+ 
   if (revertMessage == '') {
     const burnTxn = await hre.props.rangePool
       .connect(signer)
