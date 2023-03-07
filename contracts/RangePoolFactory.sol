@@ -3,9 +3,13 @@ pragma solidity ^0.8.13;
 
 import './RangePool.sol';
 import './interfaces/IRangePoolFactory.sol';
+import './base/RangePoolFactoryStorage.sol';
+import './base/RangePoolFactoryEvents.sol';
 
 contract RangePoolFactory is
-    IRangePoolFactory
+    IRangePoolFactory,
+    RangePoolFactoryStorage,
+    RangePoolFactoryEvents
 {
     error IdenticalTokenAddresses();
     error InvalidTokenDecimals();
