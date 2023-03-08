@@ -8,6 +8,7 @@ import './libraries/Positions.sol';
 import './utils/SafeTransfers.sol';
 import './RangePoolERC20.sol';
 import './utils/RangePoolErrors.sol';
+import 'hardhat/console.sol';
 
 contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
     address internal immutable token0;
@@ -68,9 +69,9 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
     function mint(MintParams calldata mintParams) external lock {
         PoolState memory pool = poolState;
         MintParams memory params = mintParams;
-        Position memory position = positions[params.fungible ? address(this) : params.to][
-            params.lower
-        ][params.upper];
+        Position memory position = positions[params.fungible ? address(this) 
+                                                             : params.to]
+                                            [params.lower][params.upper];
         IRangePoolERC20 positionToken;
         if(params.fungible) {
             positionToken = tokens[params.lower][params.upper];
@@ -128,24 +129,18 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
     function burn(BurnParams calldata burnParams) external lock {
         PoolState memory pool = poolState;
         BurnParams memory params = burnParams;
-        Position memory position = positions[params.fungible ? address(this) : msg.sender][
-            params.lower
-        ][params.upper];
+        Position memory position = positions[params.fungible ? address(this) 
+                                                             : msg.sender]
+                                            [params.lower][params.upper];
         IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
         if (params.fungible) {
             if (address(positionToken) == address(0)) {
                 revert RangeErc20NotFound();
             }
             /// @dev - burn will revert if insufficient balance
+            console.log(positionToken.balanceOf(msg.sender));
             positionToken.burn(msg.sender, params.amount);
-            if (params.amount > 0)
-                params.amount = uint128(uint256(params.amount) 
-                                        * uint256(position.liquidity) 
-                                        / (positionToken.totalSupply() + params.amount));
         }
-
-        // Ensure no overflow happens when we cast from uint128 to int128.
-        if (params.amount > uint128(type(int128).max)) revert LiquidityOverflow();
         // update position and get new params.lower and params.upper
         uint128 amount0;
         uint128 amount1;
@@ -173,8 +168,14 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
             ticks,
             pool,
             params,
-            amount0,
-            amount1
+            RemoveParams(
+                amount0,
+                amount1,
+                params.fungible ? positionToken.totalSupply() + params.amount : 0,
+                params.fungible && params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
+                                                       / (positionToken.totalSupply() + params.amount)
+                                                     : params.amount
+            )
         );
         if (params.fungible) {
             position.amount0 -= amount0;

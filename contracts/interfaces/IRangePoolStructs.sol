@@ -90,12 +90,10 @@ interface IRangePoolStructs {
     }
 
     struct RemoveParams {
-        address owner;
-        int24 lower;
-        int24 upper;
-        uint128 amount;
         uint128 amount0;
         uint128 amount1;
+        uint256 totalSupply;
+        uint256 liquidityAmount;
     }
 
     struct UpdateParams {

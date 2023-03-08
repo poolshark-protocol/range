@@ -180,6 +180,7 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('0'),
+      tokenAmount: BigNumber.from('419027207938949970576'),
       liquidityIncrease: BigNumber.from('419027207938949970576'),
       revertMessage: '',
       collectRevertMessage: 'RangeErc20NotFound()'
@@ -232,7 +233,7 @@ describe('RangePool Tests', function () {
     })
   })
 
-  it('token0 - Should add in-range liquidity', async function () {
+  it('token0 - Should add in-range fungible liquidity', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
     await validateMint({
       signer: hre.props.alice,
@@ -246,6 +247,7 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('0'),
+      tokenAmount: BigNumber.from('419027207938949970576'),
       liquidityIncrease: BigNumber.from('419027207938949970576'),
       revertMessage: '',
       collectRevertMessage: ''
@@ -425,6 +427,7 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('0'),
+      tokenAmount: BigNumber.from('4152939701311089823384'),
       liquidityIncrease: BigNumber.from('4152939701311089823384'),
       revertMessage: '',
       collectRevertMessage: 'RangeErc20NotFound()'
@@ -453,6 +456,7 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('94268177493286617045'),
+      tokenAmount: BigNumber.from('7833717996640530737050'), //TODO: tokenAmount should be slightly different here
       liquidityIncrease: BigNumber.from('7833717996640530737050'),
       revertMessage: '',
       collectRevertMessage: ''
@@ -462,11 +466,11 @@ describe('RangePool Tests', function () {
       signer: hre.props.alice,
       lower: '500',
       upper: '1000',
-      tokenAmount: BigNumber.from('11562486417524284529337'),
-      liquidityAmount: BigNumber.from('11562486417524284529337'),
+      tokenAmount: BigNumber.from('11986657697951620560434'),
+      liquidityAmount: BigNumber.from('11986657697951620560434'),
       fungible: true,
-      balance0Increase: BigNumber.from('147598961597581458468'),
-      balance1Increase: BigNumber.from('139138851097056041446'),
+      balance0Increase: BigNumber.from('153013648220322291925'),
+      balance1Increase: BigNumber.from('144243177493286617045'),
       revertMessage: '',
     })
   })

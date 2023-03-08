@@ -8,7 +8,7 @@ import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
 import '../RangePoolERC20.sol';
-
+import 'hardhat/console.sol';
 /// @notice Position management library for ranged liquidity.
 library Positions {
     error NotEnoughPositionLiquidity();
@@ -101,15 +101,33 @@ library Positions {
         if (cache.priceLower < state.price && state.price < cache.priceUpper) {
             state.liquidity += amount;
         }
-        if (params.fungible) {
-            if (position.liquidity > positionToken.totalSupply()) {
-                // modify amount based on autocompounded fees
-                amount = uint128(uint256(amount) * positionToken.totalSupply() /
-                    position.liquidity);
-            }
-        }
+        
         position.liquidity += uint128(amount);
         emit Mint(params.to, params.lower, params.upper, amount, params.fungible);
+        
+        // modify liquidity minted to account for fees accrued
+        if (params.fungible) {
+            if (position.amount0 > 0 || position.amount1 > 0
+                || (position.liquidity - amount) > positionToken.totalSupply()) {
+                console.log('amount already on position');
+                console.log(position.amount0, position.amount1);
+                console.log(position.liquidity, positionToken.totalSupply());
+                // modify amount based on autocompounded fees
+                uint256 liquidityOnPosition = DyDxMath.getLiquidityForAmounts(
+                                                cache.priceLower,
+                                                cache.priceUpper,
+                                                position.amount0 > 0 ? cache.priceLower : cache.priceUpper,
+                                                params.amount1,
+                                                params.amount0
+                                              );
+                                              console.log('amount', amount);
+                if (positionToken.totalSupply() > 0)
+                    amount = uint128(uint256(amount) * positionToken.totalSupply() /
+                         (uint256(position.liquidity - amount) + liquidityOnPosition));
+                         console.log('amount', amount);
+                /// @dev - if there are fees on the position we mint less positionToken
+            }
+        }
         return (state, position, amount);
     }
 
@@ -118,8 +136,7 @@ library Positions {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.BurnParams memory params,
-        uint128 amount0,
-        uint128 amount1
+        IRangePoolStructs.RemoveParams memory removeParams
     ) external returns (
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.Position memory,
@@ -131,7 +148,7 @@ library Positions {
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
         });
 
-        if (params.amount == 0) return (state, position, amount0, amount1);
+        if (params.amount == 0) return (state, position, removeParams.amount0, removeParams.amount1);
         if (params.amount > position.liquidity) revert NotEnoughPositionLiquidity();
 
         uint128 amount0Removed;
@@ -140,24 +157,29 @@ library Positions {
             cache.priceLower,
             cache.priceUpper,
             state.price,
-            params.amount,
+            removeParams.liquidityAmount,
             true
         );
 
-        amount0 += amount0Removed;
-        amount1 += amount1Removed;
+        if (params.fungible && params.amount > 0) {
+            amount0Removed = uint128(uint256(amount0Removed) * uint256(params.amount) / removeParams.totalSupply);
+            amount1Removed = uint128(uint256(amount1Removed) * uint256(params.amount) / removeParams.totalSupply);
+        }
+
+        removeParams.amount0 += amount0Removed;
+        removeParams.amount1 += amount1Removed;
 
         position.amount0 += amount0Removed;
         position.amount1 += amount1Removed;
         position.liquidity -= uint128(params.amount);
+
         if (position.liquidity == 0) {
             position.feeGrowthInside0Last = 0;
             position.feeGrowthInside1Last = 0;
         }
-
         state = Ticks.remove(ticks, state, params.lower, params.upper, uint128(params.amount));
 
-        return (state, position, amount0, amount1);
+        return (state, position, removeParams.amount0, removeParams.amount1);
     }
 
     function compound(
@@ -177,21 +199,28 @@ library Positions {
             position.amount1,
             position.amount0
         );
-
-        state = Ticks.insert(
-            ticks,
-            state,
-            -887272,
-            params.lower,
-            887272,
-            params.upper,
-            uint128(liquidityMinted)
-        );
-
-        position.amount0 = 0;
-        position.amount1 = 0;
-        position.liquidity += uint128(liquidityMinted);
-
+        if (liquidityMinted > 0) {
+            state = Ticks.insert(
+                ticks,
+                state,
+                -887272,
+                params.lower,
+                887272,
+                params.upper,
+                uint128(liquidityMinted)
+            );
+            uint256 amount0; uint256 amount1;
+            (amount0, amount1) = DyDxMath.getAmountsForLiquidity(
+                priceLower,
+                priceUpper,
+                state.price,
+                liquidityMinted,
+                true
+            );
+            position.amount0 -= uint128(amount0);
+            position.amount1 -= uint128(amount1);
+            position.liquidity += uint128(liquidityMinted);
+        }
         return (position, state);
     }
 
@@ -232,24 +261,23 @@ library Positions {
         position.feeGrowthInside0Last = rangeFeeGrowth0;
         position.feeGrowthInside1Last = rangeFeeGrowth1;
 
-        if (params.fungible) {
+        position.amount0 += uint128(amount0Fees);
+        position.amount1 += uint128(amount1Fees);
+
+        if (params.fungible && params.amount > 0) {
             uint128 feesBurned0; uint128 feesBurned1;
             feesBurned0 = uint128(
-                (uint256(amount0Fees) * uint256(uint128(params.amount))) / params.totalSupply
+                (uint256(position.amount0) * uint256(uint128(params.amount))) / params.totalSupply
             );
             feesBurned1 = uint128(
-                (uint256(amount1Fees) * uint256(uint128(params.amount))) / params.totalSupply
+                (uint256(position.amount1) * uint256(uint128(params.amount))) / params.totalSupply
             );
-            amount0Fees -= feesBurned0;
-            amount1Fees -= feesBurned1;
 
-            position.amount0 += uint128(amount0Fees);
-            position.amount1 += uint128(amount1Fees);
+            position.amount0 -= feesBurned0;
+            position.amount1 -= feesBurned1;
 
             return (position, feesBurned0, feesBurned1);
         }
-        position.amount0 += uint128(amount0Fees);
-        position.amount1 += uint128(amount1Fees);
 
         return (position, amount0Fees, amount1Fees);
     }

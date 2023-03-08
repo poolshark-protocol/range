@@ -58,6 +58,7 @@ export interface ValidateMintParams {
   fungible: boolean
   balance0Decrease: BigNumber
   balance1Decrease: BigNumber
+  tokenAmount?: BigNumber
   liquidityIncrease: BigNumber
   revertMessage: string
   collectRevertMessage?: string
@@ -213,6 +214,8 @@ export async function validateMint(params: ValidateMintParams) {
   let upperOldTickBefore: Tick
   let upperTickBefore: Tick
   let positionBefore: Position
+  let positionToken: Contract
+  let positionTokenBalanceBefore: BigNumber
   lowerOldTickBefore = await hre.props.rangePool.ticks(lowerOld)
   lowerTickBefore = await hre.props.rangePool.ticks(lower)
   upperOldTickBefore = await hre.props.rangePool.ticks(upperOld)
@@ -223,6 +226,15 @@ export async function validateMint(params: ValidateMintParams) {
       lower,
       upper
     )
+    const positionTokenAddress  = await hre.props.rangePool.tokens(lower, upper);
+    console.log('positionToken address', positionTokenAddress)
+    if (positionTokenAddress != '0x0000000000000000000000000000000000000000'){
+      positionToken = await hre.ethers.getContractAt('RangePoolERC20', positionTokenAddress);
+      expect(await positionToken.decimals()).to.be.equal(18)
+      positionTokenBalanceBefore = await positionToken.balanceOf(signer.address);
+    } else {
+      positionTokenBalanceBefore = BN_ZERO
+    }
   } else {
     positionBefore = await hre.props.rangePool.positions(
       recipient,
@@ -275,6 +287,7 @@ export async function validateMint(params: ValidateMintParams) {
   let upperOldTickAfter: Tick
   let upperTickAfter: Tick
   let positionAfter: Position
+  let positionTokenBalanceAfter: BigNumber
   lowerOldTickAfter = await hre.props.rangePool.ticks(lowerOld)
   lowerTickAfter = await hre.props.rangePool.ticks(lower)
   upperOldTickAfter = await hre.props.rangePool.ticks(upperOld)
@@ -285,6 +298,18 @@ export async function validateMint(params: ValidateMintParams) {
       lower,
       upper
     )
+    const positionTokenAddress  = await hre.props.rangePool.tokens(lower, upper);
+    console.log('positionToken address', positionTokenAddress)
+    if (positionTokenAddress != '0x0000000000000000000000000000000000000000') {
+      positionToken = await hre.ethers.getContractAt('RangePoolERC20', positionTokenAddress);
+      expect(await positionToken.decimals()).to.be.equal(18)
+      positionTokenBalanceAfter = await positionToken.balanceOf(signer.address);
+    } else {
+      positionTokenBalanceAfter = BN_ZERO
+    }
+    positionTokenBalanceAfter = await positionToken.balanceOf(signer.address);
+    if (params.tokenAmount)
+      expect(positionTokenBalanceAfter.sub(positionTokenBalanceBefore)).to.be.equal(params.tokenAmount)
   } else {
     positionAfter = await hre.props.rangePool.positions(
       params.signer.address,
@@ -340,7 +365,7 @@ export async function validateBurn(params: ValidateBurnParams) {
         to: params.signer.address,
         lower: lower,
         upper: upper,
-        amount: liquidityAmount,
+        amount: params.tokenAmount ? params.tokenAmount : liquidityAmount,
         fungible: fungible,
         collect: true
     })
@@ -352,7 +377,7 @@ export async function validateBurn(params: ValidateBurnParams) {
         to: params.signer.address,
         lower: lower,
         upper: upper,
-        amount: liquidityAmount,
+        amount: params.tokenAmount ? params.tokenAmount : liquidityAmount,
         fungible: fungible,
         collect: true
     })
