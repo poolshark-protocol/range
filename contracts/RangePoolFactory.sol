@@ -42,7 +42,7 @@ contract RangePoolFactory is
         }
 
         // check fee tier exists and get tick spacing
-        int24 tickSpacing = _owner.feeTierTickSpacing(swapFee);
+        int24 tickSpacing = _owner.feeTiers(swapFee);
         if (tickSpacing == 0) {
             revert FeeTierNotSupported();
         }
