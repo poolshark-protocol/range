@@ -93,6 +93,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                     params.fungible ? positionToken.totalSupply() : 0
                 )
         );
+        console.log('position returned:', position.amount0, position.amount1);
         uint256 liquidityMinted;
         //TODO: check fees and modify liquidity accordingly
         (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);

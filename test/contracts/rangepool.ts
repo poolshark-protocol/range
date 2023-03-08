@@ -414,7 +414,7 @@ describe('RangePool Tests', function () {
 
   it('token0 - Should autocompound fungible position', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
-
+    console.log('first mint')
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -443,7 +443,7 @@ describe('RangePool Tests', function () {
       balanceOutIncrease: BigNumber.from('46986351779677708075'),
       revertMessage: '',
     })
-
+    console.log('second mint')
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -461,7 +461,7 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: ''
     })
-
+    console.log('burn')
     await validateBurn({
       signer: hre.props.alice,
       lower: '500',

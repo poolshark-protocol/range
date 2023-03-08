@@ -263,8 +263,15 @@ library Positions {
 
         position.amount0 += uint128(amount0Fees);
         position.amount1 += uint128(amount1Fees);
+        if (position.amount0 > 0){
+            console.log('amount0', position.amount0);
+        }
+        if (position.amount1 > 0){
+            console.log('amount1', position.amount1);
+        }
 
         if (params.fungible && params.amount > 0) {
+            console.log('burning fees');
             uint128 feesBurned0; uint128 feesBurned1;
             feesBurned0 = uint128(
                 (uint256(position.amount0) * uint256(uint128(params.amount))) / params.totalSupply
@@ -278,7 +285,7 @@ library Positions {
 
             return (position, feesBurned0, feesBurned1);
         }
-
+        console.log('position returning:', position.amount0, position.amount1);
         return (position, amount0Fees, amount1Fees);
     }
 
