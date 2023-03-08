@@ -297,7 +297,7 @@ describe('RangePool Tests', function () {
       liquidityAmount: BigNumber.from('419027207938949970576'),
       fungible: true,
       balance0Increase: BigNumber.from('67876232082196716296'),
-      balance1Increase: BigNumber.from('99950000000000000000'),
+      balance1Increase: BigNumber.from('99999999999999999999'),
       revertMessage: '',
     })
   })
@@ -456,7 +456,7 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('94268177493286617045'),
-      tokenAmount: BigNumber.from('7833717996640530737050'), //TODO: tokenAmount should be slightly different here
+      tokenAmount: BigNumber.from('7831901490930656738366'),
       liquidityIncrease: BigNumber.from('7833717996640530737050'),
       revertMessage: '',
       collectRevertMessage: ''
@@ -471,8 +471,19 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Increase: BigNumber.from('153013648220322291925'),
       balance1Increase: BigNumber.from('144243177493286617045'),
+      revertMessage: 'ERC20: burn amount exceeds balance',
+    })
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '500',
+      upper: '1000',
+      tokenAmount: BigNumber.from('11984841192241746561750'),
+      liquidityAmount: BigNumber.from('11986657697951620560434'),
+      fungible: true,
+      balance0Increase: BigNumber.from('153013648220322291925'),
+      balance1Increase: BigNumber.from('144268177493286617044'),
       revertMessage: '',
     })
   })
-
 })

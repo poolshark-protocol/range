@@ -8,7 +8,6 @@ import './libraries/Positions.sol';
 import './utils/SafeTransfers.sol';
 import './RangePoolERC20.sol';
 import './utils/RangePoolErrors.sol';
-import 'hardhat/console.sol';
 
 contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
     address internal immutable token0;
@@ -93,7 +92,6 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                     params.fungible ? positionToken.totalSupply() : 0
                 )
         );
-        console.log('position returned:', position.amount0, position.amount1);
         uint256 liquidityMinted;
         //TODO: check fees and modify liquidity accordingly
         (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
@@ -112,7 +110,16 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         }
         //TODO: if fees > 0 emit PositionUpdated event
         // update position with latest fees accrued
-        (pool, position, liquidityMinted) = Positions.add(position, ticks, pool, params, uint128(liquidityMinted), positionToken);
+        (pool, position, liquidityMinted) = Positions.add(
+            position, 
+            ticks, 
+            pool, 
+            params, 
+            AddParams(
+                uint128(liquidityMinted),
+                params.fungible ? positionToken.totalSupply() : 0
+            )
+        );
         if (params.fungible) {
             positionToken.mint(
                 params.to,
@@ -139,7 +146,6 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                 revert RangeErc20NotFound();
             }
             /// @dev - burn will revert if insufficient balance
-            console.log(positionToken.balanceOf(msg.sender));
             positionToken.burn(msg.sender, params.amount);
         }
         // update position and get new params.lower and params.upper
@@ -159,7 +165,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                     params.upper,
                     uint128(params.amount),
                     params.fungible,
-                    params.fungible ? positionToken.totalSupply() : 0
+                    params.fungible ? (positionToken.totalSupply() + params.amount) : 0
                 )
         );
         //TODO: fungible position only gets fraction of fees

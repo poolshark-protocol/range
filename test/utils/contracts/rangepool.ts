@@ -227,7 +227,6 @@ export async function validateMint(params: ValidateMintParams) {
       upper
     )
     const positionTokenAddress  = await hre.props.rangePool.tokens(lower, upper);
-    console.log('positionToken address', positionTokenAddress)
     if (positionTokenAddress != '0x0000000000000000000000000000000000000000'){
       positionToken = await hre.ethers.getContractAt('RangePoolERC20', positionTokenAddress);
       expect(await positionToken.decimals()).to.be.equal(18)
@@ -299,7 +298,6 @@ export async function validateMint(params: ValidateMintParams) {
       upper
     )
     const positionTokenAddress  = await hre.props.rangePool.tokens(lower, upper);
-    console.log('positionToken address', positionTokenAddress)
     if (positionTokenAddress != '0x0000000000000000000000000000000000000000') {
       positionToken = await hre.ethers.getContractAt('RangePoolERC20', positionTokenAddress);
       expect(await positionToken.decimals()).to.be.equal(18)
@@ -407,7 +405,6 @@ export async function validateBurn(params: ValidateBurnParams) {
   } else {
     positionAfter = await hre.props.rangePool.positions(signer.address, lower, upper)
   }
-
   expect(lowerTickAfter.liquidityDelta.sub(lowerTickBefore.liquidityDelta)).to.be.equal(
     BN_ZERO.sub(liquidityAmount)
   )

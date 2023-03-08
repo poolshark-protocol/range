@@ -81,12 +81,8 @@ interface IRangePoolStructs {
 
     //TODO: should we have a recipient field here?
     struct AddParams {
-        address owner;
-        int24 lowerOld;
-        int24 lower;
-        int24 upper;
-        int24 upperOld;
         uint128 amount;
+        uint256 tokenSupply;
     }
 
     struct RemoveParams {

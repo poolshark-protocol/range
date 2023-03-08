@@ -8,7 +8,7 @@ import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
 import '../RangePoolERC20.sol';
-import 'hardhat/console.sol';
+
 /// @notice Position management library for ranged liquidity.
 library Positions {
     error NotEnoughPositionLiquidity();
@@ -74,8 +74,7 @@ library Positions {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.MintParams memory params,
-        uint128 amount,
-        IRangePoolERC20 positionToken
+        IRangePoolStructs.AddParams memory addParams
     ) external returns (
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.Position memory,
@@ -95,40 +94,35 @@ library Positions {
             params.lower,
             params.upperOld,
             params.upper,
-            amount
+            addParams.amount
         );
 
         if (cache.priceLower < state.price && state.price < cache.priceUpper) {
-            state.liquidity += amount;
+            state.liquidity += addParams.amount;
         }
         
-        position.liquidity += uint128(amount);
-        emit Mint(params.to, params.lower, params.upper, amount, params.fungible);
+        position.liquidity += uint128(addParams.amount);
+        emit Mint(params.to, params.lower, params.upper, addParams.amount, params.fungible);
         
         // modify liquidity minted to account for fees accrued
         if (params.fungible) {
             if (position.amount0 > 0 || position.amount1 > 0
-                || (position.liquidity - amount) > positionToken.totalSupply()) {
-                console.log('amount already on position');
-                console.log(position.amount0, position.amount1);
-                console.log(position.liquidity, positionToken.totalSupply());
+                || (position.liquidity - addParams.amount) > addParams.tokenSupply) {
                 // modify amount based on autocompounded fees
-                uint256 liquidityOnPosition = DyDxMath.getLiquidityForAmounts(
+                if (addParams.tokenSupply > 0) {
+                    uint256 liquidityOnPosition = DyDxMath.getLiquidityForAmounts(
                                                 cache.priceLower,
                                                 cache.priceUpper,
                                                 position.amount0 > 0 ? cache.priceLower : cache.priceUpper,
-                                                params.amount1,
-                                                params.amount0
+                                                position.amount1,
+                                                position.amount0
                                               );
-                                              console.log('amount', amount);
-                if (positionToken.totalSupply() > 0)
-                    amount = uint128(uint256(amount) * positionToken.totalSupply() /
-                         (uint256(position.liquidity - amount) + liquidityOnPosition));
-                         console.log('amount', amount);
-                /// @dev - if there are fees on the position we mint less positionToken
+                    addParams.amount = uint128(uint256(addParams.amount) * addParams.tokenSupply /
+                         (uint256(position.liquidity - addParams.amount) + liquidityOnPosition));
+                } /// @dev - if there are fees on the position we mint less positionToken
             }
         }
-        return (state, position, amount);
+        return (state, position, addParams.amount);
     }
 
     function remove(
@@ -171,13 +165,13 @@ library Positions {
 
         position.amount0 += amount0Removed;
         position.amount1 += amount1Removed;
-        position.liquidity -= uint128(params.amount);
+        position.liquidity -= uint128(removeParams.liquidityAmount);
 
         if (position.liquidity == 0) {
             position.feeGrowthInside0Last = 0;
             position.feeGrowthInside1Last = 0;
         }
-        state = Ticks.remove(ticks, state, params.lower, params.upper, uint128(params.amount));
+        state = Ticks.remove(ticks, state, params.lower, params.upper, uint128(removeParams.liquidityAmount));
 
         return (state, position, removeParams.amount0, removeParams.amount1);
     }
@@ -263,29 +257,19 @@ library Positions {
 
         position.amount0 += uint128(amount0Fees);
         position.amount1 += uint128(amount1Fees);
-        if (position.amount0 > 0){
-            console.log('amount0', position.amount0);
-        }
-        if (position.amount1 > 0){
-            console.log('amount1', position.amount1);
-        }
 
-        if (params.fungible && params.amount > 0) {
-            console.log('burning fees');
+        if (params.fungible) {
             uint128 feesBurned0; uint128 feesBurned1;
-            feesBurned0 = uint128(
-                (uint256(position.amount0) * uint256(uint128(params.amount))) / params.totalSupply
-            );
-            feesBurned1 = uint128(
-                (uint256(position.amount1) * uint256(uint128(params.amount))) / params.totalSupply
-            );
-
-            position.amount0 -= feesBurned0;
-            position.amount1 -= feesBurned1;
-
+            if (params.amount > 0) {
+                feesBurned0 = uint128(
+                    (uint256(position.amount0) * uint256(uint128(params.amount))) / params.totalSupply
+                );
+                feesBurned1 = uint128(
+                    (uint256(position.amount1) * uint256(uint128(params.amount))) / params.totalSupply
+                );
+            }
             return (position, feesBurned0, feesBurned1);
         }
-        console.log('position returning:', position.amount0, position.amount1);
         return (position, amount0Fees, amount1Fees);
     }
 
