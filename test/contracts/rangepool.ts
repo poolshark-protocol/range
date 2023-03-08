@@ -186,16 +186,27 @@ describe('RangePool Tests', function () {
       collectRevertMessage: 'RangeErc20NotFound()'
     })
 
-  //   await validateSwap({
-  //     signer: hre.props.alice,
-  //     recipient: hre.props.alice.address,
-  //     zeroForOne: false,
-  //     amountIn: tokenAmount,
-  //     sqrtPriceLimitX96: maxPrice,
-  //     balanceInDecrease: BigNumber.from('100000000000000000000'),
-  //     balanceOutIncrease: BigNumber.from('99551911445300376661'),
-  //     revertMessage: '',
-  //   })
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount,
+      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price,
+      balanceInDecrease: BigNumber.from('0'),
+      balanceOutIncrease: BigNumber.from('0'),
+      revertMessage: '',
+    })
+
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: true,
+      amountIn: tokenAmount,
+      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price,
+      balanceInDecrease: BigNumber.from('0'),
+      balanceOutIncrease: BigNumber.from('0'),
+      revertMessage: '',
+    })
 
     // reverts because fungible passed as false
     await validateBurn({
@@ -414,7 +425,7 @@ describe('RangePool Tests', function () {
 
   it('token0 - Should autocompound fungible position', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
-    console.log('first mint')
+
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -443,7 +454,7 @@ describe('RangePool Tests', function () {
       balanceOutIncrease: BigNumber.from('46986079114717368335'),
       revertMessage: '',
     })
-    console.log('second mint')
+
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -461,7 +472,7 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: ''
     })
-    console.log('burn')
+
     await validateBurn({
       signer: hre.props.alice,
       lower: '500',
