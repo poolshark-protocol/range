@@ -82,13 +82,9 @@ library Ticks {
             protocolFee: 0,
             input: amountIn,
             output: 0,
-            amountIn: amountIn,
-            tickInput: 0,
-            feeReturn: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6)
+            amountIn: amountIn
         });
-        // take fee from input amount
-        cache.input -= cache.feeReturn;
-        cache.protocolFee = IRangePool(address(this)).owner().protocolFees(msg.sender);
+        cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
         while (pool.price != priceLimit && cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
@@ -100,9 +96,7 @@ library Ticks {
                 );
             }
         }
-        if (cache.input > 0) {
-                    cache.input += cache.feeReturn;
-        }
+        (pool, cache) = FeeMath.calculate(pool, cache, zeroForOne);
         emit Swap(recipient, zeroForOne, amountIn - cache.input, cache.output);
         return (pool, cache);
     }
@@ -127,12 +121,9 @@ library Ticks {
             protocolFee: 0,
             input: amountIn,
             output: 0,
-            amountIn: amountIn,
-            tickInput: 0,
-            feeReturn: PrecisionMath.mulDivRoundingUp(amountIn, swapFee, 1e6)
+            amountIn: amountIn
         });
-        cache.input -= cache.feeReturn;
-        cache.protocolFee = IRangePool(address(this)).owner().protocolFees(msg.sender);
+        cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
         while (pool.price != priceLimit && cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
@@ -144,15 +135,7 @@ library Ticks {
                 );
             }
         }
-        if (zeroForOne) {
-            if (cache.input > 0) {
-                cache.input += cache.feeReturn;
-            }
-        } else {
-            if (cache.input > 0) {
-                cache.input += cache.feeReturn;
-            }
-        }
+        (pool, cache) = FeeMath.calculate(pool, cache, zeroForOne);
         return (pool, cache);
     }
 
@@ -194,13 +177,11 @@ library Ticks {
                 // if (!(nextTickPrice <= newPrice && newPrice < pool.price)) {
                 //     newPrice = uint160(PrecisionMath.divRoundingUp(liquidityPadded, liquidityPadded / pool.price + cache.input));
                 //  }23626289714699386012
-                cache.tickInput = cache.input;
                 cache.input = 0;
                 cache.output += DyDxMath.getDy(pool.liquidity, newPrice, uint256(pool.price), false);
                 cache.cross = false;
                 pool.price = uint160(newPrice);
             } else {
-                cache.tickInput = maxDx;
                 cache.input -= maxDx;
                 cache.output += DyDxMath.getDy(pool.liquidity, nextPrice, pool.price, false);
                 if (nextPrice == nextTickPrice) { cache.cross = true; }
@@ -222,7 +203,6 @@ library Ticks {
                 cache.output += DyDxMath.getDx(pool.liquidity, pool.price, newPrice, false);
                 pool.price = uint160(newPrice);
                 cache.cross = false;
-                cache.tickInput = cache.input;
                 cache.input = 0;
             } else {
                 // Swap & cross the tick.
@@ -231,10 +211,8 @@ library Ticks {
                 if (nextPrice == nextTickPrice) { cache.cross = true; }
                 else cache.cross = false;
                 cache.input -= maxDy;
-                cache.tickInput = maxDy;
             }
         }
-        (pool, cache) = FeeMath.calculate(pool, cache, zeroForOne);
         return (pool, cache);
     }
 

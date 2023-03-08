@@ -33,8 +33,6 @@ export interface SwapCache {
   input: BigNumber
   output: BigNumber
   amountIn: BigNumber
-  tickInput: BigNumber
-  feeReturn: BigNumber
 }
 
 export interface Tick {

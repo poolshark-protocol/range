@@ -97,7 +97,7 @@ describe('RangePool Tests', function () {
       amountIn: tokenAmount.div(10),
       sqrtPriceLimitX96: minPrice,
       balanceInDecrease: BigNumber.from('10000000000000000000'),
-      balanceOutIncrease: BigNumber.from('10053127661680239327'),
+      balanceOutIncrease: BigNumber.from('10053126651581942488'),
       revertMessage: '',
     })
 
@@ -118,8 +118,8 @@ describe('RangePool Tests', function () {
       upper: '60',
       liquidityAmount: liquidityAmount,
       fungible: false,
-      balance0Increase: BigNumber.from('9999999999999999999'),
-      balance1Increase: BigNumber.from('89946872338319760673'),
+      balance0Increase: BigNumber.from('10000000000000000000'),
+      balance1Increase: BigNumber.from('89946873348418057511'),
       revertMessage: '',
     })
   })
@@ -150,7 +150,7 @@ describe('RangePool Tests', function () {
       amountIn: tokenAmount,
       sqrtPriceLimitX96: maxPrice,
       balanceInDecrease: BigNumber.from('100000000000000000000'),
-      balanceOutIncrease: BigNumber.from('99551911445300376661'),
+      balanceOutIncrease: BigNumber.from('99551812394027374632'),
       revertMessage: '',
     })
 
@@ -160,8 +160,8 @@ describe('RangePool Tests', function () {
       upper: '60',
       liquidityAmount: BigNumber.from('50102591670431696268925'),
       fungible: false,
-      balance0Increase: BigNumber.from('448088554699623339'),
-      balance1Increase: BigNumber.from('99999999999999999999'),
+      balance0Increase: BigNumber.from('448187605972625367'),
+      balance1Increase: BigNumber.from('100000000000000000000'),
       revertMessage: '',
     })
   })
@@ -262,7 +262,7 @@ describe('RangePool Tests', function () {
       amountIn: tokenAmount,
       sqrtPriceLimitX96: maxPrice,
       balanceInDecrease: BigNumber.from('100000000000000000000'),
-      balanceOutIncrease: BigNumber.from('32123767917803283704'),
+      balanceOutIncrease: BigNumber.from('32121736932093337716'),
       revertMessage: '',
     })
 
@@ -296,8 +296,8 @@ describe('RangePool Tests', function () {
       tokenAmount: BigNumber.from('419027207938949970576'),
       liquidityAmount: BigNumber.from('419027207938949970576'),
       fungible: true,
-      balance0Increase: BigNumber.from('67876232082196716296'),
-      balance1Increase: BigNumber.from('99999999999999999999'),
+      balance0Increase: BigNumber.from('67878263067906662283'),
+      balance1Increase: BigNumber.from('100000000000000000000'),
       revertMessage: '',
     })
   })
@@ -328,7 +328,7 @@ describe('RangePool Tests', function () {
       amountIn: tokenAmount.div(10),
       sqrtPriceLimitX96: maxPrice,
       balanceInDecrease: BigNumber.from('10000000000000000000'),
-      balanceOutIncrease: BigNumber.from('9973043433352095283'),
+      balanceOutIncrease: BigNumber.from('9973042439282787765'),
       revertMessage: '',
     })
 
@@ -349,8 +349,8 @@ describe('RangePool Tests', function () {
       upper: '60',
       liquidityAmount: liquidityAmount2,
       fungible: false,
-      balance0Increase: BigNumber.from('90026956566647904717'),
-      balance1Increase: BigNumber.from('9999999999999999999'),
+      balance0Increase: BigNumber.from('90026957560717212234'),
+      balance1Increase: BigNumber.from('10000000000000000000'),
       revertMessage: '',
     })
   })
@@ -380,7 +380,7 @@ describe('RangePool Tests', function () {
       amountIn: tokenAmount.div(10),
       sqrtPriceLimitX96: maxPrice,
       balanceInDecrease: BigNumber.from('10000000000000000000'),
-      balanceOutIncrease: BigNumber.from('9973043433352095283'),
+      balanceOutIncrease: BigNumber.from('9973042439282787765'),
       revertMessage: '',
     })
 
@@ -395,8 +395,8 @@ describe('RangePool Tests', function () {
       amount1: tokenAmount,
       fungible: false,
       balance0Decrease: BigNumber.from('100000000000000000000'),
-      balance1Decrease: BigNumber.from('11102230244338645576'),
-      liquidityIncrease: BigNumber.from('55652877294969112542792'),
+      balance1Decrease: BigNumber.from('11108399606927461884'),
+      liquidityIncrease: BigNumber.from('55655960961787058072954'),
       revertMessage: '',
     })
 
@@ -404,10 +404,10 @@ describe('RangePool Tests', function () {
       signer: hre.props.alice,
       lower: '20',
       upper: '60',
-      liquidityAmount: liquidityAmount2.add(BigNumber.from('55652877294969112542792')),
+      liquidityAmount: liquidityAmount2.add(BigNumber.from('55655960961787058072954')),
       fungible: false,
-      balance0Increase: BigNumber.from('190026956566647904717'),
-      balance1Increase: BigNumber.from('21097230244338645576'),
+      balance0Increase: BigNumber.from('190021968544989707088'),
+      balance1Increase: BigNumber.from('21108399606927461884'),
       revertMessage: '',
     })
   })
@@ -440,7 +440,7 @@ describe('RangePool Tests', function () {
       amountIn: tokenAmount.div(2),
       sqrtPriceLimitX96: maxPrice,
       balanceInDecrease: BigNumber.from('50000000000000000000'),
-      balanceOutIncrease: BigNumber.from('46986351779677708075'),
+      balanceOutIncrease: BigNumber.from('46986079114717368335'),
       revertMessage: '',
     })
     console.log('second mint')
@@ -455,9 +455,9 @@ describe('RangePool Tests', function () {
       amount1: tokenAmount,
       fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
-      balance1Decrease: BigNumber.from('94268177493286617045'),
-      tokenAmount: BigNumber.from('7831901490930656738366'),
-      liquidityIncrease: BigNumber.from('7833717996640530737050'),
+      balance1Decrease: BigNumber.from('94356685012507865298'),
+      tokenAmount: BigNumber.from('7835310791950434814745'),
+      liquidityIncrease: BigNumber.from('7837152465450979996912'),
       revertMessage: '',
       collectRevertMessage: ''
     })
@@ -466,7 +466,7 @@ describe('RangePool Tests', function () {
       signer: hre.props.alice,
       lower: '500',
       upper: '1000',
-      tokenAmount: BigNumber.from('11986657697951620560434'),
+      tokenAmount: BigNumber.from('11988250493261524638130'),
       liquidityAmount: BigNumber.from('11986657697951620560434'),
       fungible: true,
       balance0Increase: BigNumber.from('153013648220322291925'),
@@ -478,11 +478,11 @@ describe('RangePool Tests', function () {
       signer: hre.props.alice,
       lower: '500',
       upper: '1000',
-      tokenAmount: BigNumber.from('11984841192241746561750'),
-      liquidityAmount: BigNumber.from('11986657697951620560434'),
+      tokenAmount: BigNumber.from('11988250493261524638129'),
+      liquidityAmount: BigNumber.from('11990092166762069820296'),
       fungible: true,
-      balance0Increase: BigNumber.from('153013648220322291925'),
-      balance1Increase: BigNumber.from('144268177493286617044'),
+      balance0Increase: BigNumber.from('153013920885282631664'),
+      balance1Increase: BigNumber.from('144356685012507865298'),
       revertMessage: '',
     })
   })
