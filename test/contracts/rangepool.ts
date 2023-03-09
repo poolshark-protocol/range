@@ -200,6 +200,17 @@ describe('RangePool Tests', function () {
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount,
+      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price,
+      balanceInDecrease: BigNumber.from('0'),
+      balanceOutIncrease: BigNumber.from('0'),
+      revertMessage: '',
+    })
+
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
       zeroForOne: true,
       amountIn: tokenAmount,
       sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.sub(2),
