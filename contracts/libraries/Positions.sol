@@ -8,6 +8,7 @@ import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
 import '../RangePoolERC20.sol';
+import 'hardhat/console.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -303,8 +304,16 @@ library Positions {
             feeGrowthAbove0 = upperTick.feeGrowthOutside0;
             feeGrowthAbove1 = upperTick.feeGrowthOutside1;
         } else {
+            console.log('went inside here');
             feeGrowthAbove0 = _feeGrowthGlobal0 - upperTick.feeGrowthOutside0;
             feeGrowthAbove1 = _feeGrowthGlobal1 - upperTick.feeGrowthOutside1;
+            if (lower == 200 && upper == 600){
+                console.log(_feeGrowthGlobal0);
+                console.log(feeGrowthBelow0);
+                console.log(feeGrowthAbove0);
+                console.log(upperTick.feeGrowthOutside0);
+                console.log(state.price);
+            }
         }
 
         feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
