@@ -205,7 +205,7 @@ library Ticks {
                 cache.input = 0;
             } else {
                 // Swap & cross the tick.
-                cache.output += DyDxMath.getDx(pool.liquidity, pool.price, nextTickPrice, false);
+                cache.output += DyDxMath.getDx(pool.liquidity, pool.price, nextPrice, false);
                 pool.price = uint160(nextPrice);
                 if (nextPrice == nextTickPrice) { cache.cross = true; }
                 else cache.cross = false;
@@ -446,7 +446,6 @@ library Ticks {
                 current.liquidityDelta += int128(amount);
             }
         }
-
         state.liquidityGlobal -= amount;
 
         return state;

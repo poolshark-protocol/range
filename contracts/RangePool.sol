@@ -96,6 +96,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         uint256 liquidityMinted;
         //TODO: check fees and modify liquidity accordingly
         (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
+                console.log('liquidity minted', liquidityMinted);
         _transferIn(token0, params.amount0);
         _transferIn(token1, params.amount1);
 
@@ -196,6 +197,8 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                     CompoundParams(params.lower, params.upper, params.fungible)
                 );
             }
+            console.log('amount0', amount0, ERC20(token0).balanceOf(address(this)));
+            console.log('amount1', amount1, ERC20(token1).balanceOf(address(this)));
             _transferOut(params.to, token0, amount0);
             _transferOut(params.to, token1, amount1);
         } else if (params.collect) {

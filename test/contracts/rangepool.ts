@@ -680,4 +680,106 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
   })
+
+  it('pool - Should mint position inside the other', async function () {
+    const pool: PoolState = await hre.props.rangePool.poolState()
+    console.log('price before', (await hre.props.rangePool.poolState()).price.toString())
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lowerOld: '-887272',
+      lower: '500',
+      upper: '1000',
+      upperOld: '887272',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      fungible: true,
+      balance0Decrease: BigNumber.from('100000000000000000000'),
+      balance1Decrease: BigNumber.from('0'),
+      tokenAmount: BigNumber.from('4152939701311089823384'),
+      liquidityIncrease: BigNumber.from('4152939701311089823384'),
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+
+    console.log('price before', (await hre.props.rangePool.poolState()).price.toString())
+
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount,
+      sqrtPriceLimitX96: BigNumber.from('82255474610179467046984074964'),
+      balanceInDecrease: BigNumber.from('53557189146645258776'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('50287324067551161127'), // token0 decrease in pool
+      revertMessage: '',
+    })
+    console.log('price after', (await hre.props.rangePool.poolState()).price.toString())
+    await validateMint({
+      signer: hre.props.bob,
+      recipient: hre.props.bob.address,
+      lowerOld: '500',
+      lower: '600',
+      upper: '800',
+      upperOld: '1000',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      fungible: true,
+      balance0Decrease: BigNumber.from('31002239349424966834'),
+      balance1Decrease: BigNumber.from('100000000000000000000'),
+      tokenAmount: BigNumber.from('12891478442546858467877'),
+      liquidityIncrease: BigNumber.from('12891478442546858467877'),
+      revertMessage: '',
+      collectRevertMessage: 'RangeErc20NotFound()'
+    })
+    console.log('tick after', (await hre.props.rangePool.poolState()).nearestTick.toString())
+
+    // await validateBurn({
+    //   signer: hre.props.bob,
+    //   lower: '600',
+    //   upper: '800',
+    //   tokenAmount: BigNumber.from('12891478442546858467877'),
+    //   liquidityAmount: BigNumber.from('12891478442546858467877'),
+    //   fungible: true,
+    //   balance0Increase: BigNumber.from('31002239349424966834'),
+    //   balance1Increase: BigNumber.from('100000000000000000000'),
+    //   revertMessage: '',
+    // })
+
+    await validateBurn({
+      signer: hre.props.bob,
+      lower: '600',
+      upper: '800',
+      tokenAmount: BigNumber.from('4901161634764542438934'),
+      liquidityAmount: BigNumber.from('4901161634764542438934'),
+      fungible: true,
+      balance0Increase: BigNumber.from('4481110589569978756'),
+      balance1Increase: BigNumber.from('14454151324565833083'),
+      revertMessage: '',
+    })
+
+    await validateBurn({
+      signer: hre.props.bob,
+      lower: '600',
+      upper: '800',
+      tokenAmount: BigNumber.from('7990316807782316028943'),
+      liquidityAmount: BigNumber.from('7990316807782316028943'),
+      fungible: true,
+      balance0Increase: BigNumber.from('19215617142486657242'),
+      balance1Increase: BigNumber.from('61981384395843878804'),
+      revertMessage: '',
+    })
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '500',
+      upper: '1000',
+      tokenAmount: BigNumber.from('4152939701311089823384'),
+      liquidityAmount: BigNumber.from('4152939701311089823384'),
+      fungible: true,
+      balance0Increase: BigNumber.from('49712675932448838872'),
+      balance1Increase: BigNumber.from('53557189146645258776'),
+      revertMessage: '',
+    })
+  })
 })
