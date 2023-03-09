@@ -8,7 +8,7 @@ import './libraries/Positions.sol';
 import './utils/SafeTransfers.sol';
 import './RangePoolERC20.sol';
 import './utils/RangePoolErrors.sol';
-import 'hardhat/console.sol';
+
 
 contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
     address internal immutable token0;
