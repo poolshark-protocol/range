@@ -148,10 +148,9 @@ library Ticks {
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
     ) {
-        if (pool.price == 0
-            || (zeroForOne ? priceLimit >= pool.price || pool.price == TickMath.MIN_SQRT_RATIO
-                           : priceLimit <= pool.price || pool.price == TickMath.MAX_SQRT_RATIO) 
-        ) {
+        if (zeroForOne ? priceLimit >= pool.price || pool.price == TickMath.MIN_SQRT_RATIO
+                       : priceLimit <= pool.price || pool.price == TickMath.MAX_SQRT_RATIO)
+        {
             cache.cross = false;
             return (pool, cache);
         }

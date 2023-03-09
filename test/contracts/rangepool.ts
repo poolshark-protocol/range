@@ -185,24 +185,24 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: 'RangeErc20NotFound()'
     })
-
+    console.log('price check', (await hre.props.rangePool.poolState()).price.toString())
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
       zeroForOne: false,
       amountIn: tokenAmount,
-      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price,
+      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.add(2),
       balanceInDecrease: BigNumber.from('0'),
       balanceOutIncrease: BigNumber.from('0'),
       revertMessage: '',
     })
-
+    console.log('price check', (await hre.props.rangePool.poolState()).price.toString())
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
       zeroForOne: true,
       amountIn: tokenAmount,
-      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price,
+      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.add(1),
       balanceInDecrease: BigNumber.from('0'),
       balanceOutIncrease: BigNumber.from('0'),
       revertMessage: '',
