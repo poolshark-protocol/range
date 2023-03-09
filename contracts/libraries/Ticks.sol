@@ -85,7 +85,7 @@ library Ticks {
             amountIn: amountIn
         });
         cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
-        while (pool.price != priceLimit && cache.cross) {
+        while (cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
                 (pool, cache) = _cross(
@@ -124,7 +124,7 @@ library Ticks {
             amountIn: amountIn
         });
         cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
-        while (pool.price != priceLimit && cache.cross) {
+        while (cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
                 (pool, cache) = _pass(
@@ -144,7 +144,7 @@ library Ticks {
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache
-    ) internal pure returns (
+    ) internal view returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
     ) {
@@ -162,7 +162,7 @@ library Ticks {
             if (nextPrice < priceLimit) {
                 nextPrice = priceLimit;
             }
-            uint256 maxDx = DyDxMath.getDx(pool.liquidity, nextPrice, pool.price, false);
+            uint256 maxDx = DyDxMath.getDx(pool.liquidity, nextPrice, pool.price, true);
             if (cache.input <= maxDx) {
                 // We can swap within the current range.
                 uint256 liquidityPadded = uint256(pool.liquidity) << 96;
@@ -192,7 +192,7 @@ library Ticks {
             if (nextPrice > priceLimit) {
                 nextPrice = priceLimit;
             }
-            uint256 maxDy = DyDxMath.getDy(pool.liquidity, uint256(pool.price), nextPrice, false);
+            uint256 maxDy = DyDxMath.getDy(pool.liquidity, uint256(pool.price), nextPrice, true);
             if (cache.input <= maxDy) {
                 // We can swap within the current range.
                 // Calculate new price after swap: ΔP = Δy/L.
@@ -205,7 +205,7 @@ library Ticks {
                 cache.input = 0;
             } else {
                 // Swap & cross the tick.
-                cache.output += DyDxMath.getDx(pool.liquidity, pool.price, nextTickPrice, false);
+                cache.output += DyDxMath.getDx(pool.liquidity, pool.price, nextPrice, false);
                 pool.price = uint160(nextPrice);
                 if (nextPrice == nextTickPrice) { cache.cross = true; }
                 else cache.cross = false;
@@ -446,7 +446,6 @@ library Ticks {
                 current.liquidityDelta += int128(amount);
             }
         }
-
         state.liquidityGlobal -= amount;
 
         return state;

@@ -8,7 +8,6 @@ import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
 import '../RangePoolERC20.sol';
-import 'hardhat/console.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -40,7 +39,7 @@ library Positions {
         IRangePoolStructs.MintParams memory params,
         IRangePoolStructs.PoolState memory state,
         int24 tickSpacing
-    ) external pure returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
+    ) external view returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
         if (params.lower % int24(tickSpacing) != 0) revert InvalidLowerTick();
         if (params.lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
         if (params.upper % int24(tickSpacing) != 0) revert InvalidUpperTick();
@@ -229,7 +228,9 @@ library Positions {
         uint128, 
         uint128
     ) {
-        if (params.fungible && params.totalSupply == 0) return (position, 0, 0);
+        if (params.fungible && params.totalSupply == 0){
+            return (position, 0, 0);
+        } 
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
             ticks,
             state,
@@ -304,18 +305,9 @@ library Positions {
             feeGrowthAbove0 = upperTick.feeGrowthOutside0;
             feeGrowthAbove1 = upperTick.feeGrowthOutside1;
         } else {
-            console.log('went inside here');
             feeGrowthAbove0 = _feeGrowthGlobal0 - upperTick.feeGrowthOutside0;
             feeGrowthAbove1 = _feeGrowthGlobal1 - upperTick.feeGrowthOutside1;
-            if (lower == 200 && upper == 600){
-                console.log(_feeGrowthGlobal0);
-                console.log(feeGrowthBelow0);
-                console.log(feeGrowthAbove0);
-                console.log(upperTick.feeGrowthOutside0);
-                console.log(state.price);
-            }
         }
-
         feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
         feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
     }

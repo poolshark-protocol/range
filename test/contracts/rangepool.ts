@@ -95,7 +95,7 @@ describe('RangePool Tests', function () {
       recipient: hre.props.alice.address,
       zeroForOne: true,
       amountIn: tokenAmount.div(10),
-      sqrtPriceLimitX96: minPrice,
+      sqrtPriceLimitX96: BigNumber.from('79450223072165328185028130650'),
       balanceInDecrease: BigNumber.from('10000000000000000000'),
       balanceOutIncrease: BigNumber.from('10053126651581942488'),
       revertMessage: '',
@@ -185,24 +185,35 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: 'RangeErc20NotFound()'
     })
-    console.log('price check', (await hre.props.rangePool.poolState()).price.toString())
+
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
       zeroForOne: false,
       amountIn: tokenAmount,
-      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.add(2),
+      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.add(3),
       balanceInDecrease: BigNumber.from('0'),
       balanceOutIncrease: BigNumber.from('0'),
       revertMessage: '',
     })
-    console.log('price check', (await hre.props.rangePool.poolState()).price.toString())
+
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount,
+      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price,
+      balanceInDecrease: BigNumber.from('0'),
+      balanceOutIncrease: BigNumber.from('0'),
+      revertMessage: '',
+    })
+
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
       zeroForOne: true,
       amountIn: tokenAmount,
-      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.add(1),
+      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.sub(2),
       balanceInDecrease: BigNumber.from('0'),
       balanceOutIncrease: BigNumber.from('0'),
       revertMessage: '',
@@ -547,7 +558,7 @@ describe('RangePool Tests', function () {
       zeroForOne: false,
       amountIn: tokenAmount.mul(2),
       sqrtPriceLimitX96: maxPrice,
-      balanceInDecrease: BigNumber.from('84523612529148614719'),
+      balanceInDecrease: BigNumber.from('84523612529148614720'),
       balanceOutIncrease: BigNumber.from('77990416093329296312'),
       revertMessage: '',
     })
@@ -666,6 +677,93 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Increase: BigNumber.from('50000000000000000000'),
       balance1Increase: BigNumber.from('45512710081139321979'),
+      revertMessage: '',
+    })
+  })
+
+  it('pool - Should mint position inside the other', async function () {
+    const pool: PoolState = await hre.props.rangePool.poolState()
+
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lowerOld: '-887272',
+      lower: '500',
+      upper: '1000',
+      upperOld: '887272',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      fungible: true,
+      balance0Decrease: BigNumber.from('100000000000000000000'),
+      balance1Decrease: BigNumber.from('0'),
+      tokenAmount: BigNumber.from('4152939701311089823384'),
+      liquidityIncrease: BigNumber.from('4152939701311089823384'),
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount,
+      sqrtPriceLimitX96: BigNumber.from('82255474610179467046984074964'),
+      balanceInDecrease: BigNumber.from('53557189146645258776'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('50287324067551161127'), // token0 decrease in pool
+      revertMessage: '',
+    })
+
+    await validateMint({
+      signer: hre.props.bob,
+      recipient: hre.props.bob.address,
+      lowerOld: '500',
+      lower: '600',
+      upper: '800',
+      upperOld: '1000',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      fungible: true,
+      balance0Decrease: BigNumber.from('31002239349424966834'),
+      balance1Decrease: BigNumber.from('100000000000000000000'),
+      tokenAmount: BigNumber.from('12891478442546858467877'),
+      liquidityIncrease: BigNumber.from('12891478442546858467877'),
+      revertMessage: '',
+      collectRevertMessage: 'RangeErc20NotFound()'
+    })
+
+    await validateBurn({
+      signer: hre.props.bob,
+      lower: '600',
+      upper: '800',
+      tokenAmount: BigNumber.from('4901161634764542438934'),
+      liquidityAmount: BigNumber.from('4901161634764542438934'),
+      fungible: true,
+      balance0Increase: BigNumber.from('4481110589569978756'),
+      balance1Increase: BigNumber.from('14454151324565833083'),
+      revertMessage: '',
+    })
+
+    await validateBurn({
+      signer: hre.props.bob,
+      lower: '600',
+      upper: '800',
+      tokenAmount: BigNumber.from('7990316807782316028943'),
+      liquidityAmount: BigNumber.from('7990316807782316028943'),
+      fungible: true,
+      balance0Increase: BigNumber.from('19215617142486657242'),
+      balance1Increase: BigNumber.from('61981384395843878804'),
+      revertMessage: '',
+    })
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '500',
+      upper: '1000',
+      tokenAmount: BigNumber.from('4152939701311089823384'),
+      liquidityAmount: BigNumber.from('4152939701311089823384'),
+      fungible: true,
+      balance0Increase: BigNumber.from('49712675932448838872'),
+      balance1Increase: BigNumber.from('53557189146645258776'),
       revertMessage: '',
     })
   })
