@@ -13,11 +13,12 @@ contract RangePoolAdmin is IRangePoolAdmin {
     address public _owner;
     address private _feeTo;
 
-    mapping(uint16 => int24) public feeTierTickSpacing;
+    mapping(uint16 => int24)   public feeTiers;
     mapping(address => uint16) public protocolFees;
 
     error OwnerOnly();
     error FeeToOnly();
+    error FeeTierAlreadyEnabled();
     error TransferredToZeroAddress();
 
     event FeeTierEnabled(uint16 swapFee, int24 tickSpacing);
@@ -29,15 +30,16 @@ contract RangePoolAdmin is IRangePoolAdmin {
         _feeTo = msg.sender;
         emit OwnerTransfer(address(0), msg.sender);
 
-        feeTierTickSpacing[500] = 10;
+        feeTiers[500] = 10;
         emit FeeTierEnabled(500, 10);
 
-        feeTierTickSpacing[3000] = 60;
+        feeTiers[3000] = 60;
         emit FeeTierEnabled(3000, 60);
 
-        feeTierTickSpacing[10000] = 200;
+        feeTiers[10000] = 200;
         emit FeeTierEnabled(10000, 200);
     }
+
     /**
      * @dev Throws if called by any account other than the owner.
      */
@@ -111,6 +113,17 @@ contract RangePoolAdmin is IRangePoolAdmin {
         address oldFeeTo = _feeTo;
         _feeTo = newFeeTo;
         emit OwnerTransfer(oldFeeTo, newFeeTo);
+    }
+
+    function enableFeeTier(
+        uint16 swapFee,
+        int24 tickSpacing
+    ) external onlyOwner {
+        if (feeTiers[swapFee] != 0) {
+            revert FeeTierAlreadyEnabled();
+        }
+        feeTiers[swapFee] = tickSpacing;
+        emit FeeTierEnabled(swapFee, tickSpacing);
     }
 
     function setTopPools(

@@ -126,8 +126,6 @@ interface IRangePoolStructs {
         uint256 input;
         uint256 output;
         uint256 amountIn;
-        uint256 tickInput;
-        uint256 feeReturn;
     }
 
     struct PositionCache {
