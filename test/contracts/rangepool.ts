@@ -95,7 +95,7 @@ describe('RangePool Tests', function () {
       recipient: hre.props.alice.address,
       zeroForOne: true,
       amountIn: tokenAmount.div(10),
-      sqrtPriceLimitX96: minPrice,
+      sqrtPriceLimitX96: BigNumber.from('79450223072165328185028130650'),
       balanceInDecrease: BigNumber.from('10000000000000000000'),
       balanceOutIncrease: BigNumber.from('10053126651581942488'),
       revertMessage: '',
@@ -185,24 +185,24 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: 'RangeErc20NotFound()'
     })
-    console.log('price check', (await hre.props.rangePool.poolState()).price.toString())
+
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
       zeroForOne: false,
       amountIn: tokenAmount,
-      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.add(2),
+      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.add(3),
       balanceInDecrease: BigNumber.from('0'),
       balanceOutIncrease: BigNumber.from('0'),
       revertMessage: '',
     })
-    console.log('price check', (await hre.props.rangePool.poolState()).price.toString())
+
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
       zeroForOne: true,
       amountIn: tokenAmount,
-      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.add(1),
+      sqrtPriceLimitX96: (await hre.props.rangePool.poolState()).price.sub(2),
       balanceInDecrease: BigNumber.from('0'),
       balanceOutIncrease: BigNumber.from('0'),
       revertMessage: '',
@@ -547,7 +547,7 @@ describe('RangePool Tests', function () {
       zeroForOne: false,
       amountIn: tokenAmount.mul(2),
       sqrtPriceLimitX96: maxPrice,
-      balanceInDecrease: BigNumber.from('84523612529148614719'),
+      balanceInDecrease: BigNumber.from('84523612529148614720'),
       balanceOutIncrease: BigNumber.from('77990416093329296312'),
       revertMessage: '',
     })

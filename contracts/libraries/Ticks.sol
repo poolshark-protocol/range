@@ -144,7 +144,7 @@ library Ticks {
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache
-    ) internal pure returns (
+    ) internal view returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
     ) {
@@ -162,7 +162,7 @@ library Ticks {
             if (nextPrice < priceLimit) {
                 nextPrice = priceLimit;
             }
-            uint256 maxDx = DyDxMath.getDx(pool.liquidity, nextPrice, pool.price, false);
+            uint256 maxDx = DyDxMath.getDx(pool.liquidity, nextPrice, pool.price, true);
             if (cache.input <= maxDx) {
                 // We can swap within the current range.
                 uint256 liquidityPadded = uint256(pool.liquidity) << 96;
@@ -192,7 +192,7 @@ library Ticks {
             if (nextPrice > priceLimit) {
                 nextPrice = priceLimit;
             }
-            uint256 maxDy = DyDxMath.getDy(pool.liquidity, uint256(pool.price), nextPrice, false);
+            uint256 maxDy = DyDxMath.getDy(pool.liquidity, uint256(pool.price), nextPrice, true);
             if (cache.input <= maxDy) {
                 // We can swap within the current range.
                 // Calculate new price after swap: ΔP = Δy/L.
