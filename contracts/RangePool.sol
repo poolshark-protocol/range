@@ -9,6 +9,7 @@ import './utils/SafeTransfers.sol';
 import './RangePoolERC20.sol';
 import './utils/RangePoolErrors.sol';
 
+
 contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
     address internal immutable token0;
     address internal immutable token1;
@@ -232,7 +233,6 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
 
         PoolState memory pool = poolState;
         SwapCache memory cache;
-
         (pool, cache) = Ticks.swap(
             ticks,
             recipient,
