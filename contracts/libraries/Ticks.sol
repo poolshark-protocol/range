@@ -85,7 +85,7 @@ library Ticks {
             amountIn: amountIn
         });
         cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
-        while (pool.price != priceLimit && cache.cross) {
+        while (cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
                 (pool, cache) = _cross(
@@ -124,7 +124,7 @@ library Ticks {
             amountIn: amountIn
         });
         cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
-        while (pool.price != priceLimit && cache.cross) {
+        while (cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
                 (pool, cache) = _pass(

@@ -683,7 +683,7 @@ describe('RangePool Tests', function () {
 
   it('pool - Should mint position inside the other', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
-    console.log('price before', (await hre.props.rangePool.poolState()).price.toString())
+
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -702,8 +702,6 @@ describe('RangePool Tests', function () {
       collectRevertMessage: ''
     })
 
-    console.log('price before', (await hre.props.rangePool.poolState()).price.toString())
-
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -714,7 +712,7 @@ describe('RangePool Tests', function () {
       balanceOutIncrease: BigNumber.from('50287324067551161127'), // token0 decrease in pool
       revertMessage: '',
     })
-    console.log('price after', (await hre.props.rangePool.poolState()).price.toString())
+
     await validateMint({
       signer: hre.props.bob,
       recipient: hre.props.bob.address,
@@ -732,19 +730,6 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: 'RangeErc20NotFound()'
     })
-    console.log('tick after', (await hre.props.rangePool.poolState()).nearestTick.toString())
-
-    // await validateBurn({
-    //   signer: hre.props.bob,
-    //   lower: '600',
-    //   upper: '800',
-    //   tokenAmount: BigNumber.from('12891478442546858467877'),
-    //   liquidityAmount: BigNumber.from('12891478442546858467877'),
-    //   fungible: true,
-    //   balance0Increase: BigNumber.from('31002239349424966834'),
-    //   balance1Increase: BigNumber.from('100000000000000000000'),
-    //   revertMessage: '',
-    // })
 
     await validateBurn({
       signer: hre.props.bob,

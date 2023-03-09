@@ -8,7 +8,6 @@ import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
 import '../RangePoolERC20.sol';
-import 'hardhat/console.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -56,7 +55,6 @@ library Positions {
             params.amount1,
             params.amount0
         );
-        console.log('liquidity check 1', liquidityMinted);
         if (liquidityMinted == 0) revert NoLiquidityBeingAdded();
         (params.amount0, params.amount1) = DyDxMath.getAmountsForLiquidity(
             priceLower,
@@ -65,7 +63,6 @@ library Positions {
             liquidityMinted,
             true
         );
-        console.log('liquidity check 2', params.amount0, params.amount1);
         //TODO: handle partial mints due to incorrect reserve ratio
         if (liquidityMinted > uint128(type(int128).max)) revert LiquidityOverflow();
 
@@ -232,8 +229,6 @@ library Positions {
         uint128
     ) {
         if (params.fungible && params.totalSupply == 0){
-            console.log('early return');
-            console.log(position.amount0, position.amount1);
             return (position, 0, 0);
         } 
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
@@ -264,8 +259,6 @@ library Positions {
 
         position.amount0 += uint128(amount0Fees);
         position.amount1 += uint128(amount1Fees);
-        if (params.lower == 500 && params.upper == 1000)
-        console.log('position check on update', position.amount0, position.amount1);
 
         if (params.fungible) {
             uint128 feesBurned0; uint128 feesBurned1;
@@ -317,6 +310,5 @@ library Positions {
         }
         feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
         feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
-        console.log('fee growth check', feeGrowthInside0, feeGrowthInside1);
     }
 }
