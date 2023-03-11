@@ -13,11 +13,6 @@ import {
   PoolState,
 } from '../utils/contracts/rangepool'
 
-// TODO: ✔ pool - Should handle partial mint (479ms)
-// position before liquidity: BigNumber { _hex: '0x00', _isBigNumber: true }
-//     1) pool - Should handle partial range cross w/ unfilled amount
-/// ^this causes infinite tick loop
-
 alice: SignerWithAddress
 describe('RangePool Tests', function () {
   let tokenAmount: BigNumber

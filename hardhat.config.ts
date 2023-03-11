@@ -16,32 +16,32 @@ dotenv.config()
 // Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
-  solidity: {
-    compilers: [
-      {
-        version: '0.8.13',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
-    ],
-  },
-  networks: {
-    goerli: {
-      chainId: 5,
-      gasPrice: 3000000000,
-      url: process.env.GOERLI_URL || '',
-      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      timeout: 60000,
-      allowUnlimitedContractSize: true,
+    solidity: {
+        compilers: [
+            {
+                version: '0.8.13',
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200,
+                    },
+                },
+            },
+        ],
     },
-  },
-  etherscan: {
-    apiKey: process.env.ETHEREUM_API_KEY,
-  },
+    networks: {
+        goerli: {
+            chainId: 5,
+            gasPrice: 3000000000,
+            url: process.env.GOERLI_URL || '',
+            accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+            timeout: 60000,
+            allowUnlimitedContractSize: true,
+        },
+    },
+    etherscan: {
+        apiKey: process.env.ETHEREUM_API_KEY,
+    },
 }
 
 export default config
