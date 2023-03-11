@@ -1,14 +1,14 @@
 import { task } from 'hardhat/config'
 import { GetBeforeEach } from '../../test/utils/setup/beforeEachProps'
 import { DEPLOY_RANGEPOOLS } from '../constants/taskNames'
-import { DeployHedgePools } from '../deploy/utils/deployRangePools'
+import { DeployRangePools } from '../deploy/utils/deployRangePools'
 
-class DeployHedgePoolsTask {
-  public deployHedgePools: DeployHedgePools
+class DeployRangePoolsTask {
+  public deployHedgePools: DeployRangePools
   public getBeforeEach: GetBeforeEach
 
   constructor() {
-    this.deployHedgePools = new DeployHedgePools()
+    this.deployHedgePools = new DeployRangePools()
     this.getBeforeEach = new GetBeforeEach()
     hre.props = this.getBeforeEach.retrieveProps()
   }
@@ -17,7 +17,7 @@ class DeployHedgePoolsTask {
 task(DEPLOY_RANGEPOOLS)
   .setDescription('Deploys Hedge Pools')
   .setAction(async function ({ ethers }) {
-    const deployHedgePools: DeployHedgePoolsTask = new DeployHedgePoolsTask()
+    const deployHedgePools: DeployRangePoolsTask = new DeployRangePoolsTask()
 
     if (!deployHedgePools.deployHedgePools.canDeploy()) return
 

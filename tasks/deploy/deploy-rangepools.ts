@@ -27,5 +27,5 @@ task(DEPLOY_RANGEPOOLS)
 
     await deployRangePools.deployRangePools.postDeployment()
 
-    console.log('Cover pool deployment complete.\n')
+    console.log('Range pool deployment complete.\n')
   })
