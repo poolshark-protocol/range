@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.13;
 
-import './TickMath.sol';
 import '../interfaces/IRangePoolStructs.sol';
 import '../interfaces/IRangePoolFactory.sol';
 import '../interfaces/IRangePool.sol';
-import '../utils/RangePoolErrors.sol';
-import './PrecisionMath.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
 import './Positions.sol';
+import './PrecisionMath.sol';
+import './TickMath.sol';
 
 /// @notice Tick management library for ranged llibrary Tilibrary Ticks
 library Ticks {
@@ -46,18 +45,12 @@ library Ticks {
         ticks[TickMath.MIN_TICK] = IRangePoolStructs.Tick(
             TickMath.MIN_TICK,
             TickMath.MAX_TICK,
-            0,
-            0,
-            0,
-            0
+            0,0,0,0
         );
         ticks[TickMath.MAX_TICK] = IRangePoolStructs.Tick(
             TickMath.MIN_TICK,
             TickMath.MAX_TICK,
-            0,
-            0,
-            0,
-            0
+            0,0,0,0
         );
     }
 
@@ -97,7 +90,12 @@ library Ticks {
             }
         }
         (pool, cache) = FeeMath.calculate(pool, cache, zeroForOne);
-        emit Swap(recipient, zeroForOne, amountIn - cache.input, cache.output);
+        emit Swap(
+            recipient,
+            zeroForOne,
+            amountIn - cache.input,
+            cache.output /// @dev - subgraph will do math to compute fee amount
+        );
         return (pool, cache);
     }
 
@@ -144,7 +142,7 @@ library Ticks {
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache
-    ) internal view returns (
+    ) internal pure returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
     ) {
@@ -175,7 +173,7 @@ library Ticks {
                 /// @auditor - check tests to see if we need overflow handle
                 // if (!(nextTickPrice <= newPrice && newPrice < pool.price)) {
                 //     newPrice = uint160(PrecisionMath.divRoundingUp(liquidityPadded, liquidityPadded / pool.price + cache.input));
-                //  }23626289714699386012
+                //  }
                 cache.input = 0;
                 cache.output += DyDxMath.getDy(pool.liquidity, newPrice, uint256(pool.price), false);
                 cache.cross = false;

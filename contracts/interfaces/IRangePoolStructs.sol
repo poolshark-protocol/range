@@ -67,6 +67,7 @@ interface IRangePoolStructs {
     }
 
     struct CompoundParams {
+        address owner;
         int24 lower;
         int24 upper;
         bool fungible;
@@ -82,7 +83,9 @@ interface IRangePoolStructs {
     //TODO: should we have a recipient field here?
     struct AddParams {
         uint128 amount;
+        uint128 liquidity;
         uint256 tokenSupply;
+        IRangePoolERC20 token;
     }
 
     struct RemoveParams {
@@ -90,6 +93,7 @@ interface IRangePoolStructs {
         uint128 amount1;
         uint256 totalSupply;
         uint256 liquidityAmount;
+        IRangePoolERC20 token;
     }
 
     struct UpdateParams {

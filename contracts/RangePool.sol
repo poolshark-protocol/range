@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.13;
 
-import './interfaces/IRangePool.sol';
-import './base/RangePoolStorage.sol';
-import './libraries/Ticks.sol';
-import './libraries/Positions.sol';
-import './utils/SafeTransfers.sol';
 import './RangePoolERC20.sol';
+import './base/storage/RangePoolStorage.sol';
+import './interfaces/IRangePool.sol';
+import './libraries/Positions.sol';
+import './libraries/Ticks.sol';
 import './utils/RangePoolErrors.sol';
-
+import './utils/SafeTransfers.sol';
 
 contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
     address internal immutable token0;
@@ -105,7 +104,12 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                     position,
                     ticks,
                     pool,
-                    CompoundParams(params.lower, params.upper, params.fungible)
+                    CompoundParams(
+                        params.fungible ? address(this) : params.to, 
+                        params.lower,
+                        params.upper,
+                        params.fungible
+                    )
                 );
             }
         }
@@ -118,7 +122,9 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
             params, 
             AddParams(
                 uint128(liquidityMinted),
-                params.fungible ? positionToken.totalSupply() : 0
+                uint128(liquidityMinted),
+                params.fungible ? positionToken.totalSupply() : 0,
+                positionToken
             )
         );
         if (params.fungible) {
@@ -149,7 +155,6 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
             /// @dev - burn will revert if insufficient balance
             positionToken.burn(msg.sender, params.amount);
         }
-        // update position and get new params.lower and params.upper
         uint128 amount0;
         uint128 amount1;
         (
@@ -169,8 +174,6 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                     params.fungible ? (positionToken.totalSupply() + params.amount) : 0
                 )
         );
-        //TODO: fungible position only gets fraction of fees
-        //TODO: add PositionUpdated event
         (pool, position, amount0, amount1) = Positions.remove(
             position,
             ticks,
@@ -182,34 +185,35 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                 params.fungible ? positionToken.totalSupply() + params.amount : 0,
                 params.fungible && params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
                                                        / (positionToken.totalSupply() + params.amount)
-                                                     : params.amount
+                                                     : params.amount,
+                positionToken
             )
         );
         if (params.fungible) {
             position.amount0 -= amount0;
             position.amount1 -= amount1;
-            if (position.amount0 > 0 || position.amount1 > 0) {
-                (position, pool) = Positions.compound(
-                    position,
-                    ticks,
-                    pool,
-                    CompoundParams(params.lower, params.upper, params.fungible)
-                );
-            }
-            _transferOut(params.to, token0, amount0);
-            _transferOut(params.to, token1, amount1);
         } else if (params.collect) {
             amount0 = position.amount0;
             amount1 = position.amount1;
             // zero out balances
             position.amount0 = 0;
             position.amount1 = 0;
-            // transfer out balances
-            _transferOut(msg.sender, token0, amount0);
-            _transferOut(msg.sender, token1, amount1);
-            // emit collect event 
-            // emit Collect(msg.sender, amount0, amount1);
         }
+        if (position.amount0 > 0 || position.amount1 > 0) {
+            (position, pool) = Positions.compound(
+                position,
+                ticks,
+                pool,
+                CompoundParams(
+                    params.fungible ? address(this) : msg.sender,
+                    params.lower,
+                    params.upper,
+                    params.fungible
+                )
+            );
+        }
+        _transferOut(params.to, token0, amount0);
+        _transferOut(params.to, token1, amount1);
         poolState = pool;
         positions[params.fungible ? address(this) : msg.sender][
             params.lower
@@ -284,9 +288,11 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         return (pool, cache);
     }
 
-    function collectFees() public onlyOwner {
-        _transferOut(_owner.feeTo(), token0, poolState.protocolFees.token0);
-        _transferOut(_owner.feeTo(), token1, poolState.protocolFees.token1);
+    function collectFees() public onlyOwner returns (uint128 token0Fees, uint128 token1Fees) {
+        token0Fees = poolState.protocolFees.token0;
+        token1Fees = poolState.protocolFees.token1;
+        _transferOut(_owner.feeTo(), token0, token0Fees);
+        _transferOut(_owner.feeTo(), token1, token1Fees);
         poolState.protocolFees.token0 = 0;
         poolState.protocolFees.token1 = 0;
     }

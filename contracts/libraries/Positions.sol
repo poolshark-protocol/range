@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.13;
 
-import './TickMath.sol';
-import './Ticks.sol';
 import '../interfaces/IRangePoolStructs.sol';
-import './PrecisionMath.sol';
+import '../RangePoolERC20.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
-import '../RangePoolERC20.sol';
+import './PrecisionMath.sol';
+import './TickMath.sol';
+import './Ticks.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -28,18 +28,56 @@ library Positions {
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 
     event Mint(
+        address owner,
+        address indexed recipient,
+        int24 indexed lower,
+        int24 indexed upper,
+        uint128 liquidityMinted
+    );
+
+    event Burn(
+        address owner,
+        address indexed recipient,
+        int24 indexed lower,
+        int24 indexed upper,
+        uint128 liquidityBurned,
+        uint128 amount0,
+        uint128 amount1,
+        bool collect
+    );
+
+    event Compound(
         address indexed owner,
         int24 indexed lower,
         int24 indexed upper,
-        uint128 liquidityMinted,
-        bool fungible
+        uint128 liquidityCompounded,
+        uint128 positionAmount0,
+        uint128 positionAmount1
+    );
+
+    event MintFungible(
+        address indexed token,
+        address indexed recipient,
+        int24 lower,
+        int24 upper,
+        uint128 tokenMinted,
+        uint128 liquidityMinted
+    );
+
+    event BurnFungible(
+        address indexed recipient,
+        address indexed token,
+        uint128 tokenBurned,
+        uint128 liquidityBurned,
+        uint128 amount0,
+        uint128 amount1
     );
 
     function validate(
         IRangePoolStructs.MintParams memory params,
         IRangePoolStructs.PoolState memory state,
         int24 tickSpacing
-    ) external view returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
+    ) external pure returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
         if (params.lower % int24(tickSpacing) != 0) revert InvalidLowerTick();
         if (params.lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
         if (params.upper % int24(tickSpacing) != 0) revert InvalidUpperTick();
@@ -100,9 +138,7 @@ library Positions {
         if (cache.priceLower < state.price && state.price < cache.priceUpper) {
             state.liquidity += addParams.amount;
         }
-        
         position.liquidity += uint128(addParams.amount);
-        emit Mint(params.to, params.lower, params.upper, addParams.amount, params.fungible);
         
         // modify liquidity minted to account for fees accrued
         if (params.fungible) {
@@ -121,6 +157,22 @@ library Positions {
                          (uint256(position.liquidity - addParams.amount) + liquidityOnPosition));
                 } /// @dev - if there are fees on the position we mint less positionToken
             }
+            emit MintFungible(
+                address(addParams.token),
+                params.to, 
+                params.lower,
+                params.upper,
+                addParams.amount,
+                addParams.liquidity
+            );
+        } else {
+            emit Mint(
+                params.fungible ? address(this) : params.to,
+                params.to, 
+                params.lower,
+                params.upper,
+                addParams.amount
+            );
         }
         return (state, position, addParams.amount);
     }
@@ -142,37 +194,68 @@ library Positions {
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
         });
 
-        if (params.amount == 0) return (state, position, removeParams.amount0, removeParams.amount1);
+        if (params.amount == 0) {
+            emit Burn(
+                params.fungible ? address(this) : msg.sender,
+                msg.sender,
+                params.lower,
+                params.upper,
+                params.amount,
+                removeParams.amount0,
+                removeParams.amount1,
+                params.collect
+            );
+            return (state, position, removeParams.amount0, removeParams.amount1);
+        } 
         if (params.amount > position.liquidity) revert NotEnoughPositionLiquidity();
+        {
+            uint128 amount0Removed; uint128 amount1Removed;
+            (amount0Removed, amount1Removed) = DyDxMath.getAmountsForLiquidity(
+                cache.priceLower,
+                cache.priceUpper,
+                state.price,
+                removeParams.liquidityAmount,
+                true
+            );
+            if (params.fungible && params.amount > 0) {
+                amount0Removed = uint128(uint256(amount0Removed) * uint256(params.amount) / removeParams.totalSupply);
+                amount1Removed = uint128(uint256(amount1Removed) * uint256(params.amount) / removeParams.totalSupply);
+                params.collect = true;
+            }
+            removeParams.amount0 += amount0Removed;
+            removeParams.amount1 += amount1Removed;
 
-        uint128 amount0Removed;
-        uint128 amount1Removed;
-        (amount0Removed, amount1Removed) = DyDxMath.getAmountsForLiquidity(
-            cache.priceLower,
-            cache.priceUpper,
-            state.price,
-            removeParams.liquidityAmount,
-            true
-        );
-
-        if (params.fungible && params.amount > 0) {
-            amount0Removed = uint128(uint256(amount0Removed) * uint256(params.amount) / removeParams.totalSupply);
-            amount1Removed = uint128(uint256(amount1Removed) * uint256(params.amount) / removeParams.totalSupply);
+            position.amount0 += amount0Removed;
+            position.amount1 += amount1Removed;
+            position.liquidity -= uint128(removeParams.liquidityAmount);
         }
-
-        removeParams.amount0 += amount0Removed;
-        removeParams.amount1 += amount1Removed;
-
-        position.amount0 += amount0Removed;
-        position.amount1 += amount1Removed;
-        position.liquidity -= uint128(removeParams.liquidityAmount);
-
         if (position.liquidity == 0) {
             position.feeGrowthInside0Last = 0;
             position.feeGrowthInside1Last = 0;
         }
         state = Ticks.remove(ticks, state, params.lower, params.upper, uint128(removeParams.liquidityAmount));
 
+        if (params.fungible) {
+            emit BurnFungible(
+                params.to,
+                address(removeParams.token),
+                params.amount,
+                uint128(removeParams.liquidityAmount),
+                removeParams.amount0,
+                removeParams.amount1
+            );
+        } else {
+            emit Burn(
+                params.fungible ? address(this) : msg.sender,
+                msg.sender,
+                params.lower,
+                params.upper,
+                uint128(removeParams.liquidityAmount),
+                removeParams.amount0,
+                removeParams.amount1,
+                params.collect
+            );
+        }
         return (state, position, removeParams.amount0, removeParams.amount1);
     }
 
@@ -186,14 +269,14 @@ library Positions {
         uint160 priceUpper = TickMath.getSqrtRatioAtTick(params.upper);
 
         // price tells you the ratio so you need to swap into the correct ratio and add liquidity
-        uint256 liquidityMinted = DyDxMath.getLiquidityForAmounts(
+        uint256 liquidityCompounded = DyDxMath.getLiquidityForAmounts(
             priceLower,
             priceUpper,
             state.price,
             position.amount1,
             position.amount0
         );
-        if (liquidityMinted > 0) {
+        if (liquidityCompounded > 0) {
             state = Ticks.insert(
                 ticks,
                 state,
@@ -201,20 +284,28 @@ library Positions {
                 params.lower,
                 887272,
                 params.upper,
-                uint128(liquidityMinted)
+                uint128(liquidityCompounded)
             );
             uint256 amount0; uint256 amount1;
             (amount0, amount1) = DyDxMath.getAmountsForLiquidity(
                 priceLower,
                 priceUpper,
                 state.price,
-                liquidityMinted,
+                liquidityCompounded,
                 true
             );
             position.amount0 -= uint128(amount0);
             position.amount1 -= uint128(amount1);
-            position.liquidity += uint128(liquidityMinted);
+            position.liquidity += uint128(liquidityCompounded);
         }
+        emit Compound(
+            params.owner,
+            params.lower,
+            params.upper,
+            uint128(liquidityCompounded),
+            position.amount0,
+            position.amount1
+        );
         return (position, state);
     }
 

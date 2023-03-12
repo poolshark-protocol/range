@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.13;
 
-import '../interfaces/IRangePoolStructs.sol';
-import '../interfaces/IRangePoolFactory.sol';
-import '../interfaces/IRangePoolERC20.sol';
-import '../interfaces/IRangePool.sol';
-import '../interfaces/IRangePoolAdmin.sol';
-import '../utils/RangePoolErrors.sol';
+import '../../interfaces/IRangePoolStructs.sol';
+import '../../interfaces/IRangePoolFactory.sol';
+import '../../interfaces/IRangePoolERC20.sol';
+import '../../interfaces/IRangePool.sol';
+import '../../interfaces/IRangePoolAdmin.sol';
+import '../../utils/RangePoolErrors.sol';
 
 abstract contract RangePoolStorage is IRangePoolStructs, IRangePool {
     PoolState public poolState;

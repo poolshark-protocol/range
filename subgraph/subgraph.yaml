@@ -1,0 +1,101 @@
+specVersion: 0.0.4
+description: Poolshark is a Directional Liquidity AMM allowing LPs to capture directional strength.
+repository: https://github.com/poolsharks-protocol/poolshark-range-pool
+schema:
+    file: ./schema.graphql
+dataSources:
+    - kind: ethereum/contract
+      name: RangePoolFactory
+      network: goerli
+      source:
+          address: '0xB01BF7d3C2E98179646856cfa8Eb006b4fb7dfBD'
+          abi: RangePoolFactory
+          startBlock: 8634500
+      mapping:
+          kind: ethereum/events
+          apiVersion: 0.0.6
+          language: wasm/assemblyscript
+          file: ./src/mappings/rangepoolfactory.ts
+          entities:
+              - Token
+              - RangePool
+          abis:
+              - name: RangePool
+                file: ./abis/RangePool.json
+              - name: RangePoolFactory
+                file: ./abis/RangePoolFactory.json
+              - name: ERC20
+                file: ./abis/ERC20.json
+              - name: ERC20SymbolBytes
+                file: ./abis/ERC20SymbolBytes.json
+              - name: ERC20NameBytes
+                file: ./abis/ERC20NameBytes.json
+          eventHandlers:
+              - event: RangePoolCreated(indexed address,indexed address,indexed uint24,address,uint160)
+                handler: handleRangePoolCreated
+    - kind: ethereum/contract
+      name: RangePoolAdmin
+      network: goerli
+      source:
+          address: '0x64E88cD83b9E5142Dd8188C264b4f196434d2c5e'
+          abi: RangePoolAdmin
+          startBlock: 8634500
+      mapping:
+          kind: ethereum/events
+          apiVersion: 0.0.6
+          language: wasm/assemblyscript
+          file: ./src/mappings/rangepoolfactory.ts
+          entities:
+              - RangePool
+              - RangePoolFactory
+          abis:
+              - name: RangePoolAdmin
+                file: ./abis/RangePoolAdmin.json
+          eventHandlers:
+              - event: FeeTierEnabled(uint16,int24)
+                handler: handleFeeTierEnabled
+              - event: FeeToTransfer(indexed address,indexed address)
+                handler: handleFeeToTransfer
+              - event: OwnerTransfer(indexed address,indexed address)
+                handler: handleOwnerTransfer
+              - event: ProtocolFeeCollected(indexed address,uint128,uint128)
+                handler: handleProtocolFeeCollected
+              - event: ProtocolFeeUpdated(indexed address,uint16)
+                handler: handleProtocolFeeUpdated
+templates:
+    - kind: ethereum/contract
+      name: RangePoolTemplate
+      network: goerli
+      source:
+          abi: RangePool
+      mapping:
+          kind: ethereum/events
+          apiVersion: 0.0.6
+          language: wasm/assemblyscript
+          file: ./src/mappings/rangepool.ts
+          entities:
+              - Token
+              - RangePool
+              - Position
+          abis:
+              - name: RangePool
+                file: ./abis/RangePool.json
+              - name: RangePoolFactory
+                file: ./abis/RangePoolFactory.json
+              - name: ERC20
+                file: ./abis/ERC20.json
+              - name: ERC20SymbolBytes
+                file: ./abis/ERC20SymbolBytes.json
+              - name: ERC20NameBytes
+                file: ./abis/ERC20NameBytes.json
+          eventHandlers:
+              - event: Mint(address,indexed address,indexed int24,indexed int24,uint128)
+                handler: handleMint
+              - event: MintFungible(indexed address,indexed address,int24,int24,uint128,uint128)
+                handler: handleMintFungible
+              - event: Burn(address,indexed address,indexed int24,indexed int24,uint128,uint128,uint128,bool)
+                handler: handleBurn
+              - event: BurnFungible(indexed address,indexed address,uint128,uint128,uint128,uint128)
+                handler: handleBurnFungible
+              - event: Compound(indexed address,indexed int24,indexed int24,uint128,uint128,uint128)
+                handler: handleCompound

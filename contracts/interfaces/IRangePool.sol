@@ -26,7 +26,12 @@ interface IRangePool is IRangePoolStructs {
         SwapCache memory
     );
 
-    function collectFees() external;
+    function collectFees() external returns (
+        uint128 token0Fees,
+        uint128 token1Fees
+    );
 
-    function owner() external view returns (IRangePoolAdmin);
+    function owner() external view returns (
+        IRangePoolAdmin
+    );
 }

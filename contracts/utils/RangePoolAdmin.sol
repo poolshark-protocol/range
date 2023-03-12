@@ -5,11 +5,12 @@ pragma solidity ^0.8.0;
 
 import '../interfaces/IRangePool.sol';
 import '../interfaces/IRangePoolAdmin.sol';
+import '../base/events/RangePoolAdminEvents.sol';
 
 /**
  * @dev Defines the actions which can be executed by the factory admin.
  */
-contract RangePoolAdmin is IRangePoolAdmin {
+contract RangePoolAdmin is IRangePoolAdmin, RangePoolAdminEvents {
     address public _owner;
     address private _feeTo;
 
@@ -20,10 +21,6 @@ contract RangePoolAdmin is IRangePoolAdmin {
     error FeeToOnly();
     error FeeTierAlreadyEnabled();
     error TransferredToZeroAddress();
-
-    event FeeTierEnabled(uint16 swapFee, int24 tickSpacing);
-    event OwnerTransfer(address indexed previousOwner, address indexed newOwner);
-    event FeeToTransfer(address indexed previousFeeTo, address indexed newFeeTo);
     
     constructor() {
         _owner = msg.sender;
@@ -133,9 +130,11 @@ contract RangePoolAdmin is IRangePoolAdmin {
     ) external onlyOwner {
         for (uint i; i < removePools.length; i++) {
             protocolFees[removePools[i]] = 0;
+            emit ProtocolFeeUpdated(removePools[i], 0);
         }
         for (uint i; i < addPools.length; i++) {
             protocolFees[addPools[i]] = protocolFee;
+            emit ProtocolFeeUpdated(addPools[i], protocolFee);
         }
     }
 
@@ -143,7 +142,9 @@ contract RangePoolAdmin is IRangePoolAdmin {
         address[] calldata collectPools
     ) external onlyFeeTo {
         for (uint i; i < collectPools.length; i++) {
-            IRangePool(collectPools[i]).collectFees();
+            uint128 token0Fees; uint128 token1Fees;
+            (token0Fees, token1Fees) = IRangePool(collectPools[i]).collectFees();
+            emit ProtocolFeeCollected(collectPools[i], token0Fees, token1Fees);
         }
     }
 }

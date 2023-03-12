@@ -1,0 +1,23 @@
+{
+    "network_name": "goerli",
+    "start_block": 8634500,
+    "graft_enabled": false,
+    "graft_id": "",
+    "graft_block": 0,
+    "should_backfill": false,
+    "factory_address": "0xB01BF7d3C2E98179646856cfa8Eb006b4fb7dfBD",
+    "manager_address": "0x64E88cD83b9E5142Dd8188C264b4f196434d2c5e",
+    "weth_address": "0x45742D32B5b4FCF7F5C5934b7a3718b230fBeBee",
+    "stable_pool_address": "0xe0e58122264262a2986828e412Bbd92f28B6D643",
+    "whitelist_tokens": [
+      { "address": "0x45742D32B5b4FCF7F5C5934b7a3718b230fBeBee", "blurb": "WETH" },
+      { "address": "0xcc49bB7bCD60D0D84a5bD3790b46b60F57301394", "blurb": "DAI" }
+    ],
+    "stablecoins": [
+      { "address": "0x6b175474e89094c44da98b954eedeac495271d0f", "blurb": "DAI" }
+    ],
+    "stableIsToken0": false,
+    "min_eth": 0,
+    "error_pool": "0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248"
+  }
+  
