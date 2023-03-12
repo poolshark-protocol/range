@@ -31,7 +31,10 @@ library Ticks {
         address indexed recipient,
         bool zeroForOne,
         uint256 amountIn,
-        uint256 amountOut
+        uint256 amountOut,
+        uint160 price,
+        uint128 liquidity,
+        int24 nearestTick
     );
 
     uint256 internal constant Q96 = 0x1000000000000000000000000;
@@ -94,7 +97,10 @@ library Ticks {
             recipient,
             zeroForOne,
             amountIn - cache.input,
-            cache.output /// @dev - subgraph will do math to compute fee amount
+            cache.output, /// @dev - subgraph will do math to compute fee amount
+            pool.price,
+            pool.liquidity,
+            pool.nearestTick
         );
         return (pool, cache);
     }

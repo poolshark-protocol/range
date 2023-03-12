@@ -52,6 +52,9 @@ abstract contract RangePoolEvents {
         address indexed recipient,
         bool zeroForOne,
         uint256 amountIn,
-        uint256 amountOut
+        uint256 amountOut,
+        uint160 price,
+        uint128 liquidity,
+        int24 nearestTick
     );
 }

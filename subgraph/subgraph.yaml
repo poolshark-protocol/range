@@ -89,6 +89,8 @@ templates:
               - name: ERC20NameBytes
                 file: ./abis/ERC20NameBytes.json
           eventHandlers:
+              - event: Swap(indexed address,bool,uint256,uint256,uint160,uint128,int24)
+                handler: handleSwap
               - event: Mint(address,indexed address,indexed int24,indexed int24,uint128)
                 handler: handleMint
               - event: MintFungible(indexed address,indexed address,int24,int24,uint128,uint128)

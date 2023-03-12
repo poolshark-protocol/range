@@ -16,7 +16,7 @@ contract RangePoolERC20 is IRangePoolERC20, ERC20Permit {
         _;
     }
 
-    constructor() ERC20('Poolshark Range LP', 'RANGE') ERC20Permit('Poolshark Range LP') {
+    constructor() ERC20('Poolshark Range LP', 'PSHARK-RANGE-LP') ERC20Permit('Poolshark Range LP') {
         owner = msg.sender;
         _decimals = 18;
     }
