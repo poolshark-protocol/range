@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPLv3
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
 
 abstract contract RangePoolAdminEvents {
     event FeeTierEnabled(uint16 swapFee, int24 tickSpacing);

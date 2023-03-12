@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPLv3
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
 
 import '../interfaces/IRangePoolStructs.sol';
 import '../RangePoolERC20.sol';

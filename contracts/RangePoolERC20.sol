@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPLv3
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol';
 import './interfaces/IRangePoolERC20.sol';
 
 contract RangePoolERC20 is IRangePoolERC20, ERC20Permit {
-    address owner;
-    uint8 _decimals;
+    address immutable owner;
+    uint8 immutable _decimals;
 
     error OnlyOwner();
 
