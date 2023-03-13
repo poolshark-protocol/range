@@ -1,0 +1,44 @@
+{
+    "name": "poolshark-range-subgraph",
+    "version": "0.0.1",
+    "repository": "https://github.com/poolsharks-protocol/range/subgraph",
+    "license": "MIT",
+    "prettier": {
+        "trailingComma": "es5",
+        "tabWidth": 4,
+        "semi": false,
+        "singleQuote": true
+    },
+    "scripts": {
+        "studio-auth": "graph auth  --studio",
+        "auth": "graph auth --product hosted-service ",
+        "create": "graph create example --node https://api.thegraph.com/deploy/",
+        "create-local": "graph create example --node http://127.0.0.1:3001",
+        "codegen": "graph codegen",
+        "build": "graph build",
+        "deploy": "graph deploy --product hosted-service alphak3y/poolshark-range",
+        "deploy-studio": "graph deploy --studio poolsharks-exchange",
+        "deploy-local": "graph deploy example --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
+        "test": "graph codegen; graph test -v 0.2.0",
+        "prepare-const": "mustache src/configs/goerli.json src/constants/constants.template.ts > src/constants/constants.ts",
+        "prepare-yaml": "mustache src/configs/$NETWORK.json subgraph.template.yaml  subgraph.yaml"
+    },
+    "devDependencies": {
+        "@graphprotocol/graph-cli": "0.25.1",
+        "@graphprotocol/graph-ts": "0.24.1",
+        "eslint": "^7.32.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-config-standard": "^16.0.3",
+        "eslint-plugin-prettier": "^3.4.1",
+        "libpq": "^1.8.9",
+        "matchstick-as": "0.2.0"
+    },
+    "dependencies": {
+        "assemblyscript": "^0.20.13",
+        "assemblyscript-json": "^1.1.0",
+        "json-as": "^0.2.6",
+        "node-gyp": "^9.1.0",
+        "source-map-support": "^0.5.21",
+        "mustache": "^4.2.0"
+    }
+}

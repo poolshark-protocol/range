@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
 
 import './IRangePoolStructs.sol';
 import './IRangePoolAdmin.sol';
@@ -26,7 +26,12 @@ interface IRangePool is IRangePoolStructs {
         SwapCache memory
     );
 
-    function collectFees() external;
+    function collectFees() external returns (
+        uint128 token0Fees,
+        uint128 token1Fees
+    );
 
-    function owner() external view returns (IRangePoolAdmin);
+    function owner() external view returns (
+        IRangePoolAdmin
+    );
 }

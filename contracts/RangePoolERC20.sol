@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPLv3
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol';
 import './interfaces/IRangePoolERC20.sol';
 
 contract RangePoolERC20 is IRangePoolERC20, ERC20Permit {
-    address owner;
-    uint8 _decimals;
+    address immutable owner;
+    uint8 immutable _decimals;
 
     error OnlyOwner();
 
@@ -16,7 +16,7 @@ contract RangePoolERC20 is IRangePoolERC20, ERC20Permit {
         _;
     }
 
-    constructor() ERC20('Poolshark Range LP', 'RANGE') ERC20Permit('Poolshark Range LP') {
+    constructor() ERC20('Poolshark Range LP', 'PSHARK-RANGE-LP') ERC20Permit('Poolshark Range LP') {
         owner = msg.sender;
         _decimals = 18;
     }

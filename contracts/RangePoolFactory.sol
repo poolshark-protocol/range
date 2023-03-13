@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPLv3
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
 
 import './RangePool.sol';
 import './interfaces/IRangePoolFactory.sol';
-import './base/RangePoolFactoryStorage.sol';
-import './base/RangePoolFactoryEvents.sol';
+import './base/storage/RangePoolFactoryStorage.sol';
+import './base/events/RangePoolFactoryEvents.sol';
 
 contract RangePoolFactory is
     IRangePoolFactory,
@@ -18,6 +18,7 @@ contract RangePoolFactory is
 
     constructor(address owner_) {
         _owner = IRangePoolAdmin(owner_);
+        //TODO: can call initialize to ensure valid admin
     }
 
     function createRangePool(
@@ -53,7 +54,7 @@ contract RangePoolFactory is
         rangePools[key] = pool;
 
         // emit event for indexers
-        emit RangePoolCreated(token0, token1, swapFee, pool);
+        emit RangePoolCreated(token0, token1, swapFee, pool, startPrice);
     }
 
     function getRangePool(

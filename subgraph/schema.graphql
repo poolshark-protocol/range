@@ -1,0 +1,193 @@
+type RangePoolFactory @entity {
+    id: ID!
+    owner: RangePoolManager!
+    poolCount: BigInt!
+    txnCount: BigInt!
+    volumeUsdTotal: BigDecimal!
+    volumeEthTotal: BigDecimal!
+    feesUsdTotal: BigDecimal!
+    feesEthTotal: BigDecimal!
+    totalValueLockedUsd: BigDecimal!
+    totalValueLockedEth: BigDecimal!
+}
+
+type RangePoolManager @entity {
+    id: ID!
+    owner: Bytes!
+    feeTo: Bytes!
+    feeTiers: [FeeTier!]!
+}
+
+type BasePrice @entity {
+    id: ID!
+    ethUsd: BigDecimal!
+}
+
+type FeeTier @entity {
+    # fee amount
+    id: ID!
+    tickSpacing: BigInt!
+
+    # creation stats
+    createdAtTimestamp: BigInt!
+    createdAtBlockNumber: BigInt!
+}
+
+type Token @entity {
+  # token address
+  id: ID!
+
+  # mirrored from the smart contract
+  symbol: String!
+  name: String!
+  decimals: BigInt!
+
+  # price
+  ethPrice: BigDecimal!
+  usdPrice: BigDecimal!
+  
+  rangePools: [RangePool!]!
+
+  # token specific volume
+  volume: BigDecimal!
+  volumeUsd: BigDecimal!
+  txnCount: BigInt!
+
+  feesUsdTotal: BigDecimal!
+  feesEthTotal: BigDecimal!
+
+  # liquidity across all pairs
+  totalValueLocked: BigDecimal!
+  totalValueLockedEth: BigDecimal!
+  totalValueLockedUsd: BigDecimal!
+
+  # for base price tracking
+  whitelistPools: [RangePool!]!
+}
+
+type RangePool @entity {
+  # tknA < tknB + swapFee
+  id: ID!
+
+  token0:    Token!
+  token1:    Token!
+  feeTier:   FeeTier!
+  factory:   RangePoolFactory!
+  price:     BigInt!
+  liquidity: BigInt!
+  liquidityGlobal: BigInt!
+  nearestTick: BigInt!
+  feeGrowthGlobal0: BigInt
+  feeGrowthGlobal1: BigInt
+
+  price0: BigDecimal!
+  price1: BigDecimal!
+  volumeToken0: BigDecimal!
+  volumeToken1: BigDecimal!
+  volumeUsd: BigDecimal!
+  volumeEth: BigDecimal!
+  feesUsd: BigDecimal!
+  feesEth: BigDecimal!
+  txnCount: BigInt!
+
+  totalValueLocked0: BigDecimal!
+  totalValueLocked1: BigDecimal!
+  totalValueLockedUsd: BigDecimal!
+  totalValueLockedEth: BigDecimal!
+
+  collects: [PositionCollect!]! @derivedFrom(field: "pool")
+  swaps: [Swap!]! @derivedFrom(field: "pool")
+  ticks: [Tick!]! @derivedFrom(field: "pool")
+
+  # creation stats
+  createdAtTimestamp: BigInt!
+  createdAtBlockNumber: BigInt!
+  updatedAtTimestamp: BigInt!
+  updatedAtBlockNumber: BigInt!
+}
+
+type Tick @entity {
+    # pool address + tick index
+    id: ID!
+    index: BigInt!
+    pool: RangePool!
+    price0: BigDecimal!
+    price1: BigDecimal! 
+    liquidityDelta: BigInt!
+    liquidityDeltaMinus: BigInt!
+    feeGrowthOutside0: BigInt!
+    feeGrowthOutside1: BigInt!
+    secondsGrowthOutside: BigInt!
+}
+
+type Position @entity {
+    id: ID!
+    owner: Bytes!
+    lower: BigInt!
+    upper: BigInt!
+    pool: RangePool!
+    liquidity: BigInt!
+    amount0: BigDecimal!
+    amount1: BigDecimal!
+    # creation stats
+    createdAtTimestamp: BigInt!
+    createdAtBlockNumber: BigInt!
+    updatedAtTimestamp: BigInt!
+    updatedAtBlockNumber: BigInt!
+}
+
+type PositionToken @entity {
+    # token address
+    id: ID!
+    position: Position!
+    totalSupply: BigInt!
+    fractions: [PositionFraction!]!
+}
+
+type PositionFraction @entity {
+    # token address + owner
+    id: ID!
+    amount: BigInt!
+    token: PositionToken!
+
+    # creation stats
+    updatedAtTimestamp: BigInt!
+    updatedAtBlockNumber: BigInt!
+}
+# TODO: create collect entites
+type PositionCollect @entity {
+    # position id + user
+    id: ID!
+    recipient: Bytes!
+    pool: RangePool!
+    position: Position!
+    token: PositionFraction
+}
+
+type Swap @entity {
+    # txn hash + '-' + indexed count
+    id: ID!
+    transaction: Transaction!
+    recipient: Bytes!
+    timestamp: BigInt!
+    pool: RangePool!
+    zeroForOne: Boolean!
+    amount0: BigDecimal!
+    amount1: BigDecimal!
+    amountUsd: BigDecimal!
+    priceAfter: BigInt!
+    tickAfter: BigInt!
+    txnIndex: BigInt
+}
+
+type Transaction @entity {
+    # txn hash
+    id: ID!
+    sender: Bytes!
+    blockNumber: BigInt!
+    timestamp: BigInt!
+    gasLimit: BigInt!
+    gasPrice: BigInt!
+    swaps: [Swap!]! @derivedFrom(field: "transaction")
+}
+
