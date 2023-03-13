@@ -144,12 +144,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
         "indexed": true,
         "internalType": "address",
         "name": "recipient",
@@ -171,6 +165,18 @@
         "indexed": false,
         "internalType": "uint128",
         "name": "liquidityMinted",
+        "type": "uint128"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint128",
+        "name": "amount0",
+        "type": "uint128"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint128",
+        "name": "amount1",
         "type": "uint128"
       }
     ],
@@ -214,6 +220,18 @@
         "indexed": false,
         "internalType": "uint128",
         "name": "liquidityMinted",
+        "type": "uint128"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint128",
+        "name": "amount0",
+        "type": "uint128"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint128",
+        "name": "amount1",
         "type": "uint128"
       }
     ],

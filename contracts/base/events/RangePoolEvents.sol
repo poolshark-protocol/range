@@ -3,11 +3,12 @@ pragma solidity 0.8.13;
 
 abstract contract RangePoolEvents {
     event Mint(
-        address owner,
         address indexed recipient,
         int24 indexed lower,
         int24 indexed upper,
-        uint128 liquidityMinted
+        uint128 liquidityMinted,
+        uint128 amount0,
+        uint128 amount1
     );
 
     event MintFungible(
@@ -16,7 +17,9 @@ abstract contract RangePoolEvents {
         int24 lower,
         int24 upper,
         uint128 tokenMinted,
-        uint128 liquidityMinted
+        uint128 liquidityMinted,
+        uint128 amount0,
+        uint128 amount1
     );
 
     event Burn(

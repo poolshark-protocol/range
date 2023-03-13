@@ -13,6 +13,7 @@ import '../base/events/RangePoolAdminEvents.sol';
 contract RangePoolAdmin is IRangePoolAdmin, RangePoolAdminEvents {
     address public _owner;
     address private _feeTo;
+    address private _factory;
 
     mapping(uint16 => int24)   public feeTiers;
     mapping(address => uint16) public protocolFees;
@@ -62,6 +63,10 @@ contract RangePoolAdmin is IRangePoolAdmin, RangePoolAdminEvents {
      */
     function feeTo() public view virtual returns (address) {
         return _feeTo;
+    }
+
+    function factory() public view virtual returns (address) {
+        return _factory;
     }
 
     /**
@@ -121,6 +126,13 @@ contract RangePoolAdmin is IRangePoolAdmin, RangePoolAdminEvents {
         }
         feeTiers[swapFee] = tickSpacing;
         emit FeeTierEnabled(swapFee, tickSpacing);
+    }
+
+    function setFactory(
+        address factory_
+    ) external onlyOwner {
+        emit FactoryChanged(_factory, factory_);
+        _factory = factory_;
     }
 
     function setTopPools(

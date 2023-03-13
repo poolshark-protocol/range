@@ -2,7 +2,7 @@ import { log, BigInt, BigDecimal, Address, Bytes } from '@graphprotocol/graph-ts
 import { ERC20 } from '../../../generated/RangePoolFactory/ERC20'
 import { ERC20SymbolBytes } from '../../../generated/RangePoolFactory/ERC20SymbolBytes'
 import { ERC20NameBytes } from '../../../generated/RangePoolFactory/ERC20NameBytes'
-import { RangePoolFactory } from '../../../generated/schema'
+import { RangePoolFactory } from '../../../generated/RangePoolFactory/RangePoolFactory'
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export let BIGINT_ZERO = BigInt.fromI32(0)
@@ -16,11 +16,8 @@ export function fetchFactoryOwner(factoryId: string): Bytes {
     let factoryAddress = Address.fromString(factoryId)
     let contract = RangePoolFactory.bind(factoryAddress)
     let owner = ZERO_ADDRESS
-    let ownerResult = contract.try_owner()
-    if (!ownerResult.reverted) {
-        owner = ownerResult.value
-    }
-    return Bytes.fromHexString(owner)
+    let ownerResult = contract.owner()
+    return Bytes.fromHexString(owner) as Bytes
 }
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {

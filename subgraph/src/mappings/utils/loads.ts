@@ -1,10 +1,11 @@
-import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
-import { RangePool, Position, Tick, Token, FeeTier, RangePoolManager, RangePoolFactory } from '../../../generated/schema'
+import { Address, BigDecimal, BigInt, ethereum, log } from '@graphprotocol/graph-ts'
+import { RangePool, Position, Tick, Token, FeeTier, RangePoolManager, RangePoolFactory, BasePrice, Transaction, Swap, PositionToken, PositionFraction } from '../../../generated/schema'
 import { ONE_BD } from '../../constants/constants'
 import {
     fetchTokenSymbol,
     fetchTokenName,
     fetchTokenDecimals,
+    BIGINT_ZERO,
 } from './helpers'
 import { bigDecimalExponated, safeDiv } from './math'
 
@@ -54,6 +55,75 @@ export function safeLoadManager(address: string): LoadManagerRet {
     }
 }
 
+class LoadBasePriceRet {
+    entity: BasePrice
+    exists: boolean
+}
+export function safeLoadBasePrice(name: string): LoadBasePriceRet {
+    let exists = true
+
+    let basePriceEntity = BasePrice.load(name)
+
+    if (!basePriceEntity) {
+        basePriceEntity = new BasePrice(name)
+        exists = false
+    }
+
+    return {
+        entity: basePriceEntity,
+        exists: exists,
+    }
+}
+
+class LoadTransactionRet {
+    entity: Transaction
+    exists: boolean
+}
+export function safeLoadTransaction(event: ethereum.Event): LoadTransactionRet {
+    let exists = true
+
+    let transactionEntity = Transaction.load(event.transaction.hash.toHex())
+
+    if (!transactionEntity) {
+        transactionEntity = new Transaction(event.transaction.hash.toHex())
+        transactionEntity.sender = event.transaction.from
+        transactionEntity.blockNumber = event.block.number
+        transactionEntity.timestamp = event.block.timestamp
+        transactionEntity.gasLimit = event.transaction.gasLimit
+        transactionEntity.gasPrice = event.transaction.gasPrice
+        exists = false
+    }
+
+    return {
+        entity: transactionEntity,
+        exists: exists,
+    }
+}
+
+class LoadSwapRet {
+    entity: Swap
+    exists: boolean
+}
+export function safeLoadSwap(event: ethereum.Event, pool: RangePool): LoadSwapRet {
+    let exists = true
+
+    let swapId = event.transaction.hash.toHex()
+                 .concat('-')
+                 .concat(pool.txnCount.toString())
+    let swapEntity = Swap.load(swapId)
+
+    if (!swapEntity) {
+        swapEntity = new Swap(swapId)
+        swapEntity.pool = pool.id
+        exists = false
+    }
+
+    return {
+        entity: swapEntity,
+        exists: exists,
+    }
+}
+
 class LoadFeeTierRet {
     entity: FeeTier
     exists: boolean
@@ -61,10 +131,10 @@ class LoadFeeTierRet {
 export function safeLoadFeeTier(fee: BigInt): LoadFeeTierRet {
     let exists = true
 
-    let feeTierEntity = FeeTier.load(fee.toHex())
+    let feeTierEntity = FeeTier.load(fee.toString())
 
     if (!feeTierEntity) {
-        feeTierEntity = new FeeTier(fee.toHex())
+        feeTierEntity = new FeeTier(fee.toString())
         exists = false
     }
 
@@ -90,8 +160,6 @@ export function safeLoadTick(address: string, index: BigInt): LoadTickRet {
         tickEntity = new Tick(tickId)
         tickEntity.pool = address
         tickEntity.index = index
-        tickEntity.previousTick = index.equals(BigInt.fromString("20")) ? BigInt.fromI32(-887272) : BigInt.fromI32(20)
-        tickEntity.nextTick = index.equals(BigInt.fromString("20")) ? BigInt.fromI32(30) : BigInt.fromI32(887272)
         // 1.0001^tick is token1/token0.
         tickEntity.price0 = bigDecimalExponated(BigDecimal.fromString('1.0001'), BigInt.fromI32(tickEntity.index.toI32()))
         tickEntity.price1 = safeDiv(ONE_BD, tickEntity.price0)
@@ -114,6 +182,7 @@ export function safeLoadRangePool(poolAddress: string): LoadRangePoolRet {
 
     if (!rangePoolEntity) {
         rangePoolEntity = new RangePool(poolAddress)
+        rangePoolEntity.liquidity = BIGINT_ZERO
         exists = false
     }
 
@@ -170,6 +239,78 @@ export function safeLoadPosition(
 
     return {
         entity: positionEntity,
+        exists: exists,
+    }
+}
+export function safeLoadPositionById(
+    positionId: string
+): LoadPositionRet {
+    let exists = true
+    let fromToken: string
+
+    let positionEntity = Position.load(positionId)
+
+    if (!positionEntity) {
+        positionEntity = new Position(positionId)
+
+        exists = false
+    }
+
+    return {
+        entity: positionEntity,
+        exists: exists,
+    }
+}
+
+class LoadPositionTokenRet {
+    entity: PositionToken
+    exists: boolean
+}
+export function safeLoadPositionToken(
+    tokenAddress: string
+): LoadPositionTokenRet {
+    let exists = true
+    let fromToken: string
+
+    let positionTokenEntity = PositionToken.load(tokenAddress)
+
+    if (!positionTokenEntity) {
+        positionTokenEntity = new PositionToken(tokenAddress)
+        positionTokenEntity.totalSupply = BIGINT_ZERO
+        positionTokenEntity.fractions = new Array<string>();
+        exists = false
+    }
+
+    return {
+        entity: positionTokenEntity,
+        exists: exists,
+    }
+}
+
+class LoadPositionFractionRet {
+    entity: PositionFraction
+    exists: boolean
+}
+export function safeLoadPositionFraction(
+    tokenAddress: string,
+    recipient: string
+): LoadPositionFractionRet {
+    let exists = true
+    let fromToken: string
+
+    let positionFractionId = tokenAddress.concat(recipient)
+
+    let positionFractionEntity = PositionFraction.load(positionFractionId)
+
+    if (!positionFractionEntity) {
+        positionFractionEntity = new PositionFraction(positionFractionId)
+        positionFractionEntity.token = tokenAddress
+        positionFractionEntity.amount = BIGINT_ZERO
+        exists = false
+    }
+
+    return {
+        entity: positionFractionEntity,
         exists: exists,
     }
 }

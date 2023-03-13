@@ -16,12 +16,12 @@
         "create-local": "graph create example --node http://127.0.0.1:3001",
         "codegen": "graph codegen",
         "build": "graph build",
-        "deploy": "graph deploy --product hosted-service alphak3y/poolshark-hedge-pool",
+        "deploy": "graph deploy --product hosted-service alphak3y/poolshark-range",
         "deploy-studio": "graph deploy --studio poolsharks-exchange",
         "deploy-local": "graph deploy example --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
         "test": "graph codegen; graph test -v 0.2.0",
         "prepare-const": "mustache src/configs/goerli.json src/constants/constants.template.ts > src/constants/constants.ts",
-    "prepare-yaml": "mustache src/configs/$NETWORK.json subgraph.template.yaml  subgraph.yaml"
+        "prepare-yaml": "mustache src/configs/$NETWORK.json subgraph.template.yaml  subgraph.yaml"
     },
     "devDependencies": {
         "@graphprotocol/graph-cli": "0.25.1",

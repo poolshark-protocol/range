@@ -1,9 +1,8 @@
 type RangePoolFactory @entity {
     id: ID!
-    owner: Bytes!
+    owner: RangePoolManager!
     poolCount: BigInt!
     txnCount: BigInt!
-    ethPriceUsd: BigDecimal!
     volumeUsdTotal: BigDecimal!
     volumeEthTotal: BigDecimal!
     feesUsdTotal: BigDecimal!
@@ -50,11 +49,12 @@ type Token @entity {
   rangePools: [RangePool!]!
 
   # token specific volume
-  tradeVolume: BigDecimal!
-  tradeVolumeUSD: BigDecimal!
+  volume: BigDecimal!
+  volumeUsd: BigDecimal!
+  txnCount: BigInt!
 
-  feesUSD: BigDecimal!
-  feesEth: BigDecimal!
+  feesUsdTotal: BigDecimal!
+  feesEthTotal: BigDecimal!
 
   # liquidity across all pairs
   totalValueLocked: BigDecimal!
@@ -74,9 +74,9 @@ type RangePool @entity {
   feeTier:   FeeTier!
   factory:   RangePoolFactory!
   price:     BigInt!
-  liquidity: BigInt
-  liquidityGlobal: BigInt
-  nearestTick: Tick!
+  liquidity: BigInt!
+  liquidityGlobal: BigInt!
+  nearestTick: BigInt!
   feeGrowthGlobal0: BigInt
   feeGrowthGlobal1: BigInt
 
@@ -88,6 +88,7 @@ type RangePool @entity {
   volumeEth: BigDecimal!
   feesUsd: BigDecimal!
   feesEth: BigDecimal!
+  txnCount: BigInt!
 
   totalValueLocked0: BigDecimal!
   totalValueLocked1: BigDecimal!
@@ -109,12 +110,11 @@ type Tick @entity {
     # pool address + tick index
     id: ID!
     index: BigInt!
-    previousTick: BigInt!
-    nextTick: BigInt!
     pool: RangePool!
     price0: BigDecimal!
     price1: BigDecimal! 
     liquidityDelta: BigInt!
+    liquidityDeltaMinus: BigInt!
     feeGrowthOutside0: BigInt!
     feeGrowthOutside1: BigInt!
     secondsGrowthOutside: BigInt!
@@ -125,12 +125,10 @@ type Position @entity {
     owner: Bytes!
     lower: BigInt!
     upper: BigInt!
+    pool: RangePool!
     liquidity: BigInt!
-    feeGrowthInside0Last: BigInt!
-    feeGrowthInside1Last: BigInt!
     amount0: BigDecimal!
     amount1: BigDecimal!
-
     # creation stats
     createdAtTimestamp: BigInt!
     createdAtBlockNumber: BigInt!
@@ -139,15 +137,11 @@ type Position @entity {
 }
 
 type PositionToken @entity {
+    # token address
     id: ID!
     position: Position!
     totalSupply: BigInt!
-
-    # creation stats
-    createdAtTimestamp: BigInt!
-    createdAtBlockNumber: BigInt!
-    updatedAtTimestamp: BigInt!
-    updatedAtBlockNumber: BigInt!
+    fractions: [PositionFraction!]!
 }
 
 type PositionFraction @entity {
@@ -160,7 +154,7 @@ type PositionFraction @entity {
     updatedAtTimestamp: BigInt!
     updatedAtBlockNumber: BigInt!
 }
-
+# TODO: create collect entites
 type PositionCollect @entity {
     # position id + user
     id: ID!
@@ -177,10 +171,9 @@ type Swap @entity {
     recipient: Bytes!
     timestamp: BigInt!
     pool: RangePool!
-    tokenIn: Token!
-    tokenOut: Token!
-    amountIn: BigDecimal!
-    amountOut: BigDecimal!
+    zeroForOne: Boolean!
+    amount0: BigDecimal!
+    amount1: BigDecimal!
     amountUsd: BigDecimal!
     priceAfter: BigInt!
     tickAfter: BigInt!
@@ -190,9 +183,10 @@ type Swap @entity {
 type Transaction @entity {
     # txn hash
     id: ID!
+    sender: Bytes!
     blockNumber: BigInt!
     timestamp: BigInt!
-    gasUnits: BigInt!
+    gasLimit: BigInt!
     gasPrice: BigInt!
     swaps: [Swap!]! @derivedFrom(field: "transaction")
 }

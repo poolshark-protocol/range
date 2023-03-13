@@ -28,11 +28,12 @@ library Positions {
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 
     event Mint(
-        address owner,
         address indexed recipient,
         int24 indexed lower,
         int24 indexed upper,
-        uint128 liquidityMinted
+        uint128 liquidityMinted,
+        uint128 amount0,
+        uint128 amount1
     );
 
     event Burn(
@@ -61,7 +62,9 @@ library Positions {
         int24 lower,
         int24 upper,
         uint128 tokenMinted,
-        uint128 liquidityMinted
+        uint128 liquidityMinted,
+        uint128 amount0,
+        uint128 amount1
     );
 
     event BurnFungible(
@@ -163,15 +166,18 @@ library Positions {
                 params.lower,
                 params.upper,
                 addParams.amount,
-                addParams.liquidity
+                addParams.liquidity,
+                params.amount0,
+                params.amount1
             );
         } else {
             emit Mint(
-                params.fungible ? address(this) : params.to,
                 params.to, 
                 params.lower,
                 params.upper,
-                addParams.amount
+                addParams.amount,
+                params.amount0,
+                params.amount1
             );
         }
         return (state, position, addParams.amount);

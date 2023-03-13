@@ -158,13 +158,22 @@ export class InitialSetup {
         'contracts/libraries/DyDxMath.sol:DyDxMath': hre.props.dydxMathLib.address
       }
     )
-    // // hre.nonce += 1;
+    const setFactoryTxn = await hre.props.rangePoolAdmin
+      .connect(hre.props.admin)
+      .setFactory(
+        hre.props.rangePoolFactory.address
+    )
+    await setFactoryTxn.wait()
 
-    const createPoolTxn = await hre.props.rangePoolFactory.createRangePool(
-      hre.props.token0.address,
-      hre.props.token1.address,
-      '500',
-      '177159557114295710296101716160'
+    hre.nonce += 1
+
+    const createPoolTxn = await hre.props.rangePoolFactory
+      .connect(hre.props.admin)
+      .createRangePool(
+        hre.props.token0.address,
+        hre.props.token1.address,
+        '500',
+        '177159557114295710296101716160'
     )
     await createPoolTxn.wait()
 
