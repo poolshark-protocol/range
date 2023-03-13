@@ -180,6 +180,35 @@ describe('RangePoolAdmin Tests', function () {
     await hre.props.rangePoolAdmin.connect(hre.props.admin).collectTopPools([hre.props.rangePool.address])
   })
 
+  it('Should set factory', async function () {
+    // check initial protocol fees
+    expect(await
+      hre.props.rangePoolAdmin
+        .factory()
+    ).to.be.equal(hre.props.rangePoolFactory.address)
+
+    // should revert when non-admin calls
+    await expect(
+        hre.props.rangePoolAdmin
+          .connect(hre.props.bob)
+          .setFactory(hre.props.bob.address)
+    ).to.be.revertedWith('OwnerOnly()')
+
+    await hre.props.rangePoolAdmin.connect(hre.props.admin).setFactory(hre.props.bob.address)
+
+    expect(await
+      hre.props.rangePoolAdmin
+        .factory()
+    ).to.be.equal(hre.props.bob.address)
+
+    await hre.props.rangePoolAdmin.connect(hre.props.admin).setFactory(hre.props.rangePoolFactory.address)
+
+    expect(await
+      hre.props.rangePoolAdmin
+        .factory()
+    ).to.be.equal(hre.props.rangePoolFactory.address)
+  })
+
   it('Should enable fee tier', async function () {
     // check initial protocol fees
     await expect(
