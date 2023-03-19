@@ -27,6 +27,12 @@ interface IRangePoolStructs {
         uint160 secondsGrowthOutside;
     }
 
+    struct TickMap {
+        uint256 blocks;                     /// @dev - sets of words
+        mapping(uint256 => uint256) words;  /// @dev - sets to words
+        mapping(uint256 => uint256) ticks;  /// @dev - words to ticks
+    }
+
     struct Position {
         uint128 liquidity;
         uint256 feeGrowthInside0Last;

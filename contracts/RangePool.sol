@@ -45,7 +45,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         _owner  = owner_;
 
         // set global state
-        PoolState memory pool = PoolState(0, 0, 0, 0, 0, 0, 0, 0, 0, ProtocolFees(0,0));
+        PoolState memory pool;
         pool.price = _startPrice;
         pool.unlocked = 1;
         pool.nearestTick = TickMath.MIN_TICK;
@@ -65,9 +65,8 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
     //TODO: handle incorrect ratio of assets deposited
     //TODO: add ERC-721 interface
     //TODO: add documentation here to note params
-    function mint(MintParams calldata mintParams) external lock {
+    function mint(MintParams memory params) external lock {
         PoolState memory pool = poolState;
-        MintParams memory params = mintParams;
         Position memory position = positions[params.fungible ? address(this) 
                                                              : params.to]
                                             [params.lower][params.upper];
@@ -141,9 +140,8 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
     }
 
     //TODO: support both calldata and memory params
-    function burn(BurnParams calldata burnParams) external lock {
+    function burn(BurnParams memory params) external lock {
         PoolState memory pool = poolState;
-        BurnParams memory params = burnParams;
         Position memory position = positions[params.fungible ? address(this) 
                                                              : msg.sender]
                                             [params.lower][params.upper];

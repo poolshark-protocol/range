@@ -251,7 +251,7 @@ export async function validateMint(params: ValidateMintParams) {
         amount0: amount0,
         amount1: amount1,
         fungible: fungible,
-    })
+      })
     await txn.wait()
   } else {
     await expect(
