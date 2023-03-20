@@ -4,7 +4,6 @@ pragma solidity 0.8.13;
 import "./IRangePoolERC20.sol";
 
 interface IRangePoolStructs {
-    //TODO: adjust nearestTick if someone burns all liquidity from current nearestTick
     struct PoolState {
         uint8 unlocked;
         int24  nearestTick;
@@ -57,10 +56,8 @@ interface IRangePoolStructs {
 
     struct MintParams {
         address to;
-        int24 lowerOld;
         int24 lower;
         int24 upper;
-        int24 upperOld;
         uint128 amount0;
         uint128 amount1;
         bool fungible;
@@ -89,7 +86,6 @@ interface IRangePoolStructs {
         uint256 amountIn;
     }
 
-    //TODO: should we have a recipient field here?
     struct AddParams {
         uint128 amount;
         uint128 liquidity;
@@ -101,7 +97,6 @@ interface IRangePoolStructs {
         uint128 amount0;
         uint128 amount1;
         uint256 totalSupply;
-        // uint256 liquidityAmount;
         IRangePoolERC20 token;
     }
 
@@ -112,16 +107,6 @@ interface IRangePoolStructs {
         uint128 amount;
         bool fungible;
         uint256 totalSupply; /// @dev - totalSupply of the position token if fungible
-    }
-
-    struct ValidateParams {
-        int24 lowerOld;
-        int24 lower;
-        int24 upper;
-        int24 upperOld;
-        uint128 amount0;
-        uint128 amount1;
-        PoolState state;
     }
 
     struct MintCache {

@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers'
-import { validateMint } from '../../../test/utils/contracts/rangepool'
+import { BN_ZERO, validateMint } from '../../../test/utils/contracts/rangepool'
 import { InitialSetup } from '../../../test/utils/setup/initialSetup'
 import { mintSigners20 } from '../../../test/utils/token'
 import { getNonce } from '../../utils'
@@ -26,34 +26,27 @@ export class MintPosition {
     }
     hre.nonce = await getNonce(hre, hre.props.alice.address)
     console.log(this.nonce)
-    await this.initialSetup.readHedgePoolSetup(this.nonce)
+    await this.initialSetup.readRangePoolSetup(this.nonce)
     const token0Amount = ethers.utils.parseUnits('100', await hre.props.token0.decimals())
     const token1Amount = ethers.utils.parseUnits('100', await hre.props.token1.decimals())
     await mintSigners20(hre.props.token0, token0Amount.mul(10), [hre.props.alice])
     await mintSigners20(hre.props.token1, token1Amount.mul(10), [hre.props.alice])
 
     const liquidityAmount = BigNumber.from('199760153929825488153727')
-    const lowerOld = hre.ethers.utils.parseUnits('0', 0)
-    const lower = hre.ethers.utils.parseUnits('20', 0)
-    const upperOld = hre.ethers.utils.parseUnits('887272', 0)
-    const upper = hre.ethers.utils.parseUnits('30', 0)
 
-    await validateMint(
-      hre.props.alice,
-      hre.props.alice.address,
-      lowerOld,
-      lower,
-      upperOld,
-      upper,
-      lower,
-      token1Amount,
-      false,
-      token1Amount,
-      liquidityAmount,
-      false,
-      false,
-      ''
-    )
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '20',
+      upper: '60',
+      amount0: token0Amount,
+      amount1: token1Amount,
+      fungible: false,
+      balance0Decrease: token0Amount, //TODO: make optional
+      balance1Decrease: token1Amount,
+      liquidityIncrease: liquidityAmount,
+      revertMessage: '',
+    })
 
     console.log('position minted')
   }
