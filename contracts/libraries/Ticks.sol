@@ -9,6 +9,8 @@ import './FeeMath.sol';
 import './Positions.sol';
 import './PrecisionMath.sol';
 import './TickMath.sol';
+import './TickMap.sol';
+import 'hardhat/console.sol';
 
 /// @notice Tick management library for ranged llibrary Tilibrary Ticks
 library Ticks {
@@ -21,8 +23,6 @@ library Ticks {
     error WrongTickOrder();
     error WrongTickLowerRange();
     error WrongTickUpperRange();
-    error WrongTickLowerOld();
-    error WrongTickUpperOld();
     error NoLiquidityToRollover();
     error AmountInDeltaNeutral();
     error AmountOutDeltaNeutral();
@@ -43,22 +43,15 @@ library Ticks {
     using Ticks for mapping(int24 => IRangePoolStructs.Tick);
 
     function initialize(
-        mapping(int24 => IRangePoolStructs.Tick) storage ticks
+        IRangePoolStructs.TickMap storage tickMap
     ) external {
-        ticks[TickMath.MIN_TICK] = IRangePoolStructs.Tick(
-            TickMath.MIN_TICK,
-            TickMath.MAX_TICK,
-            0,0,0,0
-        );
-        ticks[TickMath.MAX_TICK] = IRangePoolStructs.Tick(
-            TickMath.MIN_TICK,
-            TickMath.MAX_TICK,
-            0,0,0,0
-        );
+        TickMap.set(tickMap, TickMath.MIN_TICK);
+        TickMap.set(tickMap, TickMath.MAX_TICK);
     }
 
     function swap(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.TickMap storage tickMap,
         address recipient,
         bool zeroForOne,
         uint160 priceLimit,
@@ -73,7 +66,7 @@ library Ticks {
     {
         IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
             cross: true,
-            crossTick: zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick,
+            crossTick: zeroForOne ? pool.nearestTick : TickMap.next(tickMap, pool.nearestTick),
             swapFee: swapFee,
             protocolFee: 0,
             input: amountIn,
@@ -86,6 +79,7 @@ library Ticks {
             if (cache.cross) {
                 (pool, cache) = _cross(
                     ticks,
+                    tickMap,
                     pool,
                     cache,
                     zeroForOne
@@ -107,6 +101,7 @@ library Ticks {
 
     function quote(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.TickMap storage tickMap,
         bool zeroForOne,
         uint160 priceLimit,
         uint16 swapFee,
@@ -120,7 +115,7 @@ library Ticks {
     {
         IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
             cross: true,
-            crossTick: zeroForOne ? pool.nearestTick : ticks[pool.nearestTick].nextTick,
+            crossTick: zeroForOne ? pool.nearestTick : TickMap.next(tickMap, pool.nearestTick),
             swapFee: swapFee,
             protocolFee: 0,
             input: amountIn,
@@ -133,6 +128,7 @@ library Ticks {
             if (cache.cross) {
                 (pool, cache) = _pass(
                     ticks,
+                    tickMap,
                     pool,
                     cache,
                     zeroForOne
@@ -224,6 +220,7 @@ library Ticks {
     //maybe call ticks on msg.sender to get tick
     function _cross(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache,
         bool zeroForOne
@@ -244,20 +241,21 @@ library Ticks {
             unchecked {
                 pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
             }
-            cache.crossTick = ticks[cache.crossTick].previousTick;
+            cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
             pool.nearestTick = cache.crossTick;
         } else {
             unchecked {
                 pool.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
             }
             pool.nearestTick = cache.crossTick;
-            cache.crossTick = ticks[cache.crossTick].nextTick;
+            cache.crossTick = TickMap.next(tickMap, cache.crossTick);
         }
         return (pool, cache);
     }
 
     function _pass(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache,
         bool zeroForOne
@@ -269,14 +267,14 @@ library Ticks {
             unchecked {
                 pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
             }
-            cache.crossTick = ticks[cache.crossTick].previousTick;
+            cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
             pool.nearestTick = cache.crossTick;
         } else {
             unchecked {
                 pool.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
             }
             pool.nearestTick = cache.crossTick;
-            cache.crossTick = ticks[cache.crossTick].nextTick;
+            cache.crossTick = TickMap.next(tickMap, cache.crossTick);
         }
         return (pool, cache);
     }
@@ -284,15 +282,14 @@ library Ticks {
     //TODO: pass in lowerTick and upperTick
     function insert(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
-        int24 lowerOld,
         int24 lower,
-        int24 upperOld,
         int24 upper,
         uint128 amount
     ) external returns (IRangePoolStructs.PoolState memory) {
         //TODO: doesn't check if upper/lowerOld is greater/less than MAX/MIN_TICK
-        if (lower >= upper || lowerOld >= upperOld) {
+        if (lower >= upper) {
             revert WrongTickOrder();
         }
         if (TickMath.MIN_TICK > lower) {
@@ -301,29 +298,18 @@ library Ticks {
         if (upper > TickMath.MAX_TICK) {
             revert WrongTickUpperRange();
         }
-        //check for amount to overflow liquidity delta & global
+        // check for amount to overflow liquidity delta & global
         if (amount > uint128(type(int128).max)) revert LiquidityOverflow();
         if (type(uint128).max - state.liquidityGlobal < amount) revert LiquidityOverflow();
+
+        // get tick at price
         int24 tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
-        if (ticks[lower].previousTick != ticks[lower].nextTick) {
+
+        if(TickMap.set(tickMap, lower)) {
             ticks[lower].liquidityDelta += int128(amount);
         } else {
-            int24 oldNextTick = ticks[lowerOld].nextTick;
-            if (upper < oldNextTick) {
-                oldNextTick = upper;
-            }
-            /// @dev - don't set previous tick so upper can be initialized
-            else {
-                ticks[oldNextTick].previousTick = lower;
-            }
-
-            if (lowerOld >= lower || lower >= oldNextTick) {
-                revert WrongTickLowerOld();
-            }
             if (lower <= state.nearestTick || lower <= tickAtPrice) {
                 ticks[lower] = IRangePoolStructs.Tick(
-                    lowerOld,
-                    oldNextTick,
                     int128(amount),
                     state.feeGrowthGlobal0,
                     state.feeGrowthGlobal1,
@@ -331,34 +317,19 @@ library Ticks {
                 );
             } else {
                 ticks[lower] = IRangePoolStructs.Tick(
-                    lowerOld,
-                    oldNextTick,
                     int128(amount),
                     0,
                     0,
                     0
                 );
             }
-            ticks[lowerOld].nextTick = lower;
         }
 
-        if (ticks[upper].nextTick != ticks[upper].previousTick) {
+        if(TickMap.set(tickMap, upper)) {
             ticks[upper].liquidityDelta -= int128(amount);
         } else {
-            int24 oldPrevTick = ticks[upperOld].previousTick;
-            if (lower > oldPrevTick) oldPrevTick = lower;
-            if (
-                ticks[upperOld].nextTick == ticks[upperOld].previousTick ||
-                upperOld <= upper ||
-                upper <= oldPrevTick
-            ) {
-                revert WrongTickUpperOld();
-            }
-
             if (upper <= state.nearestTick || upper <= tickAtPrice) {
                 ticks[upper] = IRangePoolStructs.Tick(
-                    oldPrevTick,
-                    upperOld,
                     -int128(amount),
                     state.feeGrowthGlobal0,
                     state.feeGrowthGlobal1,
@@ -366,17 +337,14 @@ library Ticks {
                 );
             } else {
                 ticks[upper] = IRangePoolStructs.Tick(
-                    oldPrevTick,
-                    upperOld,
                     -int128(amount),
                     0,
                     0,
                     0
                 );
             }
-            ticks[oldPrevTick].nextTick = upper;
-            ticks[upperOld].previousTick = upper;
         }
+
         state.liquidityGlobal += amount;
         // get tick at current price
         
@@ -390,6 +358,7 @@ library Ticks {
 
     function remove(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
         int24 lower,
         int24 upper,
@@ -411,39 +380,25 @@ library Ticks {
         }
         IRangePoolStructs.Tick storage current = ticks[lower];
         if (lower != TickMath.MIN_TICK && current.liquidityDelta == int128(amount)) {
-            // Delete lower tick.
-            IRangePoolStructs.Tick storage previous = ticks[current.previousTick];
-            IRangePoolStructs.Tick storage next = ticks[current.nextTick];
-            //TODO: handle lower and upper being next to each other
-            previous.nextTick = current.nextTick;
-            next.previousTick = current.previousTick;
-
             if (state.nearestTick == lower) {
-                state.nearestTick = current.previousTick;
+                state.nearestTick = TickMap.previous(tickMap, lower);
                 if (state.liquidity == 0) {
                     state.price = TickMath.getSqrtRatioAtTick(state.nearestTick);
                 }
-            } 
-            // price; pool liquidity
+            }
+            TickMap.unset(tickMap, lower);
             delete ticks[lower];
         } else {
             unchecked {
                 current.liquidityDelta -= int128(amount);
             }
         }
-
         current = ticks[upper];
 
         if (upper != TickMath.MAX_TICK && current.liquidityDelta == -int128(amount)) {
-            // Delete upper tick.
-            IRangePoolStructs.Tick storage previous = ticks[current.previousTick];
-            IRangePoolStructs.Tick storage next = ticks[current.nextTick];
-
-            previous.nextTick = current.nextTick;
-            next.previousTick = current.previousTick;
-
-            if (state.nearestTick == upper) state.nearestTick = current.previousTick;
-
+            if (state.nearestTick == upper)
+                state.nearestTick = TickMap.previous(tickMap, upper);
+            TickMap.unset(tickMap, upper);
             delete ticks[upper];
         } else {
             unchecked {

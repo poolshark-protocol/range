@@ -1,7 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expect } from 'chai'
 import { BigNumber, Contract } from 'ethers'
-import { ethers } from 'hardhat'
 
 export const Q64x96 = BigNumber.from('2').pow(96)
 export const BN_ZERO = BigNumber.from('0')
@@ -36,8 +35,6 @@ export interface SwapCache {
 }
 
 export interface Tick {
-  previousTick: number
-  nextTick: number
   liquidityDelta: BigNumber
   feeGrowthOutside0: BigNumber
   feeGrowthOutside1: BigNumber
@@ -47,9 +44,7 @@ export interface Tick {
 export interface ValidateMintParams {
   signer: SignerWithAddress
   recipient: string
-  lowerOld: string
   lower: string
-  upperOld: string
   upper: string
   amount0: BigNumber
   amount1: BigNumber
@@ -158,10 +153,8 @@ export async function validateSwap(params: ValidateSwapParams) {
 export async function validateMint(params: ValidateMintParams) {
   const signer = params.signer
   const recipient = params.recipient
-  const lowerOld = BigNumber.from(params.lowerOld)
   const lower = BigNumber.from(params.lower)
   const upper = BigNumber.from(params.upper)
-  const upperOld = BigNumber.from(params.upperOld)
   const amount0 = params.amount0
   const amount1 = params.amount1
   const fungible = params.fungible
@@ -214,9 +207,7 @@ export async function validateMint(params: ValidateMintParams) {
   let positionBefore: Position
   let positionToken: Contract
   let positionTokenBalanceBefore: BigNumber
-  lowerOldTickBefore = await hre.props.rangePool.ticks(lowerOld)
   lowerTickBefore = await hre.props.rangePool.ticks(lower)
-  upperOldTickBefore = await hre.props.rangePool.ticks(upperOld)
   upperTickBefore = await hre.props.rangePool.ticks(upper)
   if (fungible) {
     positionBefore = await hre.props.rangePool.positions(
@@ -244,10 +235,8 @@ export async function validateMint(params: ValidateMintParams) {
       .connect(params.signer)
       .mint({
         to: params.signer.address,
-        lowerOld: lowerOld, 
         lower: lower,
         upper: upper,
-        upperOld: upperOld,
         amount0: amount0,
         amount1: amount1,
         fungible: fungible,
@@ -259,10 +248,8 @@ export async function validateMint(params: ValidateMintParams) {
         .connect(params.signer)
         .mint({
           to: params.signer.address,
-          lowerOld: lowerOld, 
           lower: lower,
           upper: upper,
-          upperOld: upperOld,
           amount0: amount0,
           amount1: amount1,
           fungible: fungible,
@@ -279,15 +266,11 @@ export async function validateMint(params: ValidateMintParams) {
   expect(balance0Before.sub(balance0After)).to.be.equal(balance0Decrease)
   expect(balance1Before.sub(balance1After)).to.be.equal(balance1Decrease)
 
-  let lowerOldTickAfter: Tick
   let lowerTickAfter: Tick
-  let upperOldTickAfter: Tick
   let upperTickAfter: Tick
   let positionAfter: Position
   let positionTokenBalanceAfter: BigNumber
-  lowerOldTickAfter = await hre.props.rangePool.ticks(lowerOld)
   lowerTickAfter = await hre.props.rangePool.ticks(lower)
-  upperOldTickAfter = await hre.props.rangePool.ticks(upperOld)
   upperTickAfter = await hre.props.rangePool.ticks(upper)
   if (fungible) {
     positionAfter = await hre.props.rangePool.positions(

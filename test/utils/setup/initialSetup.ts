@@ -11,6 +11,7 @@ import {
   PrecisionMath__factory,
   Positions__factory,
   RangePoolAdmin__factory,
+  TickMap__factory,
 } from '../../../typechain'
 
 export class InitialSetup {
@@ -107,6 +108,14 @@ export class InitialSetup {
     await this.deployAssist.deployContractWithRetry(
       network,
       // @ts-ignore
+      TickMap__factory,
+      'tickMapLib',
+      []
+    )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
       Ticks__factory,
       'ticksLib',
       [],
@@ -115,6 +124,7 @@ export class InitialSetup {
         'contracts/libraries/PrecisionMath.sol:PrecisionMath':
           hre.props.precisionMathLib.address,
         'contracts/libraries/TickMath.sol:TickMath': hre.props.tickMathLib.address,
+        'contracts/libraries/TickMap.sol:TickMap': hre.props.tickMapLib.address,
       }
     )
 

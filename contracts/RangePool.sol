@@ -55,16 +55,12 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         tickSpacing = _tickSpacing;
 
         // create min and max ticks
-        Ticks.initialize(ticks);
+        Ticks.initialize(tickMap);
 
         // initialize pool state
         poolState = pool;
     }
 
-    //TODO: handle support of calldata and memory params
-    //TODO: handle incorrect ratio of assets deposited
-    //TODO: add ERC-721 interface
-    //TODO: add documentation here to note params
     function mint(MintParams memory params) external lock {
         PoolState memory pool = poolState;
         Position memory position = positions[params.fungible ? address(this) 
@@ -102,6 +98,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                 (position, pool) = Positions.compound(
                     position,
                     ticks,
+                    tickMap,
                     pool,
                     CompoundParams(
                         params.fungible ? address(this) : params.to, 
@@ -115,8 +112,9 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         //TODO: if fees > 0 emit PositionUpdated event
         // update position with latest fees accrued
         (pool, position, liquidityMinted) = Positions.add(
-            position, 
-            ticks, 
+            position,
+            ticks,
+            tickMap,
             pool, 
             params, 
             AddParams(
@@ -175,15 +173,13 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         (pool, position, amount0, amount1) = Positions.remove(
             position,
             ticks,
+            tickMap,
             pool,
             params,
             RemoveParams(
                 amount0,
                 amount1,
                 params.fungible ? positionToken.totalSupply() + params.amount : 0,
-                params.fungible && params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
-                                                       / (positionToken.totalSupply() + params.amount)
-                                                     : params.amount,
                 positionToken
             )
         );
@@ -201,6 +197,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
             (position, pool) = Positions.compound(
                 position,
                 ticks,
+                tickMap,
                 pool,
                 CompoundParams(
                     params.fungible ? address(this) : msg.sender,
@@ -237,6 +234,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         SwapCache memory cache;
         (pool, cache) = Ticks.swap(
             ticks,
+            tickMap,
             recipient,
             zeroForOne,
             priceLimit,
@@ -274,6 +272,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         
         (pool, cache) = Ticks.quote(
             ticks,
+            tickMap,
             zeroForOne,
             priceLimit,
             swapFee,

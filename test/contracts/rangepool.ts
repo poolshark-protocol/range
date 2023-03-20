@@ -72,10 +72,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '20',
       upper: '60',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: false,
@@ -121,13 +119,12 @@ describe('RangePool Tests', function () {
 
   it('token0 - Should mint, swap, and burn', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
+
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '20',
       upper: '60',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: BN_ZERO,
       fungible: false,
@@ -166,10 +163,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '10000',
       upper: '20000',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: true,
@@ -255,10 +250,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '10000',
       upper: '20000',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: true,
@@ -325,10 +318,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '20',
       upper: '60',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: false,
@@ -377,10 +368,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '20',
       upper: '60',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: false,
@@ -404,10 +393,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '20',
       upper: '60',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: false,
@@ -435,10 +422,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '500',
       upper: '1000',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: true,
@@ -464,10 +449,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '500',
       upper: '1000',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: true,
@@ -510,10 +493,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '500',
       upper: '1000',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: true,
@@ -561,10 +542,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '500',
       upper: '1000',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: true,
@@ -607,10 +586,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '500',
       upper: '1000',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: true,
@@ -636,10 +613,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.bob,
       recipient: hre.props.bob.address,
-      lowerOld: '-887272',
       lower: '200',
       upper: '600',
-      upperOld: '1000',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: true,
@@ -682,10 +657,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lowerOld: '-887272',
       lower: '500',
       upper: '1000',
-      upperOld: '887272',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: true,
@@ -711,10 +684,8 @@ describe('RangePool Tests', function () {
     await validateMint({
       signer: hre.props.bob,
       recipient: hre.props.bob.address,
-      lowerOld: '500',
       lower: '600',
       upper: '800',
-      upperOld: '1000',
       amount0: tokenAmount,
       amount1: tokenAmount,
       fungible: true,
