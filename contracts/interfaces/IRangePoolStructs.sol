@@ -19,8 +19,6 @@ interface IRangePoolStructs {
     }
 
     struct Tick {
-        int24 previousTick;
-        int24 nextTick;
         int128 liquidityDelta;
         uint216 feeGrowthOutside0; // Per unit of liquidity.
         uint216 feeGrowthOutside1;
@@ -31,6 +29,11 @@ interface IRangePoolStructs {
         uint256 blocks;                     /// @dev - sets of words
         mapping(uint256 => uint256) words;  /// @dev - sets to words
         mapping(uint256 => uint256) ticks;  /// @dev - words to ticks
+    }
+
+    struct TickParams {
+        TickMap tickMap;
+        mapping(int24 => Tick) ticks;
     }
 
     struct Position {
@@ -98,7 +101,7 @@ interface IRangePoolStructs {
         uint128 amount0;
         uint128 amount1;
         uint256 totalSupply;
-        uint256 liquidityAmount;
+        // uint256 liquidityAmount;
         IRangePoolERC20 token;
     }
 
@@ -141,6 +144,8 @@ interface IRangePoolStructs {
     struct PositionCache {
         uint160 priceLower;
         uint160 priceUpper;
+        uint256 liquidityOnPosition;
+        uint256 liquidityAmount;
     }
 
     struct UpdatePositionCache {

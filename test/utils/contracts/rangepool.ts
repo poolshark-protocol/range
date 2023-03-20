@@ -1,7 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expect } from 'chai'
 import { BigNumber, Contract } from 'ethers'
-import { ethers } from 'hardhat'
 
 export const Q64x96 = BigNumber.from('2').pow(96)
 export const BN_ZERO = BigNumber.from('0')
@@ -36,8 +35,6 @@ export interface SwapCache {
 }
 
 export interface Tick {
-  previousTick: number
-  nextTick: number
   liquidityDelta: BigNumber
   feeGrowthOutside0: BigNumber
   feeGrowthOutside1: BigNumber

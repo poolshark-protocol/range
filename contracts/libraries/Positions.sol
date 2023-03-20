@@ -113,6 +113,7 @@ library Positions {
     function add(
         IRangePoolStructs.Position memory position,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.MintParams memory params,
         IRangePoolStructs.AddParams memory addParams
@@ -125,15 +126,16 @@ library Positions {
 
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
-            priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
+            priceUpper: TickMath.getSqrtRatioAtTick(params.upper),
+            liquidityOnPosition: 0,
+            liquidityAmount: 0
         });
 
         state = Ticks.insert(
             ticks,
+            tickMap,
             state,
-            params.lowerOld,
             params.lower,
-            params.upperOld,
             params.upper,
             addParams.amount
         );
@@ -149,15 +151,15 @@ library Positions {
                 || (position.liquidity - addParams.amount) > addParams.tokenSupply) {
                 // modify amount based on autocompounded fees
                 if (addParams.tokenSupply > 0) {
-                    uint256 liquidityOnPosition = DyDxMath.getLiquidityForAmounts(
-                                                cache.priceLower,
-                                                cache.priceUpper,
-                                                position.amount0 > 0 ? cache.priceLower : cache.priceUpper,
-                                                position.amount1,
-                                                position.amount0
+                    cache.liquidityOnPosition = DyDxMath.getLiquidityForAmounts(
+                                                    cache.priceLower,
+                                                    cache.priceUpper,
+                                                    position.amount0 > 0 ? cache.priceLower : cache.priceUpper,
+                                                    position.amount1,
+                                                    position.amount0
                                               );
                     addParams.amount = uint128(uint256(addParams.amount) * addParams.tokenSupply /
-                         (uint256(position.liquidity - addParams.amount) + liquidityOnPosition));
+                         (uint256(position.liquidity - addParams.amount) + cache.liquidityOnPosition));
                 } /// @dev - if there are fees on the position we mint less positionToken
             }
             emit MintFungible(
@@ -186,6 +188,7 @@ library Positions {
     function remove(
         IRangePoolStructs.Position memory position,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.BurnParams memory params,
         IRangePoolStructs.RemoveParams memory removeParams
@@ -197,7 +200,11 @@ library Positions {
     ) {
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
-            priceUpper: TickMath.getSqrtRatioAtTick(params.upper)
+            priceUpper: TickMath.getSqrtRatioAtTick(params.upper),
+            liquidityOnPosition: 0,
+            liquidityAmount: params.fungible && params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
+                                                                    / (removeParams.token.totalSupply() + params.amount)
+                                                                  : params.amount
         });
 
         if (params.amount == 0) {
@@ -220,7 +227,7 @@ library Positions {
                 cache.priceLower,
                 cache.priceUpper,
                 state.price,
-                removeParams.liquidityAmount,
+                cache.liquidityAmount,
                 true
             );
             if (params.fungible && params.amount > 0) {
@@ -233,20 +240,27 @@ library Positions {
 
             position.amount0 += amount0Removed;
             position.amount1 += amount1Removed;
-            position.liquidity -= uint128(removeParams.liquidityAmount);
+            position.liquidity -= uint128(cache.liquidityAmount);
         }
         if (position.liquidity == 0) {
             position.feeGrowthInside0Last = 0;
             position.feeGrowthInside1Last = 0;
         }
-        state = Ticks.remove(ticks, state, params.lower, params.upper, uint128(removeParams.liquidityAmount));
+        state = Ticks.remove(
+            ticks,
+            tickMap,
+            state, 
+            params.lower,
+            params.upper,
+            uint128(cache.liquidityAmount)
+        );
 
         if (params.fungible) {
             emit BurnFungible(
                 params.to,
                 address(removeParams.token),
                 params.amount,
-                uint128(removeParams.liquidityAmount),
+                uint128(cache.liquidityAmount),
                 removeParams.amount0,
                 removeParams.amount1
             );
@@ -256,7 +270,7 @@ library Positions {
                 msg.sender,
                 params.lower,
                 params.upper,
-                uint128(removeParams.liquidityAmount),
+                uint128(cache.liquidityAmount),
                 removeParams.amount0,
                 removeParams.amount1,
                 params.collect
@@ -268,6 +282,7 @@ library Positions {
     function compound(
         IRangePoolStructs.Position memory position,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.CompoundParams memory params
     ) external returns (IRangePoolStructs.Position memory, IRangePoolStructs.PoolState memory) {
@@ -285,10 +300,9 @@ library Positions {
         if (liquidityCompounded > 0) {
             state = Ticks.insert(
                 ticks,
+                tickMap,
                 state,
-                -887272,
                 params.lower,
-                887272,
                 params.upper,
                 uint128(liquidityCompounded)
             );

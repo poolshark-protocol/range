@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPLv3
-pragma solidity 0.8.13;
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.13;
 
 import './TickMath.sol';
 import '../interfaces/IRangePoolStructs.sol';
+import 'hardhat/console.sol';
 
-library TickBitmap {
+library TickMap {
 
     error TickIndexOverflow();
     error TickIndexUnderflow();
@@ -13,16 +14,26 @@ library TickBitmap {
     function set(
         IRangePoolStructs.TickMap storage tickMap,
         int24 tick
-    ) external {
+    ) external returns (
+        bool exists
+    )    
+    {
         (
             uint256 tickIndex,
             uint256 wordIndex,
             uint256 blockIndex
         ) = getIndices(tick);
 
-        tickMap.ticks[wordIndex]    |= 1 << (tickIndex & 0xFF); // same as modulus 255
-        tickMap.words[blockIndex]   |= 1 << (wordIndex & 0xFF);
-        tickMap.blocks |= 1 << blockIndex;
+        // check if bit is already set
+        uint256 word = tickMap.ticks[wordIndex] | 1 << (tickIndex & 0xFF);
+        if (word == tickMap.ticks[wordIndex]) {
+            return true;
+        }
+
+        tickMap.ticks[wordIndex]     = word; 
+        tickMap.words[blockIndex]   |= 1 << (wordIndex & 0xFF); // same as modulus 255
+        tickMap.blocks              |= 1 << blockIndex;
+        return false;
     }
 
     function unset(
@@ -44,10 +55,29 @@ library TickBitmap {
         }
     }
 
+    function get(
+        IRangePoolStructs.TickMap storage tickMap,
+        int24 tick
+    ) external view returns (
+        bool exists
+    ) {
+        (
+            uint256 tickIndex,
+            uint256 wordIndex,
+        ) = getIndices(tick);
+
+        // check if bit is already set
+        uint256 word = tickMap.ticks[wordIndex] | 1 << (tickIndex & 0xFF);
+        if (word == tickMap.ticks[wordIndex]) {
+            return true;
+        }
+        return false;
+    }
+
     function previous(
         IRangePoolStructs.TickMap storage tickMap,
         int24 tick
-    ) internal view returns (
+    ) external view returns (
         int24 previousTick
     ) {
         unchecked {
@@ -87,10 +117,9 @@ library TickBitmap {
               uint256 wordIndex,
               uint256 blockIndex
             ) = getIndices(tick);
-
-            uint256 word = tickMap.ticks[wordIndex] & ~((1 << (tickIndex & 0xFF + 1)) - 1);
+            uint256 word = tickMap.ticks[wordIndex] & ~((1 << ((tickIndex & 0xFF) + 1)) - 1);
             if (word == 0) {
-                uint256 block_ = tickMap.words[blockIndex] & ~((1 << (wordIndex & 0xFF + 1)) - 1);
+                uint256 block_ = tickMap.words[blockIndex] & ~((1 << ((wordIndex & 0xFF) + 1)) - 1);
                 if (block_ == 0) {
                     uint256 blockMap = tickMap.blocks & ~((1 << blockIndex + 1) - 1);
                     // assert(blockMap != 0);
