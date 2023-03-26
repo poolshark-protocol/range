@@ -20,9 +20,7 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         _;
     }
 
-    constructor(
-        address _pool
-    ) {
+    constructor(address _pool) {
         pool = _pool;
     }
 
@@ -86,7 +84,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         returns (uint256[] memory batchBalances)
     {
         batchBalances = new uint256[](_accounts.length);
-
         unchecked {
             for (uint256 i; i < _accounts.length; ++i) {
                 batchBalances[i] = balanceOf(_accounts[i], _ids[i]);
@@ -117,9 +114,7 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         uint256 _amount
     ) public virtual override checkAddresses(_from, _to) checkApproval(_from, msg.sender) {
         address _spender = msg.sender;
-
         _transfer(_from, _to, _id, _amount);
-
         emit TransferSingle(_spender, _from, _to, _id, _amount);
     }
 
@@ -139,7 +134,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
                 _transfer(_from, _to, _ids[i], _amounts[i]);
             }
         }
-
         emit TransferBatch(msg.sender, _from, _to, _ids, _amounts);
     }
 
@@ -155,19 +149,14 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
     ) internal virtual {
         uint256 _fromBalance = _tokenBalances[_id][_from];
         if (_fromBalance < _amount) revert TransferExceedsBalance(_from, _id, _amount);
-
         _beforeTokenTransfer(_from, _to, _id, _amount);
-
         unchecked {
             _tokenBalances[_id][_from] = _fromBalance - _amount;
         }
-
         uint256 _toBalance = _tokenBalances[_id][_to];
-
         unchecked {
             _tokenBalances[_id][_to] = _toBalance + _amount;
         }
-
         _remove(_from, _id, _fromBalance, _amount);
         _add(_to, _id, _toBalance, _amount);
     }
@@ -186,18 +175,13 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         uint256 _amount
     ) internal virtual {
         if (_account == address(0)) revert MintToAddress0();
-
         _beforeTokenTransfer(address(0), _account, _id, _amount);
-
         _totalSupplyById[_id] += _amount;
-
         uint256 _accountBalance = _tokenBalances[_id][_account];
         unchecked {
             _tokenBalances[_id][_account] = _accountBalance + _amount;
         }
-
         _add(_account, _id, _accountBalance, _amount);
-
         emit TransferSingle(msg.sender, address(0), _account, _id, _amount);
     }
 
@@ -215,19 +199,14 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         uint256 _amount
     ) internal virtual {
         if (_account == address(0)) revert BurnFromAddress0();
-
         uint256 _accountBalance = _tokenBalances[_id][_account];
         if (_accountBalance < _amount) revert BurnExceedsBalance(_account, _id, _amount);
-
         _beforeTokenTransfer(_account, address(0), _id, _amount);
-
         unchecked {
             _tokenBalances[_id][_account] = _accountBalance - _amount;
             _totalSupplyById[_id] -= _amount;
         }
-
         _remove(_account, _id, _accountBalance, _amount);
-
         emit TransferSingle(msg.sender, _account, address(0), _id, _amount);
     }
 
@@ -237,7 +216,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         bool _approved
     ) internal virtual {
         if (_owner == _spender) revert SelfApproval(_owner);
-
         _spenderApprovals[_owner][_spender] = _approved;
         emit ApprovalForAll(_owner, _spender, _approved);
     }
@@ -281,7 +259,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
     /// @return supported Whether the contract is supported (true) or not (false)
     function _verify1155Support(address _target) private view returns (bool supported) {
         if (_target.code.length == 0) return true;
-
         bytes memory encodedParams = abi.encodeWithSelector(
             IERC165.supportsInterface.selector,
             type(IRangePoolERC1155).interfaceId
