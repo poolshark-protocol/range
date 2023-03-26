@@ -3,18 +3,11 @@ pragma solidity 0.8.13;
 
 import "./PrecisionMath.sol";
 import "../interfaces/IRangePoolFactory.sol";
-import '../interfaces/IRangePoolManager.sol';
 import "../interfaces/IRangePoolStructs.sol";
 
 /// @notice Math library that facilitates fee handling.
 library Tokens {
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
-
-    function create(IRangePoolManager owner) internal returns (
-        IRangePoolERC1155
-    ) {
-        return owner.createTokens();
-    }
 
     function id(
         int24 lower,
@@ -27,7 +20,7 @@ library Tokens {
     }
 
     function totalSupply(
-        IRangePoolERC1155 tokens,
+        address tokens,
         int24 lower,
         int24 upper
     ) internal view returns (
@@ -38,7 +31,7 @@ library Tokens {
     }
 
     function totalSupplyById(
-        IRangePoolERC1155 tokens,
+        address tokens,
         uint256 _id
     ) internal view returns (
         uint256

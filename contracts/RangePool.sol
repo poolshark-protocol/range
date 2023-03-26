@@ -3,32 +3,30 @@ pragma solidity 0.8.13;
 
 import './base/storage/RangePoolStorage.sol';
 import './interfaces/IRangePool.sol';
-import './interfaces/IRangePoolERC1155.sol';
+import './RangePoolERC1155.sol';
 import './libraries/Positions.sol';
 import './libraries/Ticks.sol';
 import './libraries/Tokens.sol';
 import './utils/RangePoolErrors.sol';
 import './utils/SafeTransfers.sol';
 
-contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
+contract RangePool is 
+    RangePoolERC1155,
+    RangePoolStorage,
+    RangePoolErrors,
+    SafeTransfers
+{
     address internal immutable token0;
     address internal immutable token1;
     uint16 public immutable swapFee;
     int24 public immutable tickSpacing;
     address internal immutable _factory;
 
-    error OwnerOnly();
-
     modifier lock() {
         if (poolState.unlocked != 1) revert Locked();
         poolState.unlocked = 2;
         _;
         poolState.unlocked = 1;
-    }
-
-    modifier onlyOwner() {
-        if (address(owner) != msg.sender) revert OwnerOnly();
-        _;
     }
 
     constructor(
@@ -58,9 +56,6 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         // create min and max ticks
         Ticks.initialize(tickMap);
 
-        // launch erc-1155 contract
-        tokens = Tokens.create(_owner);
-
         // initialize pool state
         poolState = pool;
     }
@@ -79,8 +74,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                     params.lower,
                     params.upper,
                     0,
-                    params.fungible,
-                    tokens
+                    params.fungible
                 )
         );
         uint256 liquidityMinted;
@@ -114,8 +108,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
             params, 
             AddParams(
                 uint128(liquidityMinted),
-                uint128(liquidityMinted),
-                tokens
+                uint128(liquidityMinted)
             )
         );
         positions[params.fungible ? address(this) : params.to][params.lower][
@@ -152,8 +145,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                     params.lower,
                     params.upper,
                     uint128(params.amount),
-                    params.fungible,
-                    tokens
+                    params.fungible
                 )
         );
         (pool, position, amount0, amount1) = Positions.remove(
@@ -164,8 +156,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
             params,
             RemoveParams(
                 amount0,
-                amount1,
-                tokens
+                amount1
             )
         );
         if (params.fungible) {

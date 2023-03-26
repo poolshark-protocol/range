@@ -11,7 +11,6 @@ import '../../utils/RangePoolErrors.sol';
 abstract contract RangePoolStorage is IRangePoolStructs, IRangePool {
     PoolState public poolState;
     IRangePoolManager public owner;
-    IRangePoolERC1155 public tokens;
     TickMap public tickMap;
     mapping(int24 => Tick) public ticks;        /// @dev - liquidity and fee data
     mapping(address => mapping(int24 => mapping(int24 => Position))) public positions; /// @dev - nonfungible positions

@@ -89,13 +89,11 @@ interface IRangePoolStructs {
     struct AddParams {
         uint128 amount;
         uint128 liquidity;
-        IRangePoolERC1155 tokens;
     }
 
     struct RemoveParams {
         uint128 amount0;
         uint128 amount1;
-        IRangePoolERC1155 tokens;
     }
 
     struct UpdateParams {
@@ -104,14 +102,12 @@ interface IRangePoolStructs {
         int24 upper;
         uint128 amount;
         bool fungible;
-        IRangePoolERC1155 tokens; /// @dev - totalSupply of the position token if fungible
     }
 
     struct MintCache {
         PoolState pool;
         MintParams params;
         Position position;
-        IRangePoolERC1155 tokens;
     }
 
     struct SwapCache {

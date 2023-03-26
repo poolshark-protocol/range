@@ -126,7 +126,7 @@ library Positions {
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper),
             liquidityOnPosition: 0,
             liquidityAmount: 0,
-            totalSupply: Tokens.totalSupply(addParams.tokens, params.lower, params.upper),
+            totalSupply: Tokens.totalSupply(address(this), params.lower, params.upper),
             tokenId: Tokens.id(params.lower, params.upper)
         });
 
@@ -161,7 +161,7 @@ library Positions {
                          (uint256(position.liquidity - addParams.amount) + cache.liquidityOnPosition));
                 } /// @dev - if there are fees on the position we mint less positionToken
             }
-            addParams.tokens.mint(params.to, cache.tokenId, addParams.amount);
+            IRangePoolERC1155(address(this)).mintFungible(params.to, cache.tokenId, addParams.amount);
             emit MintFungible(
                 params.lower,
                 params.upper,
@@ -205,7 +205,7 @@ library Positions {
         }); 
         if (params.fungible){
             
-            cache.totalSupply = Tokens.totalSupplyById(removeParams.tokens, cache.tokenId);
+            cache.totalSupply = Tokens.totalSupplyById(address(this), cache.tokenId);
         }
         cache.liquidityAmount = params.fungible && params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
                                                                        / (cache.totalSupply + params.amount)
@@ -346,11 +346,11 @@ library Positions {
     ) {
         uint256 totalSupply;
         if (params.fungible) {
-            totalSupply = Tokens.totalSupply(params.tokens, params.lower, params.upper);
+            totalSupply = Tokens.totalSupply(address(this), params.lower, params.upper);
             if (totalSupply == 0) return (position, 0, 0);
             if (params.amount > 0) {
                 uint256 tokenId = Tokens.id(params.lower, params.upper);
-                params.tokens.burn(msg.sender, tokenId, params.amount);
+                IRangePoolERC1155(address(this)).burnFungible(msg.sender, tokenId, params.amount);
             }
         }
         
@@ -386,7 +386,6 @@ library Positions {
         if (params.fungible) {
             uint128 feesBurned0; uint128 feesBurned1;
             if (params.amount > 0) {
-                uint256 totalSupply = Tokens.totalSupply(params.tokens, params.lower, params.upper);
                 feesBurned0 = uint128(
                     (uint256(position.amount0) * uint256(uint128(params.amount))) / (totalSupply + params.amount)
                 );

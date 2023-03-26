@@ -7,22 +7,15 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./utils/RangePoolErrors.sol";
 import "./interfaces/IRangePoolERC1155.sol";
 import "./libraries/Tokens.sol";
-import 'hardhat/console.sol';
 
 contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
     using EnumerableSet for EnumerableSet.UintSet;
 
-    address immutable public pool;
-
     error OwnerOnly();
 
     modifier onlyOwner() {
-        if (address(pool) != msg.sender) revert OwnerOnly();
+        if (address(this) != msg.sender) revert OwnerOnly();
         _;
-    }
-
-    constructor(address _pool) {
-        pool = _pool;
     }
 
     /// @dev token id => owner => balance
@@ -162,7 +155,7 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         _add(_to, _id, _toBalance, _amount);
     }
 
-    function mint(
+    function mintFungible(
         address _account,
         uint256 _id,
         uint256 _amount
@@ -186,7 +179,7 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         emit TransferSingle(msg.sender, address(0), _account, _id, _amount);
     }
 
-    function burn(
+    function burnFungible(
         address _account,
         uint256 _id,
         uint256 _amount

@@ -216,7 +216,7 @@ export async function validateMint(params: ValidateMintParams) {
       upper
     )
     positionTokenId  = await hre.props.positionsLib.id(lower, upper);
-    positionTokens = await hre.ethers.getContractAt('RangePoolERC1155', await hre.props.rangePool.tokens());
+    positionTokens = await hre.ethers.getContractAt('RangePoolERC1155', hre.props.rangePool.address);
     positionTokenBalanceBefore = await positionTokens.balanceOf(signer.address, positionTokenId);
   } else {
     positionBefore = await hre.props.rangePool.positions(
@@ -273,7 +273,7 @@ export async function validateMint(params: ValidateMintParams) {
       lower,
       upper
     )
-    positionTokens = await hre.ethers.getContractAt('RangePoolERC1155', await hre.props.rangePool.tokens());
+    positionTokens = await hre.ethers.getContractAt('RangePoolERC1155', hre.props.rangePool.address);
     positionTokenBalanceAfter = await positionTokens.balanceOf(signer.address, positionTokenId);
     if (params.tokenAmount)
       expect(positionTokenBalanceAfter.sub(positionTokenBalanceBefore)).to.be.equal(params.tokenAmount)
@@ -318,7 +318,7 @@ export async function validateBurn(params: ValidateBurnParams) {
   upperTickBefore = await hre.props.rangePool.ticks(upper)
   if (fungible) {
     positionTokenId  = await hre.props.positionsLib.id(lower, upper);
-    positionToken = await hre.ethers.getContractAt('RangePoolERC1155', await hre.props.rangePool.tokens());
+    positionToken = await hre.ethers.getContractAt('RangePoolERC1155', hre.props.rangePool.address);
     positionTokenBalanceBefore = await positionToken.balanceOf(signer.address, positionTokenId);
     positionBefore = await hre.props.rangePool.positions(hre.props.rangePool.address, lower, upper)
   } else {
@@ -357,7 +357,7 @@ export async function validateBurn(params: ValidateBurnParams) {
   balance0After = await hre.props.token0.balanceOf(signer.address)
   balance1After = await hre.props.token1.balanceOf(signer.address)
 
-  expect(balance0After.sub(balance0Before)).to.be. equal(balance0Increase)
+  expect(balance0After.sub(balance0Before)).to.be.equal(balance0Increase)
   expect(balance1After.sub(balance1Before)).to.be.equal(balance1Increase)
 
   let lowerTickAfter: Tick
