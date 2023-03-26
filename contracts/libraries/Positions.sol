@@ -347,6 +347,7 @@ library Positions {
         uint256 totalSupply;
         if (params.fungible) {
             totalSupply = Tokens.totalSupply(address(this), params.lower, params.upper);
+            console.log('total supply', totalSupply, params.amount);
             if (totalSupply == 0) return (position, 0, 0);
             if (params.amount > 0) {
                 uint256 tokenId = Tokens.id(params.lower, params.upper);
@@ -384,15 +385,17 @@ library Positions {
         position.amount1 += uint128(amount1Fees);
 
         if (params.fungible) {
+            console.log('fee growth', position.amount0, position.amount1);
             uint128 feesBurned0; uint128 feesBurned1;
             if (params.amount > 0) {
                 feesBurned0 = uint128(
-                    (uint256(position.amount0) * uint256(uint128(params.amount))) / (totalSupply + params.amount)
+                    (uint256(position.amount0) * uint256(uint128(params.amount))) / (totalSupply)
                 );
                 feesBurned1 = uint128(
-                    (uint256(position.amount1) * uint256(uint128(params.amount))) / (totalSupply + params.amount)
+                    (uint256(position.amount1) * uint256(uint128(params.amount))) / (totalSupply)
                 );
             }
+            console.log('fees burned', feesBurned0, feesBurned1);
             return (position, feesBurned0, feesBurned1);
         }
         

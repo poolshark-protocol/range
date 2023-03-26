@@ -245,7 +245,7 @@ describe('RangePool Tests', function () {
     })
   })
 
-  it('token0 - Should add in-range fungible liquidity', async function () {
+  it('token0 - Should add in-range fungible liquidity 11', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
     await validateMint({
       signer: hre.props.alice,

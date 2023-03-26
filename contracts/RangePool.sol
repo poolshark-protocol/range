@@ -9,6 +9,7 @@ import './libraries/Ticks.sol';
 import './libraries/Tokens.sol';
 import './utils/RangePoolErrors.sol';
 import './utils/SafeTransfers.sol';
+import 'hardhat/console.sol';
 
 contract RangePool is 
     RangePoolERC1155,
@@ -162,6 +163,8 @@ contract RangePool is
         if (params.fungible) {
             position.amount0 -= amount0;
             position.amount1 -= amount1;
+            console.log('token0:', amount0, ERC20(token0).balanceOf(address(this)));
+            console.log('token1:', amount1, ERC20(token1).balanceOf(address(this)));
         } else if (params.collect) {
             amount0 = position.amount0;
             amount1 = position.amount1;
@@ -261,7 +264,7 @@ contract RangePool is
         return (pool, cache);
     }
 
-    function collectFees() public onlyOwner returns (uint128 token0Fees, uint128 token1Fees) {
+    function collectFees() public returns (uint128 token0Fees, uint128 token1Fees) {
         token0Fees = poolState.protocolFees.token0;
         token1Fees = poolState.protocolFees.token1;
         _transferOut(owner.feeTo(), token0, token0Fees);
