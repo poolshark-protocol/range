@@ -24,10 +24,10 @@ library FeeMath {
         cache.output -= feeAmount;
         feeAmount -= protocolFee;
         if (zeroForOne) {
-           pool.protocolFees.token0 += uint128(protocolFee);
+           pool.protocolFees.token1 += uint128(protocolFee);
            pool.feeGrowthGlobal1 += uint216(PrecisionMath.mulDiv(feeAmount, Q128, pool.liquidity));
         } else {
-          pool.protocolFees.token1 += uint128(protocolFee);
+          pool.protocolFees.token0 += uint128(protocolFee);
           pool.feeGrowthGlobal0 += uint216(PrecisionMath.mulDiv(feeAmount, Q128, pool.liquidity));
         }
         return (pool, cache);
