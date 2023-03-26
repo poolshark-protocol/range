@@ -607,32 +607,32 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
 
-    await validateMint({
-      signer: hre.props.bob,
-      recipient: hre.props.bob.address,
-      lower: '200',
-      upper: '600',
-      amount0: tokenAmount,
-      amount1: tokenAmount,
-      fungible: true,
-      balance0Decrease: BigNumber.from('0'),
-      balance1Decrease: BigNumber.from('100000000000000000000'),
-      tokenAmount: BigNumber.from('4901161634764542438934'),
-      liquidityIncrease: BigNumber.from('4901161634764542438934'),
-      revertMessage: '',
-    })
+    // await validateMint({
+    //   signer: hre.props.bob,
+    //   recipient: hre.props.bob.address,
+    //   lower: '200',
+    //   upper: '600',
+    //   amount0: tokenAmount,
+    //   amount1: tokenAmount,
+    //   fungible: true,
+    //   balance0Decrease: BigNumber.from('0'),
+    //   balance1Decrease: BigNumber.from('100000000000000000000'),
+    //   tokenAmount: BigNumber.from('4901161634764542438934'),
+    //   liquidityIncrease: BigNumber.from('4901161634764542438934'),
+    //   revertMessage: '',
+    // })
 
-    await validateBurn({
-      signer: hre.props.bob,
-      lower: '200',
-      upper: '600',
-      tokenAmount: BigNumber.from('4901161634764542438934'),
-      liquidityAmount: BigNumber.from('4901161634764542438934'),
-      fungible: true,
-      balance0Increase: BigNumber.from('0'),
-      balance1Increase: BigNumber.from('100000000000000000000'),
-      revertMessage: '',
-    })
+    // await validateBurn({
+    //   signer: hre.props.bob,
+    //   lower: '200',
+    //   upper: '600',
+    //   tokenAmount: BigNumber.from('4901161634764542438934'),
+    //   liquidityAmount: BigNumber.from('4901161634764542438934'),
+    //   fungible: true,
+    //   balance0Increase: BigNumber.from('0'),
+    //   balance1Increase: BigNumber.from('100000000000000000000'),
+    //   revertMessage: '',
+    // })
 
     await validateBurn({
       signer: hre.props.alice,

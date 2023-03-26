@@ -10,9 +10,8 @@ import './Positions.sol';
 import './PrecisionMath.sol';
 import './TickMath.sol';
 import './TickMap.sol';
-import 'hardhat/console.sol';
 
-/// @notice Tick management library for ranged llibrary Tilibrary Ticks
+/// @notice Tick management library
 library Ticks {
     error LiquidityOverflow();
     error LiquidityUnderflow();

@@ -12,7 +12,7 @@ library FeeMath {
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache,
         bool zeroForOne
-    ) internal pure returns (
+    ) internal view returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
         )

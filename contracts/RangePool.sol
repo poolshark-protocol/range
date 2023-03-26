@@ -9,7 +9,6 @@ import './libraries/Ticks.sol';
 import './libraries/Tokens.sol';
 import './utils/RangePoolErrors.sol';
 import './utils/SafeTransfers.sol';
-import 'hardhat/console.sol';
 
 contract RangePool is 
     RangePoolERC1155,
@@ -123,14 +122,6 @@ contract RangePool is
         Position memory position = positions[params.fungible ? address(this) 
                                                              : msg.sender]
                                             [params.lower][params.upper];
-        //TODO: burn in Positions.update()
-        // if (params.fungible) {
-        //     if (address(positionToken) == address(0)) {
-        //         revert RangeErc20NotFound();
-        //     }
-        //     /// @dev - burn will revert if insufficient balance
-        //     positionToken.burn(msg.sender, params.amount);
-        // }
         uint128 amount0;
         uint128 amount1;
         (
@@ -163,8 +154,6 @@ contract RangePool is
         if (params.fungible) {
             position.amount0 -= amount0;
             position.amount1 -= amount1;
-            console.log('token0:', amount0, ERC20(token0).balanceOf(address(this)));
-            console.log('token1:', amount1, ERC20(token1).balanceOf(address(this)));
         } else if (params.collect) {
             amount0 = position.amount0;
             amount1 = position.amount1;
