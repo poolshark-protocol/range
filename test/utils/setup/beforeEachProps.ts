@@ -17,7 +17,7 @@ import { InitialSetup } from './initialSetup'
 
 export interface BeforeEachProps {
   rangePool: RangePool
-  rangePoolAdmin: RangePoolAdmin
+  rangePoolManager: RangePoolAdmin
   rangePoolFactory: RangePoolFactory
   tickMathLib: TickMath
   tickMapLib: TickMap
@@ -60,7 +60,7 @@ export class GetBeforeEach {
 
   public retrieveProps(): BeforeEachProps {
     let rangePool: RangePool
-    let rangePoolAdmin: RangePoolAdmin
+    let rangePoolManager: RangePoolAdmin
     let rangePoolFactory: RangePoolFactory
     let tickMathLib: TickMath
     let tickMapLib: TickMap
@@ -81,7 +81,7 @@ export class GetBeforeEach {
 
     return {
       rangePool,
-      rangePoolAdmin,
+      rangePoolManager,
       rangePoolFactory,
       tickMathLib,
       tickMapLib,

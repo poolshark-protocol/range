@@ -1,22 +1,26 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity 0.8.13;
 
-import './RangePoolERC20.sol';
 import './base/storage/RangePoolStorage.sol';
 import './interfaces/IRangePool.sol';
+import './RangePoolERC1155.sol';
 import './libraries/Positions.sol';
 import './libraries/Ticks.sol';
+import './libraries/Tokens.sol';
 import './utils/RangePoolErrors.sol';
 import './utils/SafeTransfers.sol';
 
-contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
+contract RangePool is 
+    RangePoolERC1155,
+    RangePoolStorage,
+    RangePoolErrors,
+    SafeTransfers
+{
     address internal immutable token0;
     address internal immutable token1;
     uint16 public immutable swapFee;
     int24 public immutable tickSpacing;
     address internal immutable _factory;
-
-    error OwnerOnly();
 
     modifier lock() {
         if (poolState.unlocked != 1) revert Locked();
@@ -25,24 +29,19 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         poolState.unlocked = 1;
     }
 
-    modifier onlyOwner() {
-        if (address(_owner) != msg.sender) revert OwnerOnly();
-        _;
-    }
-
     constructor(
         address _token0,
         address _token1,
         int24 _tickSpacing,
         uint16 _swapFee,
         uint160 _startPrice,
-        IRangePoolAdmin owner_
+        IRangePoolManager _owner
     ) {
         // set addresses
         _factory = msg.sender;
         token0 = _token0;
         token1 = _token1;
-        _owner  = owner_;
+        owner  = _owner;
 
         // set global state
         PoolState memory pool;
@@ -66,14 +65,6 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         Position memory position = positions[params.fungible ? address(this) 
                                                              : params.to]
                                             [params.lower][params.upper];
-        IRangePoolERC20 positionToken;
-        if(params.fungible) {
-            positionToken = tokens[params.lower][params.upper];
-            if (address(positionToken) == address(0)) {
-                positionToken = new RangePoolERC20();
-                tokens[params.lower][params.upper] = positionToken;
-            }
-        }
         (position, , ) = Positions.update(
                 ticks,
                 position,
@@ -83,31 +74,26 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                     params.lower,
                     params.upper,
                     0,
-                    params.fungible,
-                    params.fungible ? positionToken.totalSupply() : 0
+                    params.fungible
                 )
         );
         uint256 liquidityMinted;
-        //TODO: check fees and modify liquidity accordingly
         (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
-        _transferIn(token0, params.amount0);
-        _transferIn(token1, params.amount1);
-
-        if (params.fungible) {
-            if (position.amount0 > 0 || position.amount1 > 0) {
-                (position, pool) = Positions.compound(
-                    position,
-                    ticks,
-                    tickMap,
-                    pool,
-                    CompoundParams(
-                        params.fungible ? address(this) : params.to, 
-                        params.lower,
-                        params.upper,
-                        params.fungible
-                    )
-                );
-            }
+        if (params.amount0 > 0) _transferIn(token0, params.amount0);
+        if (params.amount1 > 0) _transferIn(token1, params.amount1);
+        if (position.amount0 > 0 || position.amount1 > 0) {
+            (position, pool) = Positions.compound(
+                position,
+                ticks,
+                tickMap,
+                pool,
+                CompoundParams(
+                    params.fungible ? address(this) : params.to, 
+                    params.lower,
+                    params.upper,
+                    params.fungible
+                )
+            );
         }
         //TODO: if fees > 0 emit PositionUpdated event
         // update position with latest fees accrued
@@ -119,38 +105,20 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
             params, 
             AddParams(
                 uint128(liquidityMinted),
-                uint128(liquidityMinted),
-                params.fungible ? positionToken.totalSupply() : 0,
-                positionToken
+                uint128(liquidityMinted)
             )
         );
-        if (params.fungible) {
-            positionToken.mint(
-                params.to,
-                liquidityMinted
-            );
-        }
         positions[params.fungible ? address(this) : params.to][params.lower][
             params.upper
         ] = position;
-        poolState = pool;
-        
+        poolState = pool;   
     }
 
-    //TODO: support both calldata and memory params
     function burn(BurnParams memory params) external lock {
         PoolState memory pool = poolState;
         Position memory position = positions[params.fungible ? address(this) 
                                                              : msg.sender]
                                             [params.lower][params.upper];
-        IRangePoolERC20 positionToken = tokens[params.lower][params.upper];
-        if (params.fungible) {
-            if (address(positionToken) == address(0)) {
-                revert RangeErc20NotFound();
-            }
-            /// @dev - burn will revert if insufficient balance
-            positionToken.burn(msg.sender, params.amount);
-        }
         uint128 amount0;
         uint128 amount1;
         (
@@ -166,8 +134,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                     params.lower,
                     params.upper,
                     uint128(params.amount),
-                    params.fungible,
-                    params.fungible ? (positionToken.totalSupply() + params.amount) : 0
+                    params.fungible
                 )
         );
         (pool, position, amount0, amount1) = Positions.remove(
@@ -178,9 +145,7 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
             params,
             RemoveParams(
                 amount0,
-                amount1,
-                params.fungible ? positionToken.totalSupply() + params.amount : 0,
-                positionToken
+                amount1
             )
         );
         if (params.fungible) {
@@ -193,6 +158,8 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
             position.amount0 = 0;
             position.amount1 = 0;
         }
+        /// @dev - always compound for fungible
+        /// @dev - only comound for nonfungible is collect is false
         if (position.amount0 > 0 || position.amount1 > 0) {
             (position, pool) = Positions.compound(
                 position,
@@ -285,16 +252,12 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         return (pool, cache);
     }
 
-    function collectFees() public onlyOwner returns (uint128 token0Fees, uint128 token1Fees) {
+    function collectFees() public returns (uint128 token0Fees, uint128 token1Fees) {
         token0Fees = poolState.protocolFees.token0;
         token1Fees = poolState.protocolFees.token1;
-        _transferOut(_owner.feeTo(), token0, token0Fees);
-        _transferOut(_owner.feeTo(), token1, token1Fees);
+        _transferOut(owner.feeTo(), token0, token0Fees);
+        _transferOut(owner.feeTo(), token1, token1Fees);
         poolState.protocolFees.token0 = 0;
         poolState.protocolFees.token1 = 0;
-    }
-
-    function owner() external view returns (IRangePoolAdmin) {
-        return _owner;
     }
 }

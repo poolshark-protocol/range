@@ -4,13 +4,16 @@
 pragma solidity ^0.8.0;
 
 import '../interfaces/IRangePool.sol';
-import '../interfaces/IRangePoolAdmin.sol';
-import '../base/events/RangePoolAdminEvents.sol';
+import '../interfaces/IRangePoolManager.sol';
+import '../base/events/RangePoolManagerEvents.sol';
 
 /**
  * @dev Defines the actions which can be executed by the factory admin.
  */
-contract RangePoolAdmin is IRangePoolAdmin, RangePoolAdminEvents {
+contract RangePoolManager is 
+    IRangePoolManager,
+    RangePoolManagerEvents
+{
     address public _owner;
     address private _feeTo;
     address private _factory;

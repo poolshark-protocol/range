@@ -17,7 +17,7 @@ contract RangePoolFactory is
     error FeeTierNotSupported();
 
     constructor(address owner_) {
-        _owner = IRangePoolAdmin(owner_);
+        _owner = IRangePoolManager(owner_);
         //TODO: can call initialize to ensure valid admin
     }
 

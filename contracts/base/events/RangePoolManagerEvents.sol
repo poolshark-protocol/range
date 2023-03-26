@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity 0.8.13;
 
-abstract contract RangePoolAdminEvents {
+abstract contract RangePoolManagerEvents {
     event FactoryChanged(address indexed previousFactory, address indexed newFactory);
     event FeeTierEnabled(uint16 swapFee, int24 tickSpacing);
     event FeeToTransfer(address indexed previousFeeTo, address indexed newFeeTo);
