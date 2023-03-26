@@ -210,7 +210,6 @@ library Positions {
         cache.liquidityAmount = params.fungible && params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
                                                                        / (cache.totalSupply + params.amount)
                                                                      : params.amount;
-
         if (params.amount == 0) {
             emit Burn(
                 params.fungible ? address(this) : msg.sender,
@@ -235,9 +234,6 @@ library Positions {
                 true
             );
             if (params.fungible && params.amount > 0) {
-                
-                amount0Removed = uint128(uint256(amount0Removed) * uint256(params.amount) / (cache.totalSupply + params.amount));
-                amount1Removed = uint128(uint256(amount1Removed) * uint256(params.amount) / (cache.totalSupply + params.amount));
                 params.collect = true;
             }
             removeParams.amount0 += amount0Removed;

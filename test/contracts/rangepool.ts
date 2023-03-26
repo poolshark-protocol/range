@@ -699,8 +699,8 @@ describe('RangePool Tests', function () {
       tokenAmount: BigNumber.from('4901161634764542438934'),
       liquidityAmount: BigNumber.from('4901161634764542438934'),
       fungible: true,
-      balance0Increase: BigNumber.from('4481110589569978756'),
-      balance1Increase: BigNumber.from('14454151324565833083'),
+      balance0Increase: BigNumber.from('11786622206938309592'),
+      balance1Increase: BigNumber.from('38018615604156121197'),
       revertMessage: '',
     })
 

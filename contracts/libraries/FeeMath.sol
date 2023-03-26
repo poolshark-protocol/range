@@ -18,7 +18,6 @@ library FeeMath {
         )
     {
         if (pool.liquidity == 0 ) return (pool, cache);
-        
         uint256 feeAmount = PrecisionMath.mulDivRoundingUp(cache.output, cache.swapFee, 1e6); 
         uint256 protocolFee = PrecisionMath.mulDivRoundingUp(feeAmount, cache.protocolFee, 1e6);
         cache.output -= feeAmount;
