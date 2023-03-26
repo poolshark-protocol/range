@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity 0.8.13;
 
-import "./IRangePoolERC20.sol";
+import "./IRangePoolERC1155.sol";
 
 interface IRangePoolStructs {
     struct PoolState {
@@ -89,15 +89,13 @@ interface IRangePoolStructs {
     struct AddParams {
         uint128 amount;
         uint128 liquidity;
-        uint256 tokenSupply;
-        IRangePoolERC20 token;
+        IRangePoolERC1155 tokens;
     }
 
     struct RemoveParams {
         uint128 amount0;
         uint128 amount1;
-        uint256 totalSupply;
-        IRangePoolERC20 token;
+        IRangePoolERC1155 tokens;
     }
 
     struct UpdateParams {
@@ -106,14 +104,14 @@ interface IRangePoolStructs {
         int24 upper;
         uint128 amount;
         bool fungible;
-        uint256 totalSupply; /// @dev - totalSupply of the position token if fungible
+        IRangePoolERC1155 tokens; /// @dev - totalSupply of the position token if fungible
     }
 
     struct MintCache {
         PoolState pool;
         MintParams params;
         Position position;
-        IRangePoolERC20 positionToken;
+        IRangePoolERC1155 tokens;
     }
 
     struct SwapCache {
@@ -131,6 +129,8 @@ interface IRangePoolStructs {
         uint160 priceUpper;
         uint256 liquidityOnPosition;
         uint256 liquidityAmount;
+        uint256 totalSupply;
+        uint256 tokenId;
     }
 
     struct UpdatePositionCache {

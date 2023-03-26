@@ -2,7 +2,7 @@
 pragma solidity 0.8.13;
 
 import './IRangePoolStructs.sol';
-import './IRangePoolAdmin.sol';
+import './IRangePoolManager.sol';
 
 /// @notice Range Pool Interface
 interface IRangePool is IRangePoolStructs {
@@ -32,6 +32,6 @@ interface IRangePool is IRangePoolStructs {
     );
 
     function owner() external view returns (
-        IRangePoolAdmin
+        IRangePoolManager
     );
 }

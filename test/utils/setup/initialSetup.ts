@@ -10,7 +10,7 @@ import {
   DyDxMath__factory,
   PrecisionMath__factory,
   Positions__factory,
-  RangePoolAdmin__factory,
+  RangePoolManager__factory,
   TickMap__factory,
 } from '../../../typechain'
 
@@ -146,8 +146,8 @@ export class InitialSetup {
     await this.deployAssist.deployContractWithRetry(
       network,
       // @ts-ignore
-      RangePoolAdmin__factory,
-      'rangePoolAdmin',
+      RangePoolManager__factory,
+      'rangePoolManager',
       []
     )
 
@@ -157,7 +157,7 @@ export class InitialSetup {
       RangePoolFactory__factory,
       'rangePoolFactory',
       [
-        hre.props.rangePoolAdmin.address
+        hre.props.rangePoolManager.address
       ],
       {
         'contracts/libraries/Positions.sol:Positions': hre.props.positionsLib.address,
@@ -168,7 +168,7 @@ export class InitialSetup {
         'contracts/libraries/DyDxMath.sol:DyDxMath': hre.props.dydxMathLib.address
       }
     )
-    const setFactoryTxn = await hre.props.rangePoolAdmin
+    const setFactoryTxn = await hre.props.rangePoolManager
       .connect(hre.props.admin)
       .setFactory(
         hre.props.rangePoolFactory.address

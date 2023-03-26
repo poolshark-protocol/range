@@ -2,12 +2,12 @@
 pragma solidity 0.8.13;
 
 import '../interfaces/IRangePoolStructs.sol';
-import '../RangePoolERC20.sol';
 import './DyDxMath.sol';
 import './FeeMath.sol';
 import './PrecisionMath.sol';
 import './TickMath.sol';
 import './Ticks.sol';
+import './Tokens.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -57,7 +57,7 @@ library Positions {
     );
 
     event MintFungible(
-        address indexed token,
+        uint256 indexed tokenId,
         address indexed recipient,
         int24 lower,
         int24 upper,
@@ -69,7 +69,7 @@ library Positions {
 
     event BurnFungible(
         address indexed recipient,
-        address indexed token,
+        uint256 indexed tokenId,
         uint128 tokenBurned,
         uint128 liquidityBurned,
         uint128 amount0,
@@ -128,7 +128,9 @@ library Positions {
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper),
             liquidityOnPosition: 0,
-            liquidityAmount: 0
+            liquidityAmount: 0,
+            totalSupply: Tokens.totalSupply(addParams.tokens, params.lower, params.upper),
+            tokenId: Tokens.id(params.lower, params.upper)
         });
 
         state = Ticks.insert(
@@ -148,9 +150,9 @@ library Positions {
         // modify liquidity minted to account for fees accrued
         if (params.fungible) {
             if (position.amount0 > 0 || position.amount1 > 0
-                || (position.liquidity - addParams.amount) > addParams.tokenSupply) {
+                || (position.liquidity - addParams.amount) > cache.totalSupply) {
                 // modify amount based on autocompounded fees
-                if (addParams.tokenSupply > 0) {
+                if (cache.totalSupply > 0) {
                     cache.liquidityOnPosition = DyDxMath.getLiquidityForAmounts(
                                                     cache.priceLower,
                                                     cache.priceUpper,
@@ -158,12 +160,12 @@ library Positions {
                                                     position.amount1,
                                                     position.amount0
                                               );
-                    addParams.amount = uint128(uint256(addParams.amount) * addParams.tokenSupply /
+                    addParams.amount = uint128(uint256(addParams.amount) * cache.totalSupply /
                          (uint256(position.liquidity - addParams.amount) + cache.liquidityOnPosition));
                 } /// @dev - if there are fees on the position we mint less positionToken
             }
             emit MintFungible(
-                address(addParams.token),
+                cache.tokenId,
                 params.to, 
                 params.lower,
                 params.upper,
@@ -202,10 +204,14 @@ library Positions {
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper),
             liquidityOnPosition: 0,
-            liquidityAmount: params.fungible && params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
-                                                                    / (removeParams.token.totalSupply() + params.amount)
-                                                                  : params.amount
+            liquidityAmount: 0,
+            totalSupply: 0,
+            tokenId: Tokens.id(params.lower, params.upper)
         });
+        cache.totalSupply = Tokens.totalSupplyById(removeParams.tokens, cache.tokenId);
+        cache.liquidityAmount = params.fungible && params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
+                                                                       / (cache.totalSupply + params.amount)
+                                                                     : params.amount;
 
         if (params.amount == 0) {
             emit Burn(
@@ -231,8 +237,8 @@ library Positions {
                 true
             );
             if (params.fungible && params.amount > 0) {
-                amount0Removed = uint128(uint256(amount0Removed) * uint256(params.amount) / removeParams.totalSupply);
-                amount1Removed = uint128(uint256(amount1Removed) * uint256(params.amount) / removeParams.totalSupply);
+                amount0Removed = uint128(uint256(amount0Removed) * uint256(params.amount) / cache.totalSupply);
+                amount1Removed = uint128(uint256(amount1Removed) * uint256(params.amount) / cache.totalSupply);
                 params.collect = true;
             }
             removeParams.amount0 += amount0Removed;
@@ -258,7 +264,7 @@ library Positions {
         if (params.fungible) {
             emit BurnFungible(
                 params.to,
-                address(removeParams.token),
+                cache.tokenId,
                 params.amount,
                 uint128(cache.liquidityAmount),
                 removeParams.amount0,
@@ -339,9 +345,10 @@ library Positions {
         uint128, 
         uint128
     ) {
-        if (params.fungible && params.totalSupply == 0){
-            return (position, 0, 0);
-        } 
+        if (params.fungible) {
+            uint256 totalSupply = Tokens.totalSupply(params.tokens, params.lower, params.upper);
+            if (totalSupply == 0) return (position, 0, 0);
+        }
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
             ticks,
             state,
@@ -374,11 +381,12 @@ library Positions {
         if (params.fungible) {
             uint128 feesBurned0; uint128 feesBurned1;
             if (params.amount > 0) {
+                uint256 totalSupply = Tokens.totalSupply(params.tokens, params.lower, params.upper);
                 feesBurned0 = uint128(
-                    (uint256(position.amount0) * uint256(uint128(params.amount))) / params.totalSupply
+                    (uint256(position.amount0) * uint256(uint128(params.amount))) / totalSupply
                 );
                 feesBurned1 = uint128(
-                    (uint256(position.amount1) * uint256(uint128(params.amount))) / params.totalSupply
+                    (uint256(position.amount1) * uint256(uint128(params.amount))) / totalSupply
                 );
             }
             return (position, feesBurned0, feesBurned1);

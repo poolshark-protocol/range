@@ -4,13 +4,17 @@
 pragma solidity ^0.8.0;
 
 import '../interfaces/IRangePool.sol';
-import '../interfaces/IRangePoolAdmin.sol';
-import '../base/events/RangePoolAdminEvents.sol';
+import '../interfaces/IRangePoolManager.sol';
+import '../base/events/RangePoolManagerEvents.sol';
+import '../RangePoolERC1155.sol';
 
 /**
  * @dev Defines the actions which can be executed by the factory admin.
  */
-contract RangePoolAdmin is IRangePoolAdmin, RangePoolAdminEvents {
+contract RangePoolManager is 
+    IRangePoolManager,
+    RangePoolManagerEvents
+{
     address public _owner;
     address private _feeTo;
     address private _factory;
@@ -158,5 +162,9 @@ contract RangePoolAdmin is IRangePoolAdmin, RangePoolAdminEvents {
             (token0Fees, token1Fees) = IRangePool(collectPools[i]).collectFees();
             emit ProtocolFeeCollected(collectPools[i], token0Fees, token1Fees);
         }
+    }
+
+    function createTokens() external returns (IRangePoolERC1155) {
+        return new RangePoolERC1155(msg.sender);
     }
 }

@@ -82,6 +82,6 @@ describe('RangePoolFactory Tests', function () {
     expect(await
       hre.props.rangePoolFactory
         .owner()
-    ).to.be.equal(hre.props.rangePoolAdmin.address)
+    ).to.be.equal(hre.props.rangePoolManager.address)
   })
 })

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity 0.8.13;
 
-import '../../interfaces/IRangePoolAdmin.sol';
+import '../../interfaces/IRangePoolManager.sol';
 
 abstract contract RangePoolFactoryStorage {
-    IRangePoolAdmin public _owner;
+    IRangePoolManager public _owner;
     mapping(bytes32 => address) public rangePools;
 }
