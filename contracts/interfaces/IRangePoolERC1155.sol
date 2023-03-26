@@ -43,10 +43,6 @@ interface IRangePoolERC1155 is IERC165 {
         uint256[] memory batchBalances
     );
 
-    function tokensOwnedAtIndex(address account, uint256 index) external view returns (uint256);
-
-    function tokensOwnedLength(address account) external view returns (uint256);
-
     function totalSupply(uint256 id) external view returns (uint256);
 
     function isApprovedForAll(address owner, address spender) external view returns (bool);

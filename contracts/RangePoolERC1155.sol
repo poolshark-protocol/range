@@ -27,9 +27,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
     /// @dev token id => total supply
     mapping(uint256 => uint256) private _totalSupplyById;
 
-    /// @dev  owner => set of ids with balance
-    mapping(address => EnumerableSet.UintSet) private _tokensOwned;
-
     string private constant _NAME = "Poolshark Range LP";
     string private constant _SYMBOL = "PSHARK-RANGE-LP";
 
@@ -83,14 +80,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
                 batchBalances[i] = balanceOf(_accounts[i], _ids[i]);
             }
         }
-    }
-
-    function tokensOwnedAtIndex(address _account, uint256 _index) public view virtual override returns (uint256) {
-        return _tokensOwned[_account].at(_index);
-    }
-
-    function tokensOwnedLength(address _account) public view virtual override returns (uint256) {
-        return _tokensOwned[_account].length();
     }
 
     function isApprovedForAll(address _owner, address _spender) public view virtual override returns (bool) {
@@ -151,8 +140,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         unchecked {
             _tokenBalances[_id][_to] = _toBalance + _amount;
         }
-        _remove(_from, _id, _fromBalance, _amount);
-        _add(_to, _id, _toBalance, _amount);
     }
 
     function mintFungible(
@@ -175,7 +162,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         unchecked {
             _tokenBalances[_id][_account] = _accountBalance + _amount;
         }
-        _add(_account, _id, _accountBalance, _amount);
         emit TransferSingle(msg.sender, address(0), _account, _id, _amount);
     }
 
@@ -200,7 +186,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
             _tokenBalances[_id][_account] = _accountBalance - _amount;
             _totalSupplyById[_id] -= _amount;
         }
-        _remove(_account, _id, _accountBalance, _amount);
         emit TransferSingle(msg.sender, _account, address(0), _id, _amount);
     }
 
@@ -216,28 +201,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
 
     function _isApprovedForAll(address _owner, address _spender) internal view virtual returns (bool) {
         return _owner == _spender || _spenderApprovals[_owner][_spender];
-    }
-
-    function _add(
-        address _account,
-        uint256 _id,
-        uint256 _accountBalance,
-        uint256 _amount
-    ) internal {
-        if (_accountBalance == 0 && _amount != 0) {
-            _tokensOwned[_account].add(_id);
-        }
-    }
-
-    function _remove(
-        address _account,
-        uint256 _id,
-        uint256 _accountBalance,
-        uint256 _amount
-    ) internal {
-        if (_accountBalance == _amount && _amount != 0) {
-            _tokensOwned[_account].remove(_id);
-        }
     }
 
     /// @notice Hook that is called before any token transfer.

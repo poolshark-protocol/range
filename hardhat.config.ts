@@ -1,5 +1,4 @@
 import * as dotenv from 'dotenv'
-import { Contract } from 'ethers'
 import { HardhatUserConfig, task } from 'hardhat/config'
 import '@nomiclabs/hardhat-etherscan'
 import '@nomiclabs/hardhat-waffle'
@@ -8,7 +7,6 @@ require('solidity-coverage')
 require('hardhat-contract-sizer')
 import { handleHardhatTasks } from './taskHandler'
 // import "hardhat-gas-reporter"
-
 
 handleHardhatTasks()
 
@@ -23,7 +21,8 @@ const config: HardhatUserConfig = {
             {
                 version: '0.8.13',
                 settings: {
-                    viaIR: true,
+                    // set to true for production
+                    viaIR: false,
                     optimizer: {
                         enabled: true,
                         runs: 200,

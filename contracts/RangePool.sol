@@ -79,24 +79,21 @@ contract RangePool is
         );
         uint256 liquidityMinted;
         (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
-        _transferIn(token0, params.amount0);
-        _transferIn(token1, params.amount1);
-
-        if (params.fungible) {
-            if (position.amount0 > 0 || position.amount1 > 0) {
-                (position, pool) = Positions.compound(
-                    position,
-                    ticks,
-                    tickMap,
-                    pool,
-                    CompoundParams(
-                        params.fungible ? address(this) : params.to, 
-                        params.lower,
-                        params.upper,
-                        params.fungible
-                    )
-                );
-            }
+        if (params.amount0 > 0) _transferIn(token0, params.amount0);
+        if (params.amount1 > 0) _transferIn(token1, params.amount1);
+        if (position.amount0 > 0 || position.amount1 > 0) {
+            (position, pool) = Positions.compound(
+                position,
+                ticks,
+                tickMap,
+                pool,
+                CompoundParams(
+                    params.fungible ? address(this) : params.to, 
+                    params.lower,
+                    params.upper,
+                    params.fungible
+                )
+            );
         }
         //TODO: if fees > 0 emit PositionUpdated event
         // update position with latest fees accrued
@@ -161,6 +158,8 @@ contract RangePool is
             position.amount0 = 0;
             position.amount1 = 0;
         }
+        /// @dev - always compound for fungible
+        /// @dev - only comound for nonfungible is collect is false
         if (position.amount0 > 0 || position.amount1 > 0) {
             (position, pool) = Positions.compound(
                 position,

@@ -395,7 +395,6 @@ library Positions {
             }
             return (position, feesBurned0, feesBurned1);
         }
-        
         return (position, amount0Fees, amount1Fees);
     }
 
