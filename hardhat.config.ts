@@ -6,7 +6,7 @@ import '@typechain/hardhat'
 require('solidity-coverage')
 require('hardhat-contract-sizer')
 import { handleHardhatTasks } from './taskHandler'
-import "hardhat-gas-reporter"
+// import "hardhat-gas-reporter"
 
 handleHardhatTasks()
 

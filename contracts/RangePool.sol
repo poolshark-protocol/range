@@ -9,6 +9,7 @@ import './libraries/Ticks.sol';
 import './libraries/Tokens.sol';
 import './utils/RangePoolErrors.sol';
 import './utils/SafeTransfers.sol';
+import 'hardhat/console.sol';
 
 contract RangePool is 
     RangePoolERC1155,
