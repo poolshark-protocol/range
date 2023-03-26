@@ -202,8 +202,11 @@ library Positions {
             liquidityAmount: 0,
             totalSupply: 0,
             tokenId: Tokens.id(params.lower, params.upper)
-        });
-        cache.totalSupply = Tokens.totalSupplyById(removeParams.tokens, cache.tokenId);
+        }); 
+        if (params.fungible){
+            
+            cache.totalSupply = Tokens.totalSupplyById(removeParams.tokens, cache.tokenId);
+        }
         cache.liquidityAmount = params.fungible && params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
                                                                        / (cache.totalSupply + params.amount)
                                                                      : params.amount;
@@ -232,8 +235,9 @@ library Positions {
                 true
             );
             if (params.fungible && params.amount > 0) {
-                amount0Removed = uint128(uint256(amount0Removed) * uint256(params.amount) / cache.totalSupply);
-                amount1Removed = uint128(uint256(amount1Removed) * uint256(params.amount) / cache.totalSupply);
+                
+                amount0Removed = uint128(uint256(amount0Removed) * uint256(params.amount) / (cache.totalSupply + params.amount));
+                amount1Removed = uint128(uint256(amount1Removed) * uint256(params.amount) / (cache.totalSupply + params.amount));
                 params.collect = true;
             }
             removeParams.amount0 += amount0Removed;
@@ -340,14 +344,16 @@ library Positions {
         uint128, 
         uint128
     ) {
+        uint256 totalSupply;
         if (params.fungible) {
-            uint256 totalSupply = Tokens.totalSupply(params.tokens, params.lower, params.upper);
+            totalSupply = Tokens.totalSupply(params.tokens, params.lower, params.upper);
             if (totalSupply == 0) return (position, 0, 0);
             if (params.amount > 0) {
                 uint256 tokenId = Tokens.id(params.lower, params.upper);
                 params.tokens.burn(msg.sender, tokenId, params.amount);
             }
         }
+        
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
             ticks,
             state,
@@ -382,14 +388,15 @@ library Positions {
             if (params.amount > 0) {
                 uint256 totalSupply = Tokens.totalSupply(params.tokens, params.lower, params.upper);
                 feesBurned0 = uint128(
-                    (uint256(position.amount0) * uint256(uint128(params.amount))) / totalSupply
+                    (uint256(position.amount0) * uint256(uint128(params.amount))) / (totalSupply + params.amount)
                 );
                 feesBurned1 = uint128(
-                    (uint256(position.amount1) * uint256(uint128(params.amount))) / totalSupply
+                    (uint256(position.amount1) * uint256(uint128(params.amount))) / (totalSupply + params.amount)
                 );
             }
             return (position, feesBurned0, feesBurned1);
         }
+        
         return (position, amount0Fees, amount1Fees);
     }
 
@@ -428,5 +435,9 @@ library Positions {
         }
         feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
         feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
+    }
+
+    function id(int24 lower, int24 upper) public pure returns (uint256) {
+        return Tokens.id(lower, upper);
     }
 }

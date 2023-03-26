@@ -14,7 +14,6 @@ import 'hardhat/console.sol';
 
 /// @notice Tick management library for ranged llibrary Tilibrary Ticks
 library Ticks {
-    error Debug();
     error LiquidityOverflow();
     error LiquidityUnderflow();
     error InvalidLatestTick();

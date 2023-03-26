@@ -23,7 +23,7 @@ library Tokens {
         uint256
     )
     {
-        return uint256(keccak256(abi.encodePacked(lower, upper)));
+        return uint256(keccak256(abi.encode(lower, upper)));
     }
 
     function totalSupply(

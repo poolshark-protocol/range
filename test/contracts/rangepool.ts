@@ -67,7 +67,7 @@ describe('RangePool Tests', function () {
   //TODO: price limit hit mid-tick zeroForOne true & false
   //TODO: add liquidity to existing tick
 
-  it('token1 - Should mint, swap, and burn', async function () {
+  it('token1 - Should mint, swap, and burn 11', async function () {
 
     await validateMint({
       signer: hre.props.alice,
@@ -117,7 +117,7 @@ describe('RangePool Tests', function () {
     })
   })
 
-  it('token0 - Should mint, swap, and burn', async function () {
+  it('token0 - Should mint, swap, and burn 11', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
 
     await validateMint({
@@ -158,7 +158,7 @@ describe('RangePool Tests', function () {
     })
   })
 
-  it('token0 - Should mint and burn fungible position', async function () {
+  it('token0 - Should mint and burn fungible position 11', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
     await validateMint({
       signer: hre.props.alice,
@@ -173,7 +173,7 @@ describe('RangePool Tests', function () {
       tokenAmount: BigNumber.from('419027207938949970576'),
       liquidityIncrease: BigNumber.from('419027207938949970576'),
       revertMessage: '',
-      collectRevertMessage: 'RangeErc20NotFound()'
+      collectRevertMessage: ''
     })
 
     await validateSwap({
@@ -229,7 +229,7 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Increase: BN_ZERO,
       balance1Increase: BN_ZERO,
-      revertMessage: 'ERC20: burn amount exceeds balance',
+      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2236771031221735906744102008774832778161797975119947154210717982934819779160, 419027207938949970577)',
     })
 
     await validateBurn({
@@ -263,8 +263,6 @@ describe('RangePool Tests', function () {
       collectRevertMessage: ''
     })
 
-    expect(hre.props.rangePool.tokens('10000', '20000'))
-
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -296,7 +294,7 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Increase: BN_ZERO,
       balance1Increase: BN_ZERO,
-      revertMessage: 'ERC20: burn amount exceeds balance',
+      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2236771031221735906744102008774832778161797975119947154210717982934819779160, 419027207938949970577)',
     })
 
     await validateBurn({
@@ -432,7 +430,6 @@ describe('RangePool Tests', function () {
       tokenAmount: BigNumber.from('4152939701311089823384'),
       liquidityIncrease: BigNumber.from('4152939701311089823384'),
       revertMessage: '',
-      collectRevertMessage: 'RangeErc20NotFound()'
     })
 
     await validateSwap({
@@ -471,7 +468,7 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Increase: BigNumber.from('153013648220322291925'),
       balance1Increase: BigNumber.from('144243177493286617045'),
-      revertMessage: 'ERC20: burn amount exceeds balance',
+      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2381093050879867228278279701469820094323623974324911225843268442440969283554, 11988250493261524638130)',
     })
 
     await validateBurn({
@@ -564,7 +561,7 @@ describe('RangePool Tests', function () {
       fungible: true,
       balance0Increase: BigNumber.from('153013648220322291925'),
       balance1Increase: BigNumber.from('144243177493286617045'),
-      revertMessage: 'ERC20: burn amount exceeds balance',
+      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2381093050879867228278279701469820094323623974324911225843268442440969283554, 8004433960027029462334)',
     })
 
     await validateBurn({
@@ -623,7 +620,6 @@ describe('RangePool Tests', function () {
       tokenAmount: BigNumber.from('4901161634764542438934'),
       liquidityIncrease: BigNumber.from('4901161634764542438934'),
       revertMessage: '',
-      collectRevertMessage: 'RangeErc20NotFound()'
     })
 
     await validateBurn({
@@ -694,7 +690,6 @@ describe('RangePool Tests', function () {
       tokenAmount: BigNumber.from('12891478442546858467877'),
       liquidityIncrease: BigNumber.from('12891478442546858467877'),
       revertMessage: '',
-      collectRevertMessage: 'RangeErc20NotFound()'
     })
 
     await validateBurn({

@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./utils/RangePoolErrors.sol";
 import "./interfaces/IRangePoolERC1155.sol";
 import "./libraries/Tokens.sol";
+import 'hardhat/console.sol';
 
 contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -56,7 +57,7 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
     }
 
     modifier checkERC1155Support(address recipient) {
-        if (!_verify1155Support(recipient)) revert ERC1155NotSupported();
+        if (!_verifyERC1155Support(recipient)) revert ERC1155NotSupported();
         _;
     }
 
@@ -257,7 +258,7 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
     /// @notice Return if the `_target` contract supports ERC-1155 interface
     /// @param _target The address of the contract
     /// @return supported Whether the contract is supported (true) or not (false)
-    function _verify1155Support(address _target) private view returns (bool supported) {
+    function _verifyERC1155Support(address _target) private view returns (bool supported) {
         if (_target.code.length == 0) return true;
         bytes memory encodedParams = abi.encodeWithSelector(
             IERC165.supportsInterface.selector,

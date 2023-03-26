@@ -124,7 +124,6 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
         poolState = pool;   
     }
 
-    //TODO: support both calldata and memory params
     function burn(BurnParams memory params) external lock {
         PoolState memory pool = poolState;
         Position memory position = positions[params.fungible ? address(this) 
