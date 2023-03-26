@@ -13,6 +13,13 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
 
     address immutable public pool;
 
+    error OwnerOnly();
+
+    modifier onlyOwner() {
+        if (address(pool) != msg.sender) revert OwnerOnly();
+        _;
+    }
+
     constructor(
         address _pool
     ) {
@@ -71,11 +78,10 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         return _tokenBalances[_id][_account];
     }
 
-    function balanceOfBatch(address[] calldata _accounts, uint256[] calldata _ids)
-        public
-        view
-        virtual
-        override
+    function balanceOfBatch(
+        address[] calldata _accounts,
+        uint256[] calldata _ids
+    ) public view virtual override
         checkLength(_accounts.length, _ids.length)
         returns (uint256[] memory batchBalances)
     {
@@ -166,6 +172,14 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         _add(_to, _id, _toBalance, _amount);
     }
 
+    function mint(
+        address _account,
+        uint256 _id,
+        uint256 _amount
+    ) external onlyOwner() {
+        _mint(_account, _id, _amount);
+    }
+
     function _mint(
         address _account,
         uint256 _id,
@@ -185,6 +199,14 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         _add(_account, _id, _accountBalance, _amount);
 
         emit TransferSingle(msg.sender, address(0), _account, _id, _amount);
+    }
+
+    function burn(
+        address _account,
+        uint256 _id,
+        uint256 _amount
+    ) external onlyOwner() {
+        _burn(_account, _id, _amount);
     }
 
     function _burn(
@@ -256,7 +278,7 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
 
     /// @notice Return if the `_target` contract supports ERC-1155 interface
     /// @param _target The address of the contract
-    /// @return supported Whether the contract is supported (1) or not (any other value)
+    /// @return supported Whether the contract is supported (true) or not (false)
     function _verify1155Support(address _target) private view returns (bool supported) {
         if (_target.code.length == 0) return true;
 

@@ -53,6 +53,18 @@ interface IRangePoolERC1155 is IERC165 {
 
     function setApprovalForAll(address sender, bool approved) external;
 
+    function mint(
+        address account,
+        uint256 id,
+        uint256 amount
+    ) external;
+
+    function burn(
+        address account,
+        uint256 id,
+        uint256 amount
+    ) external;
+
     function safeTransferFrom(
         address from,
         address to,

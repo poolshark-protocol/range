@@ -84,7 +84,6 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                 )
         );
         uint256 liquidityMinted;
-        //TODO: check fees and modify liquidity accordingly
         (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
         _transferIn(token0, params.amount0);
         _transferIn(token1, params.amount1);
@@ -119,18 +118,10 @@ contract RangePool is RangePoolStorage, RangePoolErrors, SafeTransfers {
                 tokens
             )
         );
-        //TODO: mint in Positions.add()
-        // if (params.fungible) {
-        //     positionToken.mint(
-        //         params.to,
-        //         liquidityMinted
-        //     );
-        // }
         positions[params.fungible ? address(this) : params.to][params.lower][
             params.upper
         ] = position;
-        poolState = pool;
-        
+        poolState = pool;   
     }
 
     //TODO: support both calldata and memory params

@@ -57,11 +57,8 @@ library Positions {
     );
 
     event MintFungible(
-        uint256 indexed tokenId,
-        address indexed recipient,
         int24 lower,
         int24 upper,
-        uint128 tokenMinted,
         uint128 liquidityMinted,
         uint128 amount0,
         uint128 amount1
@@ -164,12 +161,10 @@ library Positions {
                          (uint256(position.liquidity - addParams.amount) + cache.liquidityOnPosition));
                 } /// @dev - if there are fees on the position we mint less positionToken
             }
+            addParams.tokens.mint(params.to, cache.tokenId, addParams.amount);
             emit MintFungible(
-                cache.tokenId,
-                params.to, 
                 params.lower,
                 params.upper,
-                addParams.amount,
                 addParams.liquidity,
                 params.amount0,
                 params.amount1
@@ -340,7 +335,7 @@ library Positions {
         IRangePoolStructs.Position memory position,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.UpdateParams memory params
-    ) external view returns (
+    ) external returns (
         IRangePoolStructs.Position memory, 
         uint128, 
         uint128
@@ -348,6 +343,10 @@ library Positions {
         if (params.fungible) {
             uint256 totalSupply = Tokens.totalSupply(params.tokens, params.lower, params.upper);
             if (totalSupply == 0) return (position, 0, 0);
+            if (params.amount > 0) {
+                uint256 tokenId = Tokens.id(params.lower, params.upper);
+                params.tokens.burn(msg.sender, tokenId, params.amount);
+            }
         }
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
             ticks,
