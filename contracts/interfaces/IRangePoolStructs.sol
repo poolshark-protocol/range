@@ -7,11 +7,13 @@ interface IRangePoolStructs {
     struct PoolState {
         uint8 unlocked;
         int24  nearestTick;
-        uint32 observationIndex;
+        uint32  twapSampleIndex;
+        uint16  twapSampleLength;
+        uint16  twapSampleLengthNew;
+        uint160 secondsGrowthGlobal; /// @dev Multiplied by 2^128.
+        uint160 price; /// @dev Starting price current
         uint128 liquidity; /// @dev Liquidity currently active
         uint128 liquidityGlobal; /// @dev Globally deposited liquidity
-        uint160 price; /// @dev Starting price current
-        uint160 secondsGrowthGlobal; /// @dev Multiplied by 2^128.
         uint216 feeGrowthGlobal0;
         uint216 feeGrowthGlobal1;
         ProtocolFees protocolFees;
@@ -43,10 +45,11 @@ interface IRangePoolStructs {
         uint256 feeGrowthInside1Last;
     }
 
-    struct Observation {
-        uint32 blockTimestamp;
-        int56 tickSeconds;
-        uint160 secondsPerLiquidityUnit;
+    struct TwapSample {
+        uint32  blockTimestamp;
+        //TODO: could be int64
+        int56   tickSecondsSum;
+        uint160 secondsPerLiquiditySum;
     }
 
     struct ProtocolFees {
