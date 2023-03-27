@@ -1,56 +1,48 @@
-import { ContractDeploymentsKey } from '../util/files/contractDeploymentsJson'
+import { ContractDeploymentsKey } from "../util/files/contractDeploymentsJson";
 
 export const CONTRACT_DEPLOYMENT_KEYS: ContractDeploymentsKey[] = [
     {
-        networkName: 'goerli',
-        objectName: 'tokenA'
-    },
-    {
-        networkName: 'goerli',
-        objectName: 'tokenB'
-    },
-    {
-        networkName: 'goerli',
+        networkName: 'arb_goerli',
         objectName: 'token0'
     },
     {
-        networkName: 'goerli',
-        objectName: 'tokenA'
+        networkName: 'arb_goerli',
+        objectName: 'token1'
     },
     {
-        networkName: 'goerli',
-        objectName: 'tokenB'
-    },
-    {
-        networkName: 'goerli',
+        networkName: 'arb_goerli',
         objectName: 'tickMathLib'
     },
     {
-        networkName: 'goerli',
+        networkName: 'arb_goerli',
         objectName: 'precisionMathLib'
     },
     {
-        networkName: 'goerli',
+        networkName: 'arb_goerli',
         objectName: 'dydxMathLib'
     },
     {
-        networkName: 'goerli',
+        networkName: 'arb_goerli',
+        objectName: 'tickMapLib'
+    },
+    {
+        networkName: 'arb_goerli',
         objectName: 'ticksLib'
     },
     {
-        networkName: 'goerli',
+        networkName: 'arb_goerli',
         objectName: 'positionsLib'
     },
     {
-        networkName: 'goerli',
-        objectName: 'rangePoolAdmin'
+        networkName: 'arb_goerli',
+        objectName: 'rangePoolManager'
     },
     {
-        networkName: 'goerli',
+        networkName: 'arb_goerli',
         objectName: 'rangePoolFactory'
     },
     {
-        networkName: 'goerli',
+        networkName: 'arb_goerli',
         objectName: 'rangePool'
     },
 ];
