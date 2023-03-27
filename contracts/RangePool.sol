@@ -37,6 +37,9 @@ contract RangePool is
         uint160 _startPrice,
         IRangePoolManager _owner
     ) {
+        // validate start price
+        TickMath.validatePrice(_startPrice);
+
         // set addresses
         _factory = msg.sender;
         token0 = _token0;

@@ -306,7 +306,7 @@ library Ticks {
         if(TickMap.set(tickMap, lower)) {
             ticks[lower].liquidityDelta += int128(amount);
         } else {
-            if (lower <= state.nearestTick || lower <= tickAtPrice) {
+            if (lower <= tickAtPrice) {
                 ticks[lower] = IRangePoolStructs.Tick(
                     int128(amount),
                     state.feeGrowthGlobal0,
@@ -326,7 +326,7 @@ library Ticks {
         if(TickMap.set(tickMap, upper)) {
             ticks[upper].liquidityDelta -= int128(amount);
         } else {
-            if (upper <= state.nearestTick || upper <= tickAtPrice) {
+            if (upper <= tickAtPrice) {
                 ticks[upper] = IRangePoolStructs.Tick(
                     -int128(amount),
                     state.feeGrowthGlobal0,
@@ -342,9 +342,7 @@ library Ticks {
                 );
             }
         }
-
         state.liquidityGlobal += amount;
-        // get tick at current price
         
         if (state.nearestTick < upper && upper <= tickAtPrice) {
             state.nearestTick = upper;
@@ -372,6 +370,7 @@ library Ticks {
             revert WrongTickUpperRange();
         }
         //check for amount to overflow liquidity delta & global
+        if (amount > uint128(type(int128).max)) revert LiquidityUnderflow();
         if (amount > state.liquidityGlobal) revert LiquidityUnderflow();
         if (state.nearestTick >= lower && state.nearestTick < upper) {
             state.liquidity -= amount;
