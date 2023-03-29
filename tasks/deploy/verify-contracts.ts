@@ -4,11 +4,11 @@ import { DEPLOY_RANGEPOOLS, VERIFY_CONTRACTS } from '../constants/taskNames'
 import { VerifyContracts } from './utils/verifyContracts'
 
 class VerifyContractsTask {
-  public deployHedgePools: VerifyContracts
+  public deployRangePools: VerifyContracts
   public getBeforeEach: GetBeforeEach
 
   constructor() {
-    this.deployHedgePools = new VerifyContracts()
+    this.deployRangePools = new VerifyContracts()
     this.getBeforeEach = new GetBeforeEach()
     hre.props = this.getBeforeEach.retrieveProps()
   }
@@ -17,15 +17,15 @@ class VerifyContractsTask {
 task(VERIFY_CONTRACTS)
   .setDescription('Verifies all contracts')
   .setAction(async function ({ ethers }) {
-    const deployHedgePools: VerifyContractsTask = new VerifyContractsTask()
+    const deployRangePools: VerifyContractsTask = new VerifyContractsTask()
 
-    if (!deployHedgePools.deployHedgePools.canDeploy()) return
+    if (!deployRangePools.deployRangePools.canDeploy()) return
 
-    await deployHedgePools.deployHedgePools.preDeployment()
+    await deployRangePools.deployRangePools.preDeployment()
 
-    await deployHedgePools.deployHedgePools.runDeployment()
+    await deployRangePools.deployRangePools.runDeployment()
 
-    await deployHedgePools.deployHedgePools.postDeployment()
+    await deployRangePools.deployRangePools.postDeployment()
 
     console.log('Contract verification complete.\n')
   })

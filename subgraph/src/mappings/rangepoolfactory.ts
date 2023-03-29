@@ -13,11 +13,11 @@ import { RangePoolCreated } from '../../generated/RangePoolFactory/RangePoolFact
 import { sqrtPriceX96ToTokenPrices } from './utils/price'
 import { ONE_BI } from '../constants/constants'
 
-export function handlePoolCreated(event: RangePoolCreated): void {
+export function handleRangePoolCreated(event: RangePoolCreated): void {
     let loadBasePrice = safeLoadBasePrice('eth')
     let loadFeeTier = safeLoadFeeTier(BigInt.fromI32(event.params.fee))
     let loadRangePool = safeLoadRangePool(event.params.pool.toHexString())
-    let loadRangePoolFactory = safeLoadRangePoolFactory(event.transaction.from.toHex())
+    let loadRangePoolFactory = safeLoadRangePoolFactory(event.address.toHex())
     let loadToken0 = safeLoadToken(event.params.token0.toHexString())
     let loadToken1 = safeLoadToken(event.params.token1.toHexString())
     let loadMinTick = safeLoadTick(event.params.pool.toHexString(), BigInt.fromI32(887272))
@@ -31,6 +31,8 @@ export function handlePoolCreated(event: RangePoolCreated): void {
     let factory = loadRangePoolFactory.entity
     let minTick = loadMinTick.entity
     let maxTick = loadMaxTick.entity
+
+    log.info("factory address: {}", [factory.id])
 
     if (!loadRangePoolFactory.exists) {
         //something is wrong
@@ -68,8 +70,12 @@ export function handlePoolCreated(event: RangePoolCreated): void {
     pool.nearestTick = minTick.index
     let prices = sqrtPriceX96ToTokenPrices(pool.price, token0, token1)
     pool.price0 = prices[0]
-    pool.price1 = prices[1]
+    pool.price1 = BIGDECIMAL_ZERO
     pool.factory = factory.id
+    pool.createdAtBlockNumber = event.block.number
+    pool.createdAtTimestamp   = event.block.timestamp
+    pool.updatedAtBlockNumber = event.block.number
+    pool.updatedAtTimestamp   = event.block.timestamp
 
     factory.poolCount = factory.poolCount.plus(ONE_BI)
     factory.txnCount  = factory.txnCount.plus(ONE_BI)

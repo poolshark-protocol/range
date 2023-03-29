@@ -207,7 +207,6 @@ export class InitialSetup {
         '10', '500', '177159557114295710296101716160'
       ]
     )
-
     return hre.nonce
   }
 
@@ -239,11 +238,34 @@ export class InitialSetup {
         'readRangePoolSetup'
       )
     ).contractAddress
+    const rangePoolFactoryAddress = (
+      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+        {
+          networkName: hre.network.name,
+          objectName: 'rangePoolFactory',
+        },
+        'readRangePoolSetup'
+      )
+    ).contractAddress
 
     hre.props.token0 = await hre.ethers.getContractAt('Token20', token0Address)
     hre.props.token1 = await hre.ethers.getContractAt('Token20', token1Address)
     hre.props.rangePool = await hre.ethers.getContractAt('RangePool', rangePoolAddress)
+    hre.props.rangePoolFactory = await hre.ethers.getContractAt('RangePoolFactory', rangePoolFactoryAddress)
 
     return nonce
+  }
+
+  public async createRangePool(tokenA: string, tokenB: string): Promise<void> {
+
+    const createPoolTxn = await hre.props.rangePoolFactory
+      .connect(hre.props.admin)
+      .createRangePool(
+        hre.props.token0.address,
+        hre.props.token1.address,
+        '3000',
+        '177159557114295710296101716160'
+    )
+    hre.nonce += 1
   }
 }

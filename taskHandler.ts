@@ -1,5 +1,6 @@
 import { SUPPORTED_NETWORKS } from './scripts/constants/supportedNetworks'
 import {
+  DEPLOY_RANGEPOOL,
   DEPLOY_RANGEPOOLS,
   MINT_POSITION,
   MINT_TOKENS,
@@ -19,6 +20,9 @@ function handleRangePoolTasks() {
   // }
   if (process.argv.includes(DEPLOY_RANGEPOOLS)) {
     import('./tasks/deploy/deploy-rangepools')
+    logTask(DEPLOY_RANGEPOOLS)
+  } else if (process.argv.includes(DEPLOY_RANGEPOOL)) {
+    import('./tasks/deploy/deploy-rangepool')
     logTask(DEPLOY_RANGEPOOLS)
   } else if (process.argv.includes(MINT_TOKENS)) {
     import('./tasks/deploy/mint-tokens')
