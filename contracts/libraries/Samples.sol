@@ -7,7 +7,17 @@ import '../interfaces/IRangePoolStructs.sol';
 library Samples {
 
     error InvalidSampleLength();
+    error SampleArrayUninitialized();
     error SampleLengthNotAvailable();
+
+    event SampleRecorded(
+        int56 tickSecondsAccum,
+        uint160 secondsPerLiquidityAccum
+    );
+
+    event SampleLengthIncreased(
+        uint16 sampleLengthNext
+    );
 
     function initialize(
         IRangePoolStructs.Sample[65535] storage samples,
@@ -53,6 +63,27 @@ library Samples {
         }
         sampleIndexNew = (state.sampleIndex + 1) % sampleLengthNew;
         samples[sampleIndexNew] = _build(newSample, uint32(block.timestamp), tick, state.liquidity);
+
+        emit SampleRecorded(
+            samples[sampleIndexNew].tickSecondsAccum,
+            samples[sampleIndexNew].secondsPerLiquidityAccum
+        );
+    }
+
+    function expand(
+        IRangePoolStructs.Sample[65535] storage samples,
+        IRangePoolStructs.PoolState memory state,
+        uint16 sampleLengthNext
+    ) external returns (
+        IRangePoolStructs.PoolState memory
+    ) {
+        if (state.sampleLength == 0) revert SampleArrayUninitialized();
+        for (uint16 i = state.sampleLengthNext; i < sampleLengthNext; i++) {
+            samples[i].tickSecondsAccum = 1;
+        }
+        state.sampleLengthNext = sampleLengthNext;
+        emit SampleLengthIncreased(sampleLengthNext);
+        return state;
     }
 
     function sample(

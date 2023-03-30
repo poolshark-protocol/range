@@ -236,6 +236,16 @@ contract RangePool is
         poolState = pool;
     }
 
+    function increaseSampleLength(
+        uint16 sampleLengthNext
+    ) external {
+        poolState = Samples.expand(
+            samples,
+            poolState,
+            sampleLengthNext
+        );
+    }
+
     function quote(
         bool zeroForOne,
         uint256 amountIn,

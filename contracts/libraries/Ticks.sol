@@ -73,16 +73,6 @@ library Ticks {
             IRangePoolStructs.SwapCache memory
         )
     {
-        // write an oracle entry before swap
-        (
-            pool.sampleIndex,
-            pool.sampleLength
-        ) = Samples.save(
-            samples,
-            pool,
-            TickMath.getTickAtSqrtRatio(pool.price)
-        );
-
         IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
             cross: true,
             crossTick: zeroForOne ? pool.nearestTick : TickMap.next(tickMap, pool.nearestTick),
@@ -106,7 +96,15 @@ library Ticks {
             }
         }
         (pool, cache) = FeeMath.calculate(pool, cache, zeroForOne);
-        
+        /// @dev - write oracle entry after start-of-block arbitrage
+        (
+            pool.sampleIndex,
+            pool.sampleLength
+        ) = Samples.save(
+            samples,
+            pool,
+            TickMath.getTickAtSqrtRatio(pool.price)
+        );
         emit Swap(
             recipient,
             zeroForOne,

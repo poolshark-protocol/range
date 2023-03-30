@@ -411,7 +411,13 @@ library Positions {
         IRangePoolStructs.PoolState memory state,
         int24 lower,
         int24 upper
-    ) public pure returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
+    ) internal pure returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
+
+        // (
+        //     ,,,,,,,,,
+        //     uint256 _feeGrowthGlobal00,
+        //     uint256 _feeGrowthGlobal01,
+        // ) = IRangePool(address(this)).poolState();
         int24 current = state.nearestTick;
 
         uint256 _feeGrowthGlobal0 = state.feeGrowthGlobal0;
@@ -435,6 +441,57 @@ library Positions {
         } else {
             feeGrowthAbove0 = _feeGrowthGlobal0 - tickUpper.feeGrowthOutside0;
             feeGrowthAbove1 = _feeGrowthGlobal1 - tickUpper.feeGrowthOutside1;
+        }
+        feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
+        feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
+    }
+
+    function rangeFeeGrowth(
+        address pool,
+        int24 lower,
+        int24 upper
+    ) external view returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
+        (
+            ,
+            int24 current,
+            ,,,,,,,
+            uint256 _feeGrowthGlobal0,
+            uint256 _feeGrowthGlobal1,
+        ) = IRangePool(pool).poolState();
+
+        (
+            ,
+            uint216 tickLowerFeeGrowthOutside0,
+            uint216 tickLowerFeeGrowthOutside1,
+        )
+            = IRangePool(pool).ticks(lower);
+
+        (
+            ,
+            uint216 tickUpperFeeGrowthOutside0,
+            uint216 tickUpperFeeGrowthOutside1,
+        )
+            = IRangePool(pool).ticks(upper);
+
+        uint256 feeGrowthBelow0;
+        uint256 feeGrowthBelow1;
+        uint256 feeGrowthAbove0;
+        uint256 feeGrowthAbove1;
+
+        if (lower <= current) {
+            feeGrowthBelow0 = tickLowerFeeGrowthOutside0;
+            feeGrowthBelow1 = tickLowerFeeGrowthOutside1;
+        } else {
+            feeGrowthBelow0 = _feeGrowthGlobal0 - tickLowerFeeGrowthOutside0;
+            feeGrowthBelow1 = _feeGrowthGlobal1 - tickLowerFeeGrowthOutside1;
+        }
+
+        if (current < upper) {
+            feeGrowthAbove0 = tickUpperFeeGrowthOutside0;
+            feeGrowthAbove1 = tickUpperFeeGrowthOutside1;
+        } else {
+            feeGrowthAbove0 = _feeGrowthGlobal0 - tickUpperFeeGrowthOutside0;
+            feeGrowthAbove1 = _feeGrowthGlobal1 - tickUpperFeeGrowthOutside1;
         }
         feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
         feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
