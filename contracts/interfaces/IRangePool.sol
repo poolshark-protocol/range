@@ -34,4 +34,10 @@ interface IRangePool is IRangePoolStructs {
     function owner() external view returns (
         IRangePoolManager
     );
+
+    function samples(uint256) external view returns (
+        uint32,
+        int56,
+        uint160
+    );
 }

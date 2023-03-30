@@ -10,6 +10,7 @@ import './Positions.sol';
 import './PrecisionMath.sol';
 import './TickMath.sol';
 import './TickMap.sol';
+import './Samples.sol';
 
 /// @notice Tick management library
 library Ticks {
@@ -280,6 +281,7 @@ library Ticks {
     //TODO: pass in lowerTick and upperTick
     function insert(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.Sample[65535] storage samples,
         IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
         int24 lower,
@@ -302,6 +304,13 @@ library Ticks {
 
         // get tick at price
         int24 tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
+
+        // write an oracle entry
+        (state.sampleIndex, state.sampleLength) = Samples.save(
+            samples,
+            state,
+            tickAtPrice
+        );
 
         if(TickMap.set(tickMap, lower)) {
             ticks[lower].liquidityDelta += int128(amount);

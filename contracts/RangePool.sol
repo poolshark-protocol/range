@@ -5,6 +5,7 @@ import './base/storage/RangePoolStorage.sol';
 import './interfaces/IRangePool.sol';
 import './RangePoolERC1155.sol';
 import './libraries/Positions.sol';
+import './libraries/Samples.sol';
 import './libraries/Ticks.sol';
 import './libraries/Tokens.sol';
 import './utils/RangePoolErrors.sol';
@@ -58,8 +59,9 @@ contract RangePool is
 
         // create min and max ticks
         Ticks.initialize(tickMap);
-
-        // initialize pool state
+        // create first sample
+        Samples.initialize(samples);
+        // save pool state
         poolState = pool;
     }
 
@@ -88,6 +90,7 @@ contract RangePool is
             (position, pool) = Positions.compound(
                 position,
                 ticks,
+                samples,
                 tickMap,
                 pool,
                 CompoundParams(
@@ -103,10 +106,11 @@ contract RangePool is
         (pool, position, liquidityMinted) = Positions.add(
             position,
             ticks,
+            samples,
             tickMap,
-            pool, 
-            params, 
             AddParams(
+                pool, 
+                params,
                 uint128(liquidityMinted),
                 uint128(liquidityMinted)
             )
@@ -167,6 +171,7 @@ contract RangePool is
             (position, pool) = Positions.compound(
                 position,
                 ticks,
+                samples,
                 tickMap,
                 pool,
                 CompoundParams(
