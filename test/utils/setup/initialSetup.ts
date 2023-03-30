@@ -12,6 +12,7 @@ import {
   Positions__factory,
   RangePoolManager__factory,
   TickMap__factory,
+  Samples__factory,
 } from '../../../typechain'
 
 export class InitialSetup {
@@ -116,6 +117,14 @@ export class InitialSetup {
     await this.deployAssist.deployContractWithRetry(
       network,
       // @ts-ignore
+      Samples__factory,
+      'samplesLib',
+      []
+    )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
       Ticks__factory,
       'ticksLib',
       [],
@@ -125,6 +134,7 @@ export class InitialSetup {
           hre.props.precisionMathLib.address,
         'contracts/libraries/TickMath.sol:TickMath': hre.props.tickMathLib.address,
         'contracts/libraries/TickMap.sol:TickMap': hre.props.tickMapLib.address,
+        'contracts/libraries/Samples.sol:Samples': hre.props.samplesLib.address
       }
     )
 
@@ -165,7 +175,8 @@ export class InitialSetup {
         'contracts/libraries/PrecisionMath.sol:PrecisionMath':
           hre.props.precisionMathLib.address,
         'contracts/libraries/TickMath.sol:TickMath': hre.props.tickMathLib.address,
-        'contracts/libraries/DyDxMath.sol:DyDxMath': hre.props.dydxMathLib.address
+        'contracts/libraries/DyDxMath.sol:DyDxMath': hre.props.dydxMathLib.address,
+        'contracts/libraries/Samples.sol:Samples': hre.props.samplesLib.address
       }
     )
     const setFactoryTxn = await hre.props.rangePoolManager

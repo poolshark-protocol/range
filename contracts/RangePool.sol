@@ -5,7 +5,6 @@ import './base/storage/RangePoolStorage.sol';
 import './interfaces/IRangePool.sol';
 import './RangePoolERC1155.sol';
 import './libraries/Positions.sol';
-import './libraries/Samples.sol';
 import './libraries/Ticks.sol';
 import './libraries/Tokens.sol';
 import './utils/RangePoolErrors.sol';
@@ -57,10 +56,13 @@ contract RangePool is
         swapFee = _swapFee;
         tickSpacing = _tickSpacing;
 
-        // create min and max ticks
-        Ticks.initialize(tickMap);
-        // create first sample
-        Samples.initialize(samples);
+        // create ticks and sample
+        pool = Ticks.initialize(
+            tickMap,
+            samples,
+            pool
+        );
+
         // save pool state
         poolState = pool;
     }
@@ -147,6 +149,7 @@ contract RangePool is
         (pool, position, amount0, amount1) = Positions.remove(
             position,
             ticks,
+            samples,
             tickMap,
             pool,
             params,
@@ -188,7 +191,6 @@ contract RangePool is
         positions[params.fungible ? address(this) : msg.sender][
             params.lower
         ][params.upper] = position;
-        // emit Burn(params.fungible ? address(this) : msg.sender, params.lower, params.upper, params.amount);
     }
 
     //TODO: block the swap if there is an overflow on fee growth
@@ -209,6 +211,7 @@ contract RangePool is
         SwapCache memory cache;
         (pool, cache) = Ticks.swap(
             ticks,
+            samples,
             tickMap,
             recipient,
             zeroForOne,

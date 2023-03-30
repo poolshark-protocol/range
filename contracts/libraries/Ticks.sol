@@ -42,14 +42,24 @@ library Ticks {
     using Ticks for mapping(int24 => IRangePoolStructs.Tick);
 
     function initialize(
-        IRangePoolStructs.TickMap storage tickMap
-    ) external {
+        IRangePoolStructs.TickMap storage tickMap,
+        IRangePoolStructs.Sample[65535] storage samples,
+        IRangePoolStructs.PoolState memory state
+    ) external returns (
+        IRangePoolStructs.PoolState memory
+    )    
+    {
         TickMap.set(tickMap, TickMath.MIN_TICK);
         TickMap.set(tickMap, TickMath.MAX_TICK);
+        return Samples.initialize(
+            samples,
+            state
+        );
     }
 
     function swap(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.Sample[65535] storage samples,
         IRangePoolStructs.TickMap storage tickMap,
         address recipient,
         bool zeroForOne,
@@ -63,6 +73,16 @@ library Ticks {
             IRangePoolStructs.SwapCache memory
         )
     {
+        // write an oracle entry before swap
+        (
+            pool.sampleIndex,
+            pool.sampleLength
+        ) = Samples.save(
+            samples,
+            pool,
+            TickMath.getTickAtSqrtRatio(pool.price)
+        );
+
         IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
             cross: true,
             crossTick: zeroForOne ? pool.nearestTick : TickMap.next(tickMap, pool.nearestTick),
@@ -86,6 +106,7 @@ library Ticks {
             }
         }
         (pool, cache) = FeeMath.calculate(pool, cache, zeroForOne);
+        
         emit Swap(
             recipient,
             zeroForOne,
@@ -363,6 +384,7 @@ library Ticks {
 
     function remove(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.Sample[65535] storage samples,
         IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
         int24 lower,
@@ -381,6 +403,17 @@ library Ticks {
         //check for amount to overflow liquidity delta & global
         if (amount > uint128(type(int128).max)) revert LiquidityUnderflow();
         if (amount > state.liquidityGlobal) revert LiquidityUnderflow();
+
+        // get tick at price
+        int24 tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
+
+        // write an oracle entry
+        (state.sampleIndex, state.sampleLength) = Samples.save(
+            samples,
+            state,
+            tickAtPrice
+        );
+
         if (state.nearestTick >= lower && state.nearestTick < upper) {
             state.liquidity -= amount;
         }

@@ -185,6 +185,7 @@ library Positions {
     function remove(
         IRangePoolStructs.Position memory position,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.Sample[65535] storage samples,
         IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.BurnParams memory params,
@@ -249,6 +250,7 @@ library Positions {
         }
         state = Ticks.remove(
             ticks,
+            samples,
             tickMap,
             state, 
             params.lower,

@@ -9,20 +9,22 @@ import {
   TickMath,
   Ticks,
   Token20,
-  RangePoolAdmin,
+  RangePoolManager,
   TickMap,
+  Samples,
 } from '../../../typechain'
 import { TwapOracle } from '../../../typechain/TwapOracle'
 import { InitialSetup } from './initialSetup'
 
 export interface BeforeEachProps {
   rangePool: RangePool
-  rangePoolManager: RangePoolAdmin
+  rangePoolManager: RangePoolManager
   rangePoolFactory: RangePoolFactory
   tickMathLib: TickMath
   tickMapLib: TickMap
   dydxMathLib: DyDxMath
   precisionMathLib: PrecisionMath
+  samplesLib: Samples
   ticksLib: Ticks
   twapOracleLib: TwapOracle
   positionsLib: Positions
@@ -60,12 +62,13 @@ export class GetBeforeEach {
 
   public retrieveProps(): BeforeEachProps {
     let rangePool: RangePool
-    let rangePoolManager: RangePoolAdmin
+    let rangePoolManager: RangePoolManager
     let rangePoolFactory: RangePoolFactory
     let tickMathLib: TickMath
     let tickMapLib: TickMap
     let dydxMathLib: DyDxMath
     let precisionMathLib: PrecisionMath
+    let samplesLib: Samples
     let ticksLib: Ticks
     let twapOracleLib: TwapOracle
     let positionsLib: Positions
@@ -87,6 +90,7 @@ export class GetBeforeEach {
       tickMapLib,
       dydxMathLib,
       precisionMathLib,
+      samplesLib,
       ticksLib,
       twapOracleLib,
       positionsLib,

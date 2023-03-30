@@ -10,10 +10,10 @@ library Samples {
     error SampleLengthNotAvailable();
 
     function initialize(
-        IRangePoolStructs.Sample[65535] storage samples
+        IRangePoolStructs.Sample[65535] storage samples,
+        IRangePoolStructs.PoolState memory state
     ) external returns (
-        uint16 sampleLength,
-        uint16 sampleLengthNext
+        IRangePoolStructs.PoolState memory
     )
     {
         samples[0] = IRangePoolStructs.Sample({
@@ -21,7 +21,11 @@ library Samples {
             tickSecondsAccum: 0,
             secondsPerLiquidityAccum: 0
         });
-        return (1, 5);
+
+        state.sampleLength = 1;
+        state.sampleLengthNext = 5;
+
+        return state;
         /// @dev - TWAP length of 5 is safer for oracle manipulation
     }
 
