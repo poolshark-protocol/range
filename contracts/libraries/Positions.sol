@@ -439,6 +439,7 @@ library Positions {
         int24 lower,
         int24 upper
     ) external view returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
+        Ticks.validate(lower, upper, IRangePool(pool).tickSpacing());
         (
             ,
             int24 currentTick,
@@ -522,6 +523,12 @@ library Positions {
             cache.secondsOutsideUpper
         )
             = IRangePool(pool).ticks(upper);
+
+        // ticks not initialized or range not crossed into
+        if (cache.secondsOutsideUpper == 0
+            && cache.secondsOutsideLower == 0){
+            return (0,0,0);
+        }
         
         cache.tick = TickMath.getTickAtSqrtRatio(cache.price);
 
@@ -561,8 +568,6 @@ library Positions {
             );
         }
     }
-
-    // range seconds inside
 
     function id(int24 lower, int24 upper) public pure returns (uint256) {
         return Tokens.id(lower, upper);
