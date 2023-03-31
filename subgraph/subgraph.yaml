@@ -6,11 +6,11 @@ schema:
 dataSources:
     - kind: ethereum/contract
       name: RangePoolFactory
-      network: goerli
+      network: arbitrum-goerli
       source:
-          address: '0xB01BF7d3C2E98179646856cfa8Eb006b4fb7dfBD'
+          address: '0x58d8235108E12E6B725A53B57CD0b00C5eDeE0da'
           abi: RangePoolFactory
-          startBlock: 8634500
+          startBlock: 13800000
       mapping:
           kind: ethereum/events
           apiVersion: 0.0.6
@@ -34,12 +34,12 @@ dataSources:
               - event: RangePoolCreated(indexed address,indexed address,indexed uint24,address,uint160)
                 handler: handleRangePoolCreated
     - kind: ethereum/contract
-      name: RangePoolAdmin
-      network: goerli
+      name: RangePoolManager
+      network: arbitrum-goerli
       source:
-          address: '0x64E88cD83b9E5142Dd8188C264b4f196434d2c5e'
-          abi: RangePoolAdmin
-          startBlock: 8634500
+          address: '0x33A28c58Ab9C2fc5Bc0eF84CA1b28763A904c4DD'
+          abi: RangePoolManager
+          startBlock: 13800000
       mapping:
           kind: ethereum/events
           apiVersion: 0.0.6
@@ -49,8 +49,8 @@ dataSources:
               - RangePool
               - RangePoolFactory
           abis:
-              - name: RangePoolAdmin
-                file: ./abis/RangePoolAdmin.json
+              - name: RangePoolManager
+                file: ./abis/RangePoolManager.json
           eventHandlers:
               - event: FeeTierEnabled(uint16,int24)
                 handler: handleFeeTierEnabled
@@ -67,7 +67,7 @@ dataSources:
 templates:
     - kind: ethereum/contract
       name: RangePoolTemplate
-      network: goerli
+      network: arbitrum-goerli
       source:
           abi: RangePool
       mapping:

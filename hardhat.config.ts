@@ -40,9 +40,17 @@ const config: HardhatUserConfig = {
             timeout: 60000,
             allowUnlimitedContractSize: true,
         },
+        arb_goerli: {
+            chainId: 421613,
+            gasPrice: 3000000000,
+            url: process.env.ARBITRUM_GOERLI_URL || '',
+            accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+            timeout: 60000,
+            allowUnlimitedContractSize: true,
+        },
     },
     etherscan: {
-        apiKey: process.env.ETHEREUM_API_KEY,
+        apiKey: process.env.ARBITRUM_GOERLI_API_KEY,
     },
 }
 

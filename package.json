@@ -1,5 +1,9 @@
 {
-  "name": "poolshark-protocol",
+  "//": [
+    "verify-pool followed with..",
+    "pool address and network"
+  ],
+  "name": "poolshark-range-pools",
   "scripts": {
     "format": "npx prettier --write .",
     "format:check": "npx prettier --check '*/**/*.{js,sol,json,md,ts}'",
@@ -8,6 +12,8 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "deploy": "npx hardhat deploy-rangepools",
+    "verify": "npx hardhat verify-contracts",
+    "verify-pool": "npx hardhat verify --constructor-args scripts/autogen/arguments.js --libraries scripts/autogen/libraries.js",
     "all": "yarn clean; yarn compile; yarn test; yarn deploy;"
   },
   "devDependencies": {

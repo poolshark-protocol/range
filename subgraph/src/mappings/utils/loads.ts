@@ -42,15 +42,15 @@ class LoadManagerRet {
 export function safeLoadManager(address: string): LoadManagerRet {
     let exists = true
 
-    let feeTierEntity = RangePoolManager.load(address)
+    let managerEntity = RangePoolManager.load(address)
 
-    if (!feeTierEntity) {
-        feeTierEntity = new RangePoolManager(address)
+    if (!managerEntity) {
+        managerEntity = new RangePoolManager(address)
         exists = false
     }
 
     return {
-        entity: feeTierEntity,
+        entity: managerEntity,
         exists: exists,
     }
 }

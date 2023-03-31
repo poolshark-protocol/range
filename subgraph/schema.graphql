@@ -26,6 +26,7 @@ type BasePrice @entity {
 type FeeTier @entity {
     # fee amount
     id: ID!
+    feeAmount: BigInt!
     tickSpacing: BigInt!
 
     # creation stats

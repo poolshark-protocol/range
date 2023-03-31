@@ -8,6 +8,7 @@ export const VERIFY_CONTRACTS = 'verify-contracts'
 
 /* Deploy */
 export const DEPLOY_RANGEPOOLS = 'deploy-rangepools'
+export const DEPLOY_RANGEPOOL = 'deploy-pool'
 
 /* Utils */
 export const MINT_TOKENS = 'mint-tokens'

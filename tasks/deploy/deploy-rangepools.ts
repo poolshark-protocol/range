@@ -15,7 +15,7 @@ class DeployRangePoolsTask {
 }
 
 task(DEPLOY_RANGEPOOLS)
-  .setDescription('Deploys Cover Pools')
+  .setDescription('Deploys Range Pools')
   .setAction(async function ({ ethers }) {
     const deployRangePools: DeployRangePoolsTask = new DeployRangePoolsTask()
 

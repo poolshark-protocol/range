@@ -1,19 +1,23 @@
 /* eslint-disable prefer-const */
 import { MINIMUM_ETH_LOCKED, ONE_BD, STABLE_COINS, STABLE_IS_TOKEN_0, STABLE_POOL_ADDRESS, WETH_ADDRESS, WHITELIST_TOKENS, ZERO_BD, ZERO_BI } from '../../constants/constants'
 import { BasePrice, RangePool, Token } from '../../../generated/schema'
-import { BigDecimal, BigInt } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
 import { exponentToBigDecimal, safeDiv } from './math'
+import { BIGDECIMAL_ZERO, BIGINT_ZERO } from './helpers'
 
-let Q192 = 2 ** 192
 export function sqrtPriceX96ToTokenPrices(sqrtPriceX96: BigInt, token0: Token, token1: Token): BigDecimal[] {
   let num = sqrtPriceX96.times(sqrtPriceX96).toBigDecimal()
-  let denom = BigDecimal.fromString(Q192.toString())
+  let Q192 = BigInt.fromI32(2).pow(192).toBigDecimal()
   let price1 = num
-    .div(denom)
+    .div(Q192)
     .times(exponentToBigDecimal(token0.decimals))
     .div(exponentToBigDecimal(token1.decimals))
 
-  let price0 = safeDiv(BigDecimal.fromString('1'), price1)
+  let price0 = BIGDECIMAL_ZERO
+  if (price1.gt(BIGDECIMAL_ZERO)) {
+    price0 = safeDiv(BigDecimal.fromString('1'), price1);
+  }
+  
   return [price0, price1]
 }
 

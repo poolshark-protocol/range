@@ -25,7 +25,7 @@ export class MintTokens {
     }
     hre.nonce = await getNonce(hre, hre.props.alice.address)
     console.log(this.nonce)
-    await this.initialSetup.readHedgePoolSetup(this.nonce)
+    await this.initialSetup.readRangePoolSetup(this.nonce)
     const token0Amount = ethers.utils.parseUnits('100', await hre.props.token0.decimals())
     const token1Amount = ethers.utils.parseUnits('100', await hre.props.token1.decimals())
     await mintSigners20(hre.props.token0, token0Amount.mul(10), [hre.props.alice])
