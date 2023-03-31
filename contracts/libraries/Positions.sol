@@ -438,7 +438,10 @@ library Positions {
         address pool,
         int24 lower,
         int24 upper
-    ) external view returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
+    ) external view returns (
+        uint256 feeGrowthInside0,
+        uint256 feeGrowthInside1
+    ) {
         Ticks.validate(lower, upper, IRangePool(pool).tickSpacing());
         (
             ,
@@ -462,6 +465,14 @@ library Positions {
             ,,
         )
             = IRangePool(pool).ticks(upper);
+
+        // ticks not initialized or range not crossed into
+        if (tickLowerFeeGrowthOutside0 == 0
+            && tickLowerFeeGrowthOutside1 == 0
+            && tickUpperFeeGrowthOutside0 == 0
+            && tickUpperFeeGrowthOutside0 == 0) {
+            return (0,0);
+        }
 
         uint256 feeGrowthBelow0;
         uint256 feeGrowthBelow1;
