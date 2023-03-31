@@ -32,8 +32,8 @@ library Samples {
             secondsPerLiquidityAccum: 0
         });
 
-        state.sampleLength = 1;
-        state.sampleLengthNext = 5;
+        state.samples.length = 1;
+        state.samples.lengthNext = 5;
 
         return state;
         /// @dev - TWAP length of 5 is safer for oracle manipulation
@@ -48,20 +48,20 @@ library Samples {
         uint16 sampleLengthNew
     ) {
         // grab the latest sample
-        IRangePoolStructs.Sample memory newSample = samples[state.sampleIndex];
+        IRangePoolStructs.Sample memory newSample = samples[state.samples.index];
 
         // early return if sample already created this block
         if (newSample.blockTimestamp == uint32(block.timestamp))
-            return (state.sampleIndex, state.sampleLength);
+            return (state.samples.index, state.samples.length);
 
-        if (state.sampleLengthNext > state.sampleLength
-            && state.sampleIndex == (state.sampleLength - 1)) {
+        if (state.samples.lengthNext > state.samples.length
+            && state.samples.index == (state.samples.length - 1)) {
             // increase sampleLengthNew if old size exceeded
-            sampleLengthNew = state.sampleLengthNext;
+            sampleLengthNew = state.samples.lengthNext;
         } else {
-            sampleLengthNew = state.sampleLength;
+            sampleLengthNew = state.samples.length;
         }
-        sampleIndexNew = (state.sampleIndex + 1) % sampleLengthNew;
+        sampleIndexNew = (state.samples.index + 1) % sampleLengthNew;
         samples[sampleIndexNew] = _build(newSample, uint32(block.timestamp), tick, state.liquidity);
 
         emit SampleRecorded(
@@ -77,11 +77,11 @@ library Samples {
     ) external returns (
         IRangePoolStructs.PoolState memory
     ) {
-        if (state.sampleLength == 0) revert SampleArrayUninitialized();
-        for (uint16 i = state.sampleLengthNext; i < sampleLengthNext; i++) {
+        if (state.samples.length == 0) revert SampleArrayUninitialized();
+        for (uint16 i = state.samples.lengthNext; i < sampleLengthNext; i++) {
             samples[i].tickSecondsAccum = 1;
         }
-        state.sampleLengthNext = sampleLengthNext;
+        state.samples.lengthNext = sampleLengthNext;
         emit SampleLengthIncreased(sampleLengthNext);
         return state;
     }
@@ -102,7 +102,7 @@ library Samples {
             (
                 tickSecondsAccum[i],
                 secondsPerLiquidityAccum[i]
-            ) = _getSample(
+            ) = get(
                 IRangePool(pool),
                 params,
                 params.secondsAgos[i]
@@ -129,11 +129,11 @@ library Samples {
         );
     }
 
-    function _getSample(
+    function get(
         IRangePool pool,
         IRangePoolStructs.SampleParams memory params,
         uint32 secondsAgo
-    ) internal view returns (
+    ) public view returns (
         int56   tickSecondsAccum,
         uint160 secondsPerLiquidityAccum
     ) {
@@ -246,25 +246,31 @@ library Samples {
         IRangePoolStructs.Sample memory firstSample,
         IRangePoolStructs.Sample memory secondSample
     ) {
-        uint256 l = (sampleIndex + 1) % sampleLength;
-        uint256 r = l + sampleLength - 1;             
-        uint256 i;
+        uint256 oldIndex = (sampleIndex + 1) % sampleLength;
+        uint256 newIndex = oldIndex + sampleLength - 1;             
+        uint256 index;
         while (true) {
-            i = (l + r) / 2;
+            // start in the middle
+            index = (oldIndex + newIndex) / 2;
 
-            firstSample = _poolSample(pool, i % sampleLength);
+            // get the first sample
+            firstSample = _poolSample(pool, index % sampleLength);
 
+            // if sample is uninitialized
             if (firstSample.blockTimestamp == 0) {
-                l = i + 1;
+                // skip this index and continue
+                oldIndex = index + 1;
                 continue;
             }
-            secondSample = _poolSample(pool, (i + 1) % sampleLength);
+            // else grab second sample
+            secondSample = _poolSample(pool, (index + 1) % sampleLength);
 
-            bool targetAtOrAfter = _lte(firstSample.blockTimestamp, targetTime);
-            if (targetAtOrAfter 
-                && _lte(targetTime, secondSample.blockTimestamp)) break;
-            if (!targetAtOrAfter) r = i - 1;
-            else l = i + 1;
+            // check if target time within first and second sample
+            bool targetAfterFirst   = _lte(firstSample.blockTimestamp, targetTime);
+            bool targetBeforeSecond = _lte(targetTime, secondSample.blockTimestamp);
+            if (targetAfterFirst && targetBeforeSecond) break;
+            if (!targetAfterFirst) newIndex = index - 1;
+            else oldIndex = index + 1;
         }
     }
 

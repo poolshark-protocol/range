@@ -254,6 +254,8 @@ contract RangePool is
         PoolState memory,
         SwapCache memory
     ) {
+        // figure out price limit for user
+        // quote with low price limit
         PoolState memory pool = poolState;
         SwapCache memory cache;
         // take fee from inputAmount

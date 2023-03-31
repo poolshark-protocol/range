@@ -5,25 +5,33 @@ import "./IRangePoolERC1155.sol";
 
 interface IRangePoolStructs {
     struct PoolState {
-        uint8 unlocked;
-        int24  nearestTick;
-        uint16  sampleIndex;
-        uint16  sampleLength;
-        uint16  sampleLengthNext;
-        uint160 secondsGrowthGlobal; /// @dev Multiplied by 2^128.
-        uint160 price; /// @dev Starting price current
-        uint128 liquidity; /// @dev Liquidity currently active
-        uint128 liquidityGlobal; /// @dev Globally deposited liquidity
-        uint216 feeGrowthGlobal0;
-        uint216 feeGrowthGlobal1;
+        uint8   unlocked;
+        int24   nearestTick;
+        uint32  secondsGrowthGlobal; /// @dev Multiplied by 2^128
+        int56   tickSecondsAccum;
+        uint160 secondsPerLiquidityAccum;
+        uint160 price;               /// @dev Starting price current
+        uint128 liquidity;           /// @dev Liquidity currently active
+        uint128 liquidityGlobal;     /// @dev Globally deposited liquidity
+        uint200 feeGrowthGlobal0;
+        uint200 feeGrowthGlobal1;
+        SampleState  samples;
         ProtocolFees protocolFees;
     }
 
+    struct SampleState {
+        uint16  index;
+        uint16  length;
+        uint16  lengthNext;
+    }
+
     struct Tick {
-        int128 liquidityDelta;
-        uint216 feeGrowthOutside0; // Per unit of liquidity.
-        uint216 feeGrowthOutside1;
-        uint160 secondsGrowthOutside;
+        int128  liquidityDelta;
+        uint200 feeGrowthOutside0; // Per unit of liquidity.
+        uint200 feeGrowthOutside1;
+        int56   tickSecondsAccumOutside;
+        uint160 secondsPerLiquidityAccumOutside;
+        uint32  secondsGrowthOutside;
     }
 
     struct TickMap {
@@ -131,6 +139,8 @@ interface IRangePoolStructs {
         uint256 input;
         uint256 output;
         uint256 amountIn;
+        int56   tickSecondsAccum;
+        uint160 secondsPerLiquidityAccum;
     }
 
     struct PositionCache {

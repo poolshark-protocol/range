@@ -80,8 +80,26 @@ library Ticks {
             protocolFee: 0,
             input: amountIn,
             output: 0,
-            amountIn: amountIn
+            amountIn: amountIn,
+            tickSecondsAccum: 0,
+            secondsPerLiquidityAccum: 0
         });
+        // grab latest sample and store in cache for _cross
+        (
+            cache.tickSecondsAccum,
+            cache.secondsPerLiquidityAccum
+        ) = Samples.get(
+            IRangePool(address(this)), 
+            IRangePoolStructs.SampleParams(
+                pool.samples.index,
+                pool.samples.length,
+                uint32(block.timestamp),
+                new uint32[](2),
+                pool.nearestTick,
+                pool.liquidity
+            ),
+            0
+        );
         cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
         while (cache.cross) {
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
@@ -96,10 +114,10 @@ library Ticks {
             }
         }
         (pool, cache) = FeeMath.calculate(pool, cache, zeroForOne);
-        /// @dev - write oracle entry after start-of-block arbitrage
+        /// @dev - write oracle entry after start of block
         (
-            pool.sampleIndex,
-            pool.sampleLength
+            pool.samples.index,
+            pool.samples.length
         ) = Samples.save(
             samples,
             pool,
@@ -138,7 +156,9 @@ library Ticks {
             protocolFee: 0,
             input: amountIn,
             output: 0,
-            amountIn: amountIn
+            amountIn: amountIn,
+            tickSecondsAccum: 0,
+            secondsPerLiquidityAccum: 0
         });
         cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
         while (cache.cross) {
@@ -246,15 +266,16 @@ library Ticks {
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
-        ticks[cache.crossTick].secondsGrowthOutside =
-            pool.secondsGrowthGlobal -
-            ticks[cache.crossTick].secondsGrowthOutside;
-        ticks[cache.crossTick].feeGrowthOutside0 =
-                pool.feeGrowthGlobal0 -
-                ticks[cache.crossTick].feeGrowthOutside0;
-        ticks[cache.crossTick].feeGrowthOutside1 =
-                pool.feeGrowthGlobal1 -
-                ticks[cache.crossTick].feeGrowthOutside1;
+        // observe most recent oracle update
+
+        IRangePoolStructs.Tick memory crossTick = ticks[cache.crossTick];
+        crossTick.feeGrowthOutside0       = pool.feeGrowthGlobal0 - crossTick.feeGrowthOutside0;
+        crossTick.feeGrowthOutside1       = pool.feeGrowthGlobal1 - crossTick.feeGrowthOutside1;
+        crossTick.tickSecondsAccumOutside = cache.tickSecondsAccum - crossTick.tickSecondsAccumOutside;
+        crossTick.secondsGrowthOutside    = uint32(block.timestamp) - crossTick.secondsGrowthOutside;
+        crossTick.secondsPerLiquidityAccumOutside = cache.secondsPerLiquidityAccum - crossTick.secondsPerLiquidityAccumOutside;
+        ticks[cache.crossTick] = crossTick;
+
         if (zeroForOne) {
             unchecked {
                 pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
@@ -325,7 +346,7 @@ library Ticks {
         int24 tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
 
         // write an oracle entry
-        (state.sampleIndex, state.sampleLength) = Samples.save(
+        (state.samples.index, state.samples.length) = Samples.save(
             samples,
             state,
             tickAtPrice
@@ -339,14 +360,14 @@ library Ticks {
                     int128(amount),
                     state.feeGrowthGlobal0,
                     state.feeGrowthGlobal1,
+                    state.tickSecondsAccum,
+                    state.secondsPerLiquidityAccum,
                     state.secondsGrowthGlobal
                 );
             } else {
                 ticks[lower] = IRangePoolStructs.Tick(
                     int128(amount),
-                    0,
-                    0,
-                    0
+                    0,0,0,0,0
                 );
             }
         }
@@ -359,14 +380,14 @@ library Ticks {
                     -int128(amount),
                     state.feeGrowthGlobal0,
                     state.feeGrowthGlobal1,
+                    state.tickSecondsAccum,
+                    state.secondsPerLiquidityAccum,
                     state.secondsGrowthGlobal
                 );
             } else {
                 ticks[upper] = IRangePoolStructs.Tick(
                     -int128(amount),
-                    0,
-                    0,
-                    0
+                    0,0,0,0,0
                 );
             }
         }
@@ -406,7 +427,7 @@ library Ticks {
         int24 tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
 
         // write an oracle entry
-        (state.sampleIndex, state.sampleLength) = Samples.save(
+        (state.samples.index, state.samples.length) = Samples.save(
             samples,
             state,
             tickAtPrice

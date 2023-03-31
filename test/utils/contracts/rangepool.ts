@@ -15,13 +15,27 @@ export interface Position {
 export interface PoolState {
   unlocked: number
   nearestTick: number
-  observationIndex: number
+  secondsGrowthGlobal: number
+  tickSecondsAccum: BigNumber
+  secondsPerLiquidityAccum: BigNumber
+  price: BigNumber
   liquidity: BigNumber
   liquidityGlobal: BigNumber
-  price: BigNumber
-  secondsGrowthGlobal: BigNumber
   feeGrowthGlobal0: BigNumber
   feeGrowthGlobal1: BigNumber
+  samples: SampleState
+  protocolFees: ProtocolFees
+}
+
+export interface SampleState {
+  index: number
+  length: number
+  lengthNext: number
+}
+
+export interface ProtocolFees {
+  token0: BigNumber
+  token1: BigNumber
 }
 
 export interface SwapCache {
@@ -38,7 +52,9 @@ export interface Tick {
   liquidityDelta: BigNumber
   feeGrowthOutside0: BigNumber
   feeGrowthOutside1: BigNumber
-  secondsGrowthOutside: BigNumber
+  tickSecondsAccumOutside: BigNumber
+  secondsPerLiquidityAccumOutside: BigNumber
+  secondsGrowthOutside: number
 }
 
 export interface ValidateMintParams {

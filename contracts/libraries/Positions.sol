@@ -413,11 +413,6 @@ library Positions {
         int24 upper
     ) internal pure returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
 
-        // (
-        //     ,,,,,,,,,
-        //     uint256 _feeGrowthGlobal00,
-        //     uint256 _feeGrowthGlobal01,
-        // ) = IRangePool(address(this)).poolState();
         int24 current = state.nearestTick;
 
         uint256 _feeGrowthGlobal0 = state.feeGrowthGlobal0;
@@ -454,22 +449,23 @@ library Positions {
         (
             ,
             int24 current,
-            ,,,,,,,
+            ,,,,,,
             uint256 _feeGrowthGlobal0,
             uint256 _feeGrowthGlobal1,
+            ,
         ) = IRangePool(pool).poolState();
-
         (
             ,
             uint216 tickLowerFeeGrowthOutside0,
             uint216 tickLowerFeeGrowthOutside1,
+            ,,
         )
             = IRangePool(pool).ticks(lower);
-
         (
             ,
             uint216 tickUpperFeeGrowthOutside0,
             uint216 tickUpperFeeGrowthOutside1,
+            ,,
         )
             = IRangePool(pool).ticks(upper);
 
@@ -496,6 +492,8 @@ library Positions {
         feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
         feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
     }
+
+    // range seconds inside
 
     function id(int24 lower, int24 upper) public pure returns (uint256) {
         return Tokens.id(lower, upper);

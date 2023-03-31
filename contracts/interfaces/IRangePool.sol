@@ -44,22 +44,24 @@ interface IRangePool is IRangePoolStructs {
     function poolState() external view returns (
         uint8,
         int24,
-        uint16,
-        uint16,
-        uint16,
+        uint32,
+        int56,
         uint160,
         uint160,
         uint128,
         uint128,
-        uint216,
-        uint216,
+        uint200,
+        uint200,
+        SampleState memory,
         ProtocolFees memory
     );
 
     function ticks(int24) external view returns (
         int128,
-        uint216,
-        uint216,
-        uint160
+        uint200,
+        uint200,
+        int56,
+        uint160,
+        uint32
     );
 }
