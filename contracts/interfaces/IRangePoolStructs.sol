@@ -133,6 +133,7 @@ interface IRangePoolStructs {
 
     struct SwapCache {
         bool    cross;
+        int24   tick;
         int24   crossTick;
         uint16  swapFee;
         uint16  protocolFee;
@@ -160,5 +161,21 @@ interface IRangePoolStructs {
         bool removeUpper;
         int128 amountInDelta;
         int128 amountOutDelta;
+    }
+
+    struct SnapshotCache {
+        int24   tick;
+        uint160 price;
+        uint32  blockTimestamp;
+        uint32  secondsOutsideLower;
+        uint32  secondsOutsideUpper;
+        int56   tickSecondsAccum;
+        int56   tickSecondsAccumLower;
+        int56   tickSecondsAccumUpper;
+        uint128 liquidity;
+        uint160 secondsPerLiquidityAccum;
+        uint160 secondsPerLiquidityAccumLower;
+        uint160 secondsPerLiquidityAccumUpper;
+        SampleState samples;
     }
 }

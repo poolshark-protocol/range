@@ -150,6 +150,7 @@ export class InitialSetup {
           hre.props.precisionMathLib.address,
         'contracts/libraries/TickMath.sol:TickMath': hre.props.tickMathLib.address,
         'contracts/libraries/Ticks.sol:Ticks': hre.props.ticksLib.address,
+        'contracts/libraries/Samples.sol:Samples': hre.props.samplesLib.address
       }
     )
 

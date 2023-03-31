@@ -85,7 +85,7 @@ contract RangePool is
                 )
         );
         uint256 liquidityMinted;
-        (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
+        (params, liquidityMinted) = Positions.validate(params, pool);
         if (params.amount0 > 0) _transferIn(token0, params.amount0);
         if (params.amount1 > 0) _transferIn(token1, params.amount1);
         if (position.amount0 > 0 || position.amount1 > 0) {

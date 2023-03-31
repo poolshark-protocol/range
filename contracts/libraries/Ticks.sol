@@ -11,20 +11,16 @@ import './PrecisionMath.sol';
 import './TickMath.sol';
 import './TickMap.sol';
 import './Samples.sol';
+import 'hardhat/console.sol';
 
 /// @notice Tick management library
 library Ticks {
     error LiquidityOverflow();
     error LiquidityUnderflow();
-    error InvalidLatestTick();
-    error InfiniteTickLoop0(int24);
-    error InfiniteTickLoop1(int24);
-    error WrongTickOrder();
-    error WrongTickLowerRange();
-    error WrongTickUpperRange();
-    error NoLiquidityToRollover();
-    error AmountInDeltaNeutral();
-    error AmountOutDeltaNeutral();
+    error InvalidLowerTick();
+    error InvalidUpperTick();
+    error InvalidPositionAmount();
+    error InvalidPositionBounds();
 
     event Swap(
         address indexed recipient,
@@ -57,6 +53,18 @@ library Ticks {
         );
     }
 
+    function validate(
+        int24 lower,
+        int24 upper,
+        int24 tickSpacing
+    ) public pure {
+        if (lower % tickSpacing != 0) revert InvalidLowerTick();
+        if (lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
+        if (upper % tickSpacing != 0) revert InvalidUpperTick();
+        if (upper >= TickMath.MAX_TICK) revert InvalidUpperTick();
+        if (lower >= upper) revert InvalidPositionBounds();
+    }
+
     function swap(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.Sample[65535] storage samples,
@@ -75,6 +83,7 @@ library Ticks {
     {
         IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
             cross: true,
+            tick: TickMath.getTickAtSqrtRatio(pool.price),
             crossTick: zeroForOne ? pool.nearestTick : TickMap.next(tickMap, pool.nearestTick),
             swapFee: swapFee,
             protocolFee: 0,
@@ -95,7 +104,7 @@ library Ticks {
                 pool.samples.length,
                 uint32(block.timestamp),
                 new uint32[](2),
-                pool.nearestTick,
+                cache.tick,
                 pool.liquidity
             ),
             0
@@ -151,6 +160,7 @@ library Ticks {
     {
         IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
             cross: true,
+            tick: 0,
             crossTick: zeroForOne ? pool.nearestTick : TickMap.next(tickMap, pool.nearestTick),
             swapFee: swapFee,
             protocolFee: 0,
@@ -329,15 +339,7 @@ library Ticks {
         uint128 amount
     ) external returns (IRangePoolStructs.PoolState memory) {
         //TODO: doesn't check if upper/lowerOld is greater/less than MAX/MIN_TICK
-        if (lower >= upper) {
-            revert WrongTickOrder();
-        }
-        if (TickMath.MIN_TICK > lower) {
-            revert WrongTickLowerRange();
-        }
-        if (upper > TickMath.MAX_TICK) {
-            revert WrongTickUpperRange();
-        }
+        validate(lower, upper, IRangePool(address(this)).tickSpacing());
         // check for amount to overflow liquidity delta & global
         if (amount > uint128(type(int128).max)) revert LiquidityOverflow();
         if (type(uint128).max - state.liquidityGlobal < amount) revert LiquidityOverflow();
@@ -410,15 +412,7 @@ library Ticks {
         int24 upper,
         uint128 amount
     ) external returns (IRangePoolStructs.PoolState memory) {
-        if (lower >= upper) {
-            revert WrongTickOrder();
-        }
-        if (TickMath.MIN_TICK > lower) {
-            revert WrongTickLowerRange();
-        }
-        if (upper > TickMath.MAX_TICK) {
-            revert WrongTickUpperRange();
-        }
+        validate(lower, upper, IRangePool(address(this)).tickSpacing());
         //check for amount to overflow liquidity delta & global
         if (amount > uint128(type(int128).max)) revert LiquidityUnderflow();
         if (amount > state.liquidityGlobal) revert LiquidityUnderflow();

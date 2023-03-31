@@ -35,6 +35,10 @@ interface IRangePool is IRangePoolStructs {
         IRangePoolManager
     );
 
+    function tickSpacing() external view returns (
+        int24
+    );
+
     function samples(uint256) external view returns (
         uint32,
         int56,
