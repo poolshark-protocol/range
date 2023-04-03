@@ -50,8 +50,8 @@ library Samples {
         // grab the latest sample
         IRangePoolStructs.Sample memory newSample = samples[state.samples.index];
 
-        // early return if sample already created this block
-        if (newSample.blockTimestamp == uint32(block.timestamp))
+        // early return if newest sample within 5 seconds
+        if (newSample.blockTimestamp + 5 >= uint32(block.timestamp))
             return (state.samples.index, state.samples.length);
 
         if (state.samples.lengthNext > state.samples.length

@@ -130,7 +130,7 @@ library Ticks {
         ) = Samples.save(
             samples,
             pool,
-            TickMath.getTickAtSqrtRatio(pool.price)
+            cache.tick
         );
         emit Swap(
             recipient,
