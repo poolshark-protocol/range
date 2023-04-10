@@ -4,7 +4,6 @@ pragma solidity 0.8.13;
 import './IRangePoolStructs.sol';
 import './IRangePoolManager.sol';
 
-/// @notice Range Pool Interface
 interface IRangePool is IRangePoolStructs {
     function mint(MintParams calldata mintParams) external;
 
