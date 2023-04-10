@@ -1,87 +1,72 @@
 {
     "arb_goerli": {
-        "token0": {
-            "contractName": "Token20",
-            "contractAddress": "0x7024879Eda80577Cbc0Cb039ad3c7081f38ABb41",
-            "constructorArguments": [
-                "Token20A",
-                "TOKEN20A",
-                18
-            ],
-            "created": "2023-03-27T22:54:35.004Z"
-        },
-        "token1": {
-            "contractName": "Token20",
-            "contractAddress": "0xA826F06C47597549faa74D8916EF4Da8f417F16c",
-            "constructorArguments": [
-                "Token20B",
-                "TOKEN20B",
-                18
-            ],
-            "created": "2023-03-27T22:54:35.009Z"
-        },
         "tickMathLib": {
             "contractName": "TickMath",
-            "contractAddress": "0x92192101F6c5138160C093882B0fA502deE889Cd",
+            "contractAddress": "0x09D9d80bCF681B56B804ad60728bd1927F18F43C",
             "constructorArguments": [],
-            "created": "2023-03-27T22:54:36.025Z"
+            "created": "2023-04-10T16:57:42.945Z"
         },
         "precisionMathLib": {
             "contractName": "PrecisionMath",
-            "contractAddress": "0x4Dc4F1A2a3303E40a07C3AAc4919A97F33Ab01EB",
+            "contractAddress": "0x161bf9Ebf6C8A71089885E4C387AD92d11aD7EdE",
             "constructorArguments": [],
-            "created": "2023-03-27T22:54:36.973Z"
+            "created": "2023-04-10T16:57:43.969Z"
         },
         "dydxMathLib": {
             "contractName": "DyDxMath",
-            "contractAddress": "0xc1E9A857e96AeeFE28F8340CF82dE7801bd95A77",
+            "contractAddress": "0xB06e072421A00401B216Fc41B7C716c2d69D496D",
             "constructorArguments": [],
-            "created": "2023-03-27T22:54:37.891Z"
+            "created": "2023-04-10T16:57:44.948Z"
         },
         "tickMapLib": {
             "contractName": "TickMap",
-            "contractAddress": "0x96F8d308dB8F86FCcbef8c57df7BbaD6Ee4C7D89",
+            "contractAddress": "0xFD3BB7f564D6bA92adefEf84115857D65098469B",
             "constructorArguments": [],
-            "created": "2023-03-27T22:54:38.860Z"
+            "created": "2023-04-10T16:57:46.005Z"
+        },
+        "samplesLib": {
+            "contractName": "Samples",
+            "contractAddress": "0x9ac8E70B96Eb4669d0394b6230351Ea0fb10aF04",
+            "constructorArguments": [],
+            "created": "2023-04-10T16:57:47.019Z"
         },
         "ticksLib": {
             "contractName": "Ticks",
-            "contractAddress": "0x215afe9A2D7e1f8B82d221213D880f7e28e1dD03",
+            "contractAddress": "0x222B730e933caAd246a42C1d6076153cBF9BC9ea",
             "constructorArguments": [],
-            "created": "2023-03-27T22:54:39.857Z"
+            "created": "2023-04-10T16:57:48.114Z"
         },
         "positionsLib": {
             "contractName": "Positions",
-            "contractAddress": "0x3F96856927E6192291717d1F43Cc5B264D93CAa8",
+            "contractAddress": "0x845Be31D0e2F541B51420ec440195a16ECE3dC39",
             "constructorArguments": [],
-            "created": "2023-03-27T22:54:40.848Z"
+            "created": "2023-04-10T16:57:49.218Z"
         },
         "rangePoolManager": {
             "contractName": "RangePoolManager",
-            "contractAddress": "0x33A28c58Ab9C2fc5Bc0eF84CA1b28763A904c4DD",
+            "contractAddress": "0x36c0237E687CB57C3B3A2052c56A7465C62A8AF9",
             "constructorArguments": [],
-            "created": "2023-03-27T22:54:41.940Z"
+            "created": "2023-04-10T16:57:50.347Z"
         },
         "rangePoolFactory": {
             "contractName": "RangePoolFactory",
-            "contractAddress": "0x58d8235108E12E6B725A53B57CD0b00C5eDeE0da",
+            "contractAddress": "0x5cff06eE7c5f2eb60ECf9C7d149c668a65Dd37B1",
             "constructorArguments": [
-                "0x33A28c58Ab9C2fc5Bc0eF84CA1b28763A904c4DD"
+                "0x36c0237E687CB57C3B3A2052c56A7465C62A8AF9"
             ],
-            "created": "2023-03-27T22:54:43.011Z"
+            "created": "2023-04-10T16:57:51.475Z"
         },
         "rangePool": {
             "contractName": "RangePool",
-            "contractAddress": "0x39C459ed1EFe9f2959CF0a249fB964fE81Adf5D3",
+            "contractAddress": "0x973Dc7E4d42cC4be9BCC88affB4EBff49cA1dC4f",
             "constructorArguments": [
-                "0x7024879Eda80577Cbc0Cb039ad3c7081f38ABb41",
-                "0xA826F06C47597549faa74D8916EF4Da8f417F16c",
+                "0x829e4a03A5Bd1EC5b6f5CC1d3A77c8e54A294847",
+                "0xf853592f1e4ceA2B5e722A17C6f917a4c70d40Ca",
                 "10",
                 "500",
-                "177159557114295710296101716160",
-                "0x33A28c58Ab9C2fc5Bc0eF84CA1b28763A904c4DD"
+                "177159557114295710296101716160"
             ],
-            "created": "2023-03-27T22:54:46.112Z"
+            "created": "2023-04-10T16:57:54.951Z"
         }
     }
 }

@@ -31,6 +31,28 @@ export class InitialSetup {
   public async initialRangePoolSetup(): Promise<number> {
     const network = SUPPORTED_NETWORKS[hre.network.name.toUpperCase()]
 
+    // const token0Address = (
+    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+    //     {
+    //       networkName: hre.network.name,
+    //       objectName: 'token0',
+    //     },
+    //     'readRangePoolSetup'
+    //   )
+    // ).contractAddress
+    // const token1Address = (
+    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+    //     {
+    //       networkName: hre.network.name,
+    //       objectName: 'token1',
+    //     },
+    //     'readRangePoolSetup'
+    //   )
+    // ).contractAddress
+
+    // hre.props.token0 = await hre.ethers.getContractAt('Token20', token0Address)
+    // hre.props.token1 = await hre.ethers.getContractAt('Token20', token1Address)
+
     await this.deployAssist.deployContractWithRetry(
       network,
       // @ts-ignore

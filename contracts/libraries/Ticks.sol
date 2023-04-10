@@ -97,7 +97,7 @@ library Ticks {
         (
             cache.tickSecondsAccum,
             cache.secondsPerLiquidityAccum
-        ) = Samples.get(
+        ) = Samples.getSingle(
             IRangePool(address(this)), 
             IRangePoolStructs.SampleParams(
                 pool.samples.index,

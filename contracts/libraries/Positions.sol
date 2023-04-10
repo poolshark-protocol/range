@@ -554,7 +554,7 @@ library Positions {
             (
                 cache.tickSecondsAccum,
                 cache.secondsPerLiquidityAccum
-            ) = Samples.get(
+            ) = Samples.getSingle(
                 IRangePool(address(this)), 
                 IRangePoolStructs.SampleParams(
                     cache.samples.index,

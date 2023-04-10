@@ -86,7 +86,7 @@ library Samples {
         return state;
     }
 
-    function sample(
+    function get(
         address pool,
         IRangePoolStructs.SampleParams memory params
     ) external view returns (
@@ -102,7 +102,7 @@ library Samples {
             (
                 tickSecondsAccum[i],
                 secondsPerLiquidityAccum[i]
-            ) = get(
+            ) = getSingle(
                 IRangePool(pool),
                 params,
                 params.secondsAgos[i]
@@ -129,7 +129,7 @@ library Samples {
         );
     }
 
-    function get(
+    function getSingle(
         IRangePool pool,
         IRangePoolStructs.SampleParams memory params,
         uint32 secondsAgo
