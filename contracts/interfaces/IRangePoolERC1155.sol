@@ -4,9 +4,6 @@ pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-/// @title Poolshark
-/// @author Trader Joe
-/// @notice Required interface of LBToken contract
 interface IRangePoolERC1155 is IERC165 {
     event TransferSingle(
         address indexed sender,
