@@ -8,6 +8,7 @@ import './PrecisionMath.sol';
 import './TickMath.sol';
 import './Ticks.sol';
 import './Tokens.sol';
+import './Samples.sol';
 
 /// @notice Position management library for ranged liquidity.
 library Positions {
@@ -21,7 +22,6 @@ library Positions {
     error InvalidUpperTick();
     error InvalidPositionAmount();
     error InvalidPositionBoundsOrder();
-    error InvalidPositionBoundsTwap();
     error NotImplementedYet();
 
     uint256 internal constant Q96 = 0x1000000000000000000000000;
@@ -75,14 +75,8 @@ library Positions {
 
     function validate(
         IRangePoolStructs.MintParams memory params,
-        IRangePoolStructs.PoolState memory state,
-        int24 tickSpacing
+        IRangePoolStructs.PoolState memory state
     ) external pure returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
-        if (params.lower % int24(tickSpacing) != 0) revert InvalidLowerTick();
-        if (params.lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
-        if (params.upper % int24(tickSpacing) != 0) revert InvalidUpperTick();
-        if (params.upper >= TickMath.MAX_TICK) revert InvalidUpperTick();
-        if (params.lower >= params.upper) revert InvalidPositionBoundsOrder();
         uint256 priceLower = uint256(TickMath.getSqrtRatioAtTick(params.lower));
         uint256 priceUpper = uint256(TickMath.getSqrtRatioAtTick(params.upper));
 
@@ -101,7 +95,6 @@ library Positions {
             liquidityMinted,
             true
         );
-        //TODO: handle partial mints due to incorrect reserve ratio
         if (liquidityMinted > uint128(type(int128).max)) revert LiquidityOverflow();
 
         return (params, liquidityMinted);
@@ -110,44 +103,44 @@ library Positions {
     function add(
         IRangePoolStructs.Position memory position,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.Sample[65535] storage samples,
         IRangePoolStructs.TickMap storage tickMap,
-        IRangePoolStructs.PoolState memory state,
-        IRangePoolStructs.MintParams memory params,
-        IRangePoolStructs.AddParams memory addParams
+        IRangePoolStructs.AddParams memory params
     ) external returns (
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.Position memory,
         uint128
     ) {
-        if (params.amount0 == 0 && params.amount1 == 0) return (state, position, 0);
+        if (params.mint.amount0 == 0 && params.mint.amount1 == 0) return (params.state, position, 0);
 
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
-            priceLower: TickMath.getSqrtRatioAtTick(params.lower),
-            priceUpper: TickMath.getSqrtRatioAtTick(params.upper),
+            priceLower: TickMath.getSqrtRatioAtTick(params.mint.lower),
+            priceUpper: TickMath.getSqrtRatioAtTick(params.mint.upper),
             liquidityOnPosition: 0,
             liquidityAmount: 0,
-            totalSupply: Tokens.totalSupply(address(this), params.lower, params.upper),
-            tokenId: Tokens.id(params.lower, params.upper)
+            totalSupply: Tokens.totalSupply(address(this), params.mint.lower, params.mint.upper),
+            tokenId: Tokens.id(params.mint.lower, params.mint.upper)
         });
 
-        state = Ticks.insert(
+        params.state = Ticks.insert(
             ticks,
+            samples,
             tickMap,
-            state,
-            params.lower,
-            params.upper,
-            addParams.amount
+            params.state,
+            params.mint.lower,
+            params.mint.upper,
+            params.amount
         );
 
-        if (cache.priceLower < state.price && state.price < cache.priceUpper) {
-            state.liquidity += addParams.amount;
+        if (cache.priceLower < params.state.price && params.state.price < cache.priceUpper) {
+            params.state.liquidity += params.amount;
         }
-        position.liquidity += uint128(addParams.amount);
+        position.liquidity += uint128(params.amount);
         
         // modify liquidity minted to account for fees accrued
-        if (params.fungible) {
+        if (params.mint.fungible) {
             if (position.amount0 > 0 || position.amount1 > 0
-                || (position.liquidity - addParams.amount) > cache.totalSupply) {
+                || (position.liquidity - params.amount) > cache.totalSupply) {
                 // modify amount based on autocompounded fees
                 if (cache.totalSupply > 0) {
                     cache.liquidityOnPosition = DyDxMath.getLiquidityForAmounts(
@@ -156,35 +149,36 @@ library Positions {
                                                     position.amount0 > 0 ? cache.priceLower : cache.priceUpper,
                                                     position.amount1,
                                                     position.amount0
-                                              );
-                    addParams.amount = uint128(uint256(addParams.amount) * cache.totalSupply /
-                         (uint256(position.liquidity - addParams.amount) + cache.liquidityOnPosition));
+                                                );
+                    params.amount = uint128(uint256(params.amount) * cache.totalSupply /
+                         (uint256(position.liquidity - params.amount) + cache.liquidityOnPosition));
                 } /// @dev - if there are fees on the position we mint less positionToken
             }
-            IRangePoolERC1155(address(this)).mintFungible(params.to, cache.tokenId, addParams.amount);
+            IRangePoolERC1155(address(this)).mintFungible(params.mint.to, cache.tokenId, params.amount);
             emit MintFungible(
-                params.lower,
-                params.upper,
-                addParams.liquidity,
-                params.amount0,
-                params.amount1
+                params.mint.lower,
+                params.mint.upper,
+                params.liquidity,
+                params.mint.amount0,
+                params.mint.amount1
             );
         } else {
             emit Mint(
-                params.to, 
-                params.lower,
-                params.upper,
-                addParams.amount,
-                params.amount0,
-                params.amount1
+                params.mint.to, 
+                params.mint.lower,
+                params.mint.upper,
+                params.amount,
+                params.mint.amount0,
+                params.mint.amount1
             );
         }
-        return (state, position, addParams.amount);
+        return (params.state, position, params.amount);
     }
 
     function remove(
         IRangePoolStructs.Position memory position,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.Sample[65535] storage samples,
         IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.BurnParams memory params,
@@ -249,6 +243,7 @@ library Positions {
         }
         state = Ticks.remove(
             ticks,
+            samples,
             tickMap,
             state, 
             params.lower,
@@ -283,47 +278,55 @@ library Positions {
     function compound(
         IRangePoolStructs.Position memory position,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.Sample[65535] storage samples,
         IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.CompoundParams memory params
     ) external returns (IRangePoolStructs.Position memory, IRangePoolStructs.PoolState memory) {
-        uint160 priceLower = TickMath.getSqrtRatioAtTick(params.lower);
-        uint160 priceUpper = TickMath.getSqrtRatioAtTick(params.upper);
+        IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
+            priceLower: TickMath.getSqrtRatioAtTick(params.lower),
+            priceUpper: TickMath.getSqrtRatioAtTick(params.upper),
+            liquidityOnPosition: 0,
+            liquidityAmount: 0,
+            totalSupply: 0,
+            tokenId: 0
+        });
 
         // price tells you the ratio so you need to swap into the correct ratio and add liquidity
-        uint256 liquidityCompounded = DyDxMath.getLiquidityForAmounts(
-            priceLower,
-            priceUpper,
+        cache.liquidityAmount = DyDxMath.getLiquidityForAmounts(
+            cache.priceLower,
+            cache.priceUpper,
             state.price,
             position.amount1,
             position.amount0
         );
-        if (liquidityCompounded > 0) {
+        if (cache.liquidityAmount > 0) {
             state = Ticks.insert(
                 ticks,
+                samples,
                 tickMap,
                 state,
                 params.lower,
                 params.upper,
-                uint128(liquidityCompounded)
+                uint128(cache.liquidityAmount)
             );
             uint256 amount0; uint256 amount1;
             (amount0, amount1) = DyDxMath.getAmountsForLiquidity(
-                priceLower,
-                priceUpper,
+                cache.priceLower,
+                cache.priceUpper,
                 state.price,
-                liquidityCompounded,
+                cache.liquidityAmount,
                 true
             );
             position.amount0 -= uint128(amount0);
             position.amount1 -= uint128(amount1);
-            position.liquidity += uint128(liquidityCompounded);
+            position.liquidity += uint128(cache.liquidityAmount);
         }
         emit Compound(
             params.owner,
             params.lower,
             params.upper,
-            uint128(liquidityCompounded),
+            uint128(cache.liquidityAmount),
             position.amount0,
             position.amount1
         );
@@ -351,7 +354,8 @@ library Positions {
         }
         
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
-            ticks,
+            ticks[params.lower],
+            ticks[params.upper],
             state,
             params.lower,
             params.upper
@@ -395,15 +399,14 @@ library Positions {
     }
 
     function rangeFeeGrowth(
-        mapping(int24 => IRangePoolStructs.Tick) storage ticks,
+        IRangePoolStructs.Tick memory tickLower,
+        IRangePoolStructs.Tick memory tickUpper,
         IRangePoolStructs.PoolState memory state,
         int24 lower,
         int24 upper
-    ) public view returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
-        int24 current = state.nearestTick;
+    ) internal pure returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
 
-        IRangePoolStructs.Tick memory lowerTick = ticks[lower];
-        IRangePoolStructs.Tick memory upperTick = ticks[upper];
+        int24 currentTick = state.nearestTick;
 
         uint256 _feeGrowthGlobal0 = state.feeGrowthGlobal0;
         uint256 _feeGrowthGlobal1 = state.feeGrowthGlobal1;
@@ -412,23 +415,169 @@ library Positions {
         uint256 feeGrowthAbove0;
         uint256 feeGrowthAbove1;
 
-        if (lower <= current) {
-            feeGrowthBelow0 = lowerTick.feeGrowthOutside0;
-            feeGrowthBelow1 = lowerTick.feeGrowthOutside1;
+        if (lower <= currentTick) {
+            feeGrowthBelow0 = tickLower.feeGrowthOutside0;
+            feeGrowthBelow1 = tickLower.feeGrowthOutside1;
         } else {
-            feeGrowthBelow0 = _feeGrowthGlobal0 - lowerTick.feeGrowthOutside0;
-            feeGrowthBelow1 = _feeGrowthGlobal1 - lowerTick.feeGrowthOutside1;
+            feeGrowthBelow0 = _feeGrowthGlobal0 - tickLower.feeGrowthOutside0;
+            feeGrowthBelow1 = _feeGrowthGlobal1 - tickLower.feeGrowthOutside1;
         }
 
-        if (current < upper) {
-            feeGrowthAbove0 = upperTick.feeGrowthOutside0;
-            feeGrowthAbove1 = upperTick.feeGrowthOutside1;
+        if (currentTick < upper) {
+            feeGrowthAbove0 = tickUpper.feeGrowthOutside0;
+            feeGrowthAbove1 = tickUpper.feeGrowthOutside1;
         } else {
-            feeGrowthAbove0 = _feeGrowthGlobal0 - upperTick.feeGrowthOutside0;
-            feeGrowthAbove1 = _feeGrowthGlobal1 - upperTick.feeGrowthOutside1;
+            feeGrowthAbove0 = _feeGrowthGlobal0 - tickUpper.feeGrowthOutside0;
+            feeGrowthAbove1 = _feeGrowthGlobal1 - tickUpper.feeGrowthOutside1;
         }
         feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
         feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
+    }
+
+    function rangeFeeGrowth(
+        address pool,
+        int24 lower,
+        int24 upper
+    ) external view returns (
+        uint256 feeGrowthInside0,
+        uint256 feeGrowthInside1
+    ) {
+        Ticks.validate(lower, upper, IRangePool(pool).tickSpacing());
+        (
+            ,
+            int24 currentTick,
+            ,,,,,,
+            uint256 _feeGrowthGlobal0,
+            uint256 _feeGrowthGlobal1,
+            ,
+        ) = IRangePool(pool).poolState();
+        (
+            ,
+            uint216 tickLowerFeeGrowthOutside0,
+            uint216 tickLowerFeeGrowthOutside1,
+            ,,
+        )
+            = IRangePool(pool).ticks(lower);
+        (
+            ,
+            uint216 tickUpperFeeGrowthOutside0,
+            uint216 tickUpperFeeGrowthOutside1,
+            ,,
+        )
+            = IRangePool(pool).ticks(upper);
+
+        // ticks not initialized or range not crossed into
+        if (tickLowerFeeGrowthOutside0 == 0
+            && tickLowerFeeGrowthOutside1 == 0
+            && tickUpperFeeGrowthOutside0 == 0
+            && tickUpperFeeGrowthOutside0 == 0) {
+            return (0,0);
+        }
+
+        uint256 feeGrowthBelow0;
+        uint256 feeGrowthBelow1;
+        uint256 feeGrowthAbove0;
+        uint256 feeGrowthAbove1;
+
+        if (lower <= currentTick) {
+            feeGrowthBelow0 = tickLowerFeeGrowthOutside0;
+            feeGrowthBelow1 = tickLowerFeeGrowthOutside1;
+        } else {
+            feeGrowthBelow0 = _feeGrowthGlobal0 - tickLowerFeeGrowthOutside0;
+            feeGrowthBelow1 = _feeGrowthGlobal1 - tickLowerFeeGrowthOutside1;
+        }
+
+        if (currentTick < upper) {
+            feeGrowthAbove0 = tickUpperFeeGrowthOutside0;
+            feeGrowthAbove1 = tickUpperFeeGrowthOutside1;
+        } else {
+            feeGrowthAbove0 = _feeGrowthGlobal0 - tickUpperFeeGrowthOutside0;
+            feeGrowthAbove1 = _feeGrowthGlobal1 - tickUpperFeeGrowthOutside1;
+        }
+        feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
+        feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
+    }
+
+    function snapshot(
+        address pool,
+        int24 lower,
+        int24 upper
+    ) external view returns (
+        int56   tickSecondsAccum,
+        uint160 secondsPerLiquidityAccum,
+        uint32  secondsGrowth
+    ) {
+        Ticks.validate(lower, upper, IRangePool(pool).tickSpacing());
+
+        IRangePoolStructs.SnapshotCache memory cache;
+        (
+            ,
+            ,,,,
+            cache.price,
+            cache.liquidity,
+            ,,,
+            cache.samples,
+        ) = IRangePool(pool).poolState();
+        (
+            ,,,
+            cache.tickSecondsAccumLower,
+            cache.secondsPerLiquidityAccumLower,
+            cache.secondsOutsideLower
+        )
+            = IRangePool(pool).ticks(lower);
+
+        // if both have never been crossed into return 0
+        (
+            ,,,
+            cache.tickSecondsAccumUpper,
+            cache.secondsPerLiquidityAccumUpper,
+            cache.secondsOutsideUpper
+        )
+            = IRangePool(pool).ticks(upper);
+
+        // ticks not initialized or range not crossed into
+        if (cache.secondsOutsideUpper == 0
+            && cache.secondsOutsideLower == 0){
+            return (0,0,0);
+        }
+        
+        cache.tick = TickMath.getTickAtSqrtRatio(cache.price);
+
+        if (lower >= cache.tick) {
+            return (
+                cache.tickSecondsAccumLower - cache.tickSecondsAccumUpper,
+                cache.secondsPerLiquidityAccumLower - cache.secondsPerLiquidityAccumUpper,
+                cache.secondsOutsideLower - cache.secondsOutsideUpper
+            );
+        } else if (upper >= cache.tick) {
+            cache.blockTimestamp = uint32(block.timestamp);
+            (
+                cache.tickSecondsAccum,
+                cache.secondsPerLiquidityAccum
+            ) = Samples.getSingle(
+                IRangePool(address(this)), 
+                IRangePoolStructs.SampleParams(
+                    cache.samples.index,
+                    cache.samples.length,
+                    uint32(block.timestamp),
+                    new uint32[](2),
+                    cache.tick,
+                    cache.liquidity
+                ),
+                0
+            );
+            return (
+                cache.tickSecondsAccum 
+                  - cache.tickSecondsAccumLower 
+                  - cache.tickSecondsAccumUpper,
+                cache.secondsPerLiquidityAccum
+                  - cache.secondsPerLiquidityAccumLower
+                  - cache.secondsPerLiquidityAccumUpper,
+                cache.blockTimestamp
+                  - cache.secondsOutsideLower
+                  - cache.secondsOutsideUpper
+            );
+        }
     }
 
     function id(int24 lower, int24 upper) public pure returns (uint256) {

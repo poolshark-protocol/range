@@ -56,10 +56,14 @@ contract RangePool is
         swapFee = _swapFee;
         tickSpacing = _tickSpacing;
 
-        // create min and max ticks
-        Ticks.initialize(tickMap);
+        // create ticks and sample
+        pool = Ticks.initialize(
+            tickMap,
+            samples,
+            pool
+        );
 
-        // initialize pool state
+        // save pool state
         poolState = pool;
     }
 
@@ -81,13 +85,14 @@ contract RangePool is
                 )
         );
         uint256 liquidityMinted;
-        (params, liquidityMinted) = Positions.validate(params, pool, tickSpacing);
+        (params, liquidityMinted) = Positions.validate(params, pool);
         if (params.amount0 > 0) _transferIn(token0, params.amount0);
         if (params.amount1 > 0) _transferIn(token1, params.amount1);
         if (position.amount0 > 0 || position.amount1 > 0) {
             (position, pool) = Positions.compound(
                 position,
                 ticks,
+                samples,
                 tickMap,
                 pool,
                 CompoundParams(
@@ -103,10 +108,11 @@ contract RangePool is
         (pool, position, liquidityMinted) = Positions.add(
             position,
             ticks,
+            samples,
             tickMap,
-            pool, 
-            params, 
             AddParams(
+                pool, 
+                params,
                 uint128(liquidityMinted),
                 uint128(liquidityMinted)
             )
@@ -143,6 +149,7 @@ contract RangePool is
         (pool, position, amount0, amount1) = Positions.remove(
             position,
             ticks,
+            samples,
             tickMap,
             pool,
             params,
@@ -167,6 +174,7 @@ contract RangePool is
             (position, pool) = Positions.compound(
                 position,
                 ticks,
+                samples,
                 tickMap,
                 pool,
                 CompoundParams(
@@ -183,7 +191,6 @@ contract RangePool is
         positions[params.fungible ? address(this) : msg.sender][
             params.lower
         ][params.upper] = position;
-        // emit Burn(params.fungible ? address(this) : msg.sender, params.lower, params.upper, params.amount);
     }
 
     //TODO: block the swap if there is an overflow on fee growth
@@ -204,6 +211,7 @@ contract RangePool is
         SwapCache memory cache;
         (pool, cache) = Ticks.swap(
             ticks,
+            samples,
             tickMap,
             recipient,
             zeroForOne,
@@ -228,6 +236,16 @@ contract RangePool is
         poolState = pool;
     }
 
+    function increaseSampleLength(
+        uint16 sampleLengthNext
+    ) external {
+        poolState = Samples.expand(
+            samples,
+            poolState,
+            sampleLengthNext
+        );
+    }
+
     function quote(
         bool zeroForOne,
         uint256 amountIn,
@@ -236,6 +254,8 @@ contract RangePool is
         PoolState memory,
         SwapCache memory
     ) {
+        // figure out price limit for user
+        // quote with low price limit
         PoolState memory pool = poolState;
         SwapCache memory cache;
         // take fee from inputAmount

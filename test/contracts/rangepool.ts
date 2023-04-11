@@ -67,7 +67,7 @@ describe('RangePool Tests', function () {
   //TODO: price limit hit mid-tick zeroForOne true & false
   //TODO: add liquidity to existing tick
 
-  it('token1 - Should mint, swap, and burn 11', async function () {
+  it('token1 - Should mint, swap, and burn', async function () {
 
     await validateMint({
       signer: hre.props.alice,
@@ -117,7 +117,7 @@ describe('RangePool Tests', function () {
     })
   })
 
-  it('token0 - Should mint, swap, and burn 11', async function () {
+  it('token0 - Should mint, swap, and burn', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
 
     await validateMint({
@@ -158,7 +158,7 @@ describe('RangePool Tests', function () {
     })
   })
 
-  it('token0 - Should mint and burn fungible position 11', async function () {
+  it('token0 - Should mint and burn fungible position', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
     await validateMint({
       signer: hre.props.alice,
@@ -245,7 +245,7 @@ describe('RangePool Tests', function () {
     })
   })
 
-  it('token0 - Should add in-range fungible liquidity 11', async function () {
+  it('token0 - Should add in-range fungible liquidity', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
     await validateMint({
       signer: hre.props.alice,

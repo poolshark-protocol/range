@@ -5,23 +5,33 @@ import "./IRangePoolERC1155.sol";
 
 interface IRangePoolStructs {
     struct PoolState {
-        uint8 unlocked;
-        int24  nearestTick;
-        uint32 observationIndex;
-        uint128 liquidity; /// @dev Liquidity currently active
-        uint128 liquidityGlobal; /// @dev Globally deposited liquidity
-        uint160 price; /// @dev Starting price current
-        uint160 secondsGrowthGlobal; /// @dev Multiplied by 2^128.
-        uint216 feeGrowthGlobal0;
-        uint216 feeGrowthGlobal1;
+        uint8   unlocked;
+        int24   nearestTick;
+        uint32  secondsGrowthGlobal; /// @dev Multiplied by 2^128
+        int56   tickSecondsAccum;
+        uint160 secondsPerLiquidityAccum;
+        uint160 price;               /// @dev Starting price current
+        uint128 liquidity;           /// @dev Liquidity currently active
+        uint128 liquidityGlobal;     /// @dev Globally deposited liquidity
+        uint200 feeGrowthGlobal0;
+        uint200 feeGrowthGlobal1;
+        SampleState  samples;
         ProtocolFees protocolFees;
     }
 
+    struct SampleState {
+        uint16  index;
+        uint16  length;
+        uint16  lengthNext;
+    }
+
     struct Tick {
-        int128 liquidityDelta;
-        uint216 feeGrowthOutside0; // Per unit of liquidity.
-        uint216 feeGrowthOutside1;
-        uint160 secondsGrowthOutside;
+        int128  liquidityDelta;
+        uint200 feeGrowthOutside0; // Per unit of liquidity.
+        uint200 feeGrowthOutside1;
+        int56   tickSecondsAccumOutside;
+        uint160 secondsPerLiquidityAccumOutside;
+        uint32  secondsGrowthOutside;
     }
 
     struct TickMap {
@@ -43,10 +53,10 @@ interface IRangePoolStructs {
         uint256 feeGrowthInside1Last;
     }
 
-    struct Observation {
-        uint32 blockTimestamp;
-        int56 tickSeconds;
-        uint160 secondsPerLiquidityUnit;
+    struct Sample {
+        uint32  blockTimestamp;
+        int56   tickSecondsAccum;
+        uint160 secondsPerLiquidityAccum;
     }
 
     struct ProtocolFees {
@@ -86,7 +96,18 @@ interface IRangePoolStructs {
         uint256 amountIn;
     }
 
+    struct SampleParams {
+        uint16 sampleIndex;
+        uint16 sampleLength;
+        uint32 time;
+        uint32[] secondsAgos;
+        int24 tick;
+        uint128 liquidity;
+    }
+
     struct AddParams {
+        PoolState state;
+        MintParams mint;
         uint128 amount;
         uint128 liquidity;
     }
@@ -112,12 +133,15 @@ interface IRangePoolStructs {
 
     struct SwapCache {
         bool    cross;
+        int24   tick;
         int24   crossTick;
         uint16  swapFee;
         uint16  protocolFee;
         uint256 input;
         uint256 output;
         uint256 amountIn;
+        int56   tickSecondsAccum;
+        uint160 secondsPerLiquidityAccum;
     }
 
     struct PositionCache {
@@ -137,5 +161,21 @@ interface IRangePoolStructs {
         bool removeUpper;
         int128 amountInDelta;
         int128 amountOutDelta;
+    }
+
+    struct SnapshotCache {
+        int24   tick;
+        uint160 price;
+        uint32  blockTimestamp;
+        uint32  secondsOutsideLower;
+        uint32  secondsOutsideUpper;
+        int56   tickSecondsAccum;
+        int56   tickSecondsAccumLower;
+        int56   tickSecondsAccumUpper;
+        uint128 liquidity;
+        uint160 secondsPerLiquidityAccum;
+        uint160 secondsPerLiquidityAccumLower;
+        uint160 secondsPerLiquidityAccumUpper;
+        SampleState samples;
     }
 }

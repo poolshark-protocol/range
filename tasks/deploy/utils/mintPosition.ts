@@ -32,17 +32,17 @@ export class MintPosition {
     await mintSigners20(hre.props.token0, token0Amount.mul(10), [hre.props.alice])
     await mintSigners20(hre.props.token1, token1Amount.mul(10), [hre.props.alice])
 
-    const liquidityAmount = BigNumber.from('199760153929825488153727')
+    const liquidityAmount = BigNumber.from('19851540375107355238395')
 
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
-      lower: '-887272',
-      upper: '887272',
+      lower: '100',
+      upper: '200',
       amount0: token0Amount,
       amount1: token1Amount,
       fungible: false,
-      balance0Decrease: token0Amount, //TODO: make optional
+      balance0Decrease: BigNumber.from('0'), //TODO: make optional
       balance1Decrease: token1Amount,
       liquidityIncrease: liquidityAmount,
       revertMessage: '',

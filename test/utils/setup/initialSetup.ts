@@ -12,6 +12,7 @@ import {
   Positions__factory,
   RangePoolManager__factory,
   TickMap__factory,
+  Samples__factory,
 } from '../../../typechain'
 
 export class InitialSetup {
@@ -29,6 +30,28 @@ export class InitialSetup {
 
   public async initialRangePoolSetup(): Promise<number> {
     const network = SUPPORTED_NETWORKS[hre.network.name.toUpperCase()]
+
+    // const token0Address = (
+    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+    //     {
+    //       networkName: hre.network.name,
+    //       objectName: 'token0',
+    //     },
+    //     'readRangePoolSetup'
+    //   )
+    // ).contractAddress
+    // const token1Address = (
+    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+    //     {
+    //       networkName: hre.network.name,
+    //       objectName: 'token1',
+    //     },
+    //     'readRangePoolSetup'
+    //   )
+    // ).contractAddress
+
+    // hre.props.token0 = await hre.ethers.getContractAt('Token20', token0Address)
+    // hre.props.token1 = await hre.ethers.getContractAt('Token20', token1Address)
 
     await this.deployAssist.deployContractWithRetry(
       network,
@@ -116,6 +139,14 @@ export class InitialSetup {
     await this.deployAssist.deployContractWithRetry(
       network,
       // @ts-ignore
+      Samples__factory,
+      'samplesLib',
+      []
+    )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
       Ticks__factory,
       'ticksLib',
       [],
@@ -125,6 +156,7 @@ export class InitialSetup {
           hre.props.precisionMathLib.address,
         'contracts/libraries/TickMath.sol:TickMath': hre.props.tickMathLib.address,
         'contracts/libraries/TickMap.sol:TickMap': hre.props.tickMapLib.address,
+        'contracts/libraries/Samples.sol:Samples': hre.props.samplesLib.address
       }
     )
 
@@ -140,6 +172,7 @@ export class InitialSetup {
           hre.props.precisionMathLib.address,
         'contracts/libraries/TickMath.sol:TickMath': hre.props.tickMathLib.address,
         'contracts/libraries/Ticks.sol:Ticks': hre.props.ticksLib.address,
+        'contracts/libraries/Samples.sol:Samples': hre.props.samplesLib.address
       }
     )
 
@@ -165,7 +198,8 @@ export class InitialSetup {
         'contracts/libraries/PrecisionMath.sol:PrecisionMath':
           hre.props.precisionMathLib.address,
         'contracts/libraries/TickMath.sol:TickMath': hre.props.tickMathLib.address,
-        'contracts/libraries/DyDxMath.sol:DyDxMath': hre.props.dydxMathLib.address
+        'contracts/libraries/DyDxMath.sol:DyDxMath': hre.props.dydxMathLib.address,
+        'contracts/libraries/Samples.sol:Samples': hre.props.samplesLib.address
       }
     )
     const setFactoryTxn = await hre.props.rangePoolManager
