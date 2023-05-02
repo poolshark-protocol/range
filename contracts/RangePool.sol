@@ -23,10 +23,9 @@ contract RangePool is
     address internal immutable _factory;
 
     modifier lock() {
-        if (poolState.unlocked != 1) revert Locked();
-        poolState.unlocked = 2;
+        _prelock();
         _;
-        poolState.unlocked = 1;
+        _postlock();
     }
 
     constructor(
@@ -193,16 +192,12 @@ contract RangePool is
         ][params.upper] = position;
     }
 
-    //TODO: block the swap if there is an overflow on fee growth
     function swap(
         address recipient,
         bool zeroForOne,
         uint256 amountIn,
         uint160 priceLimit
-    )
-        external
-        override
-        lock
+    ) external override lock
     {
         if (amountIn == 0) return;
         _transferIn(zeroForOne ? token0 : token1, amountIn);
@@ -238,7 +233,7 @@ contract RangePool is
 
     function increaseSampleLength(
         uint16 sampleLengthNext
-    ) external {
+    ) external lock {
         poolState = Samples.expand(
             samples,
             poolState,
@@ -250,7 +245,7 @@ contract RangePool is
         bool zeroForOne,
         uint256 amountIn,
         uint160 priceLimit
-    ) public view override returns (
+    ) external view override returns (
         PoolState memory,
         SwapCache memory
     ) {
@@ -275,12 +270,24 @@ contract RangePool is
         return (pool, cache);
     }
 
-    function collectFees() public returns (uint128 token0Fees, uint128 token1Fees) {
+    function collectFees() external lock returns (
+        uint128 token0Fees,
+        uint128 token1Fees
+    ) {
         token0Fees = poolState.protocolFees.token0;
         token1Fees = poolState.protocolFees.token1;
-        _transferOut(owner.feeTo(), token0, token0Fees);
-        _transferOut(owner.feeTo(), token1, token1Fees);
         poolState.protocolFees.token0 = 0;
         poolState.protocolFees.token1 = 0;
+        _transferOut(owner.feeTo(), token0, token0Fees);
+        _transferOut(owner.feeTo(), token1, token1Fees);
+    }
+
+    function _prelock() private {
+        if (poolState.unlocked != 1) revert Locked();
+        poolState.unlocked = 2;
+    }
+
+    function _postlock() private {
+        poolState.unlocked = 1;
     }
 }
