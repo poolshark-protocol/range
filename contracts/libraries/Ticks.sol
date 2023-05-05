@@ -11,7 +11,6 @@ import './PrecisionMath.sol';
 import './TickMath.sol';
 import './TickMap.sol';
 import './Samples.sol';
-import 'hardhat/console.sol';
 
 /// @notice Tick management library
 library Ticks {
@@ -291,18 +290,15 @@ library Ticks {
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
+        IRangePoolStructs.Tick memory crossTick = ticks[cache.crossTick];
+        crossTick.feeGrowthOutside0       = pool.feeGrowthGlobal0 - crossTick.feeGrowthOutside0;
+        crossTick.feeGrowthOutside1       = pool.feeGrowthGlobal1 - crossTick.feeGrowthOutside1;
+        crossTick.tickSecondsAccumOutside = cache.tickSecondsAccum - crossTick.tickSecondsAccumOutside;
+        crossTick.secondsGrowthOutside    = uint32(block.timestamp) - crossTick.secondsGrowthOutside;
+        crossTick.secondsPerLiquidityAccumOutside = cache.secondsPerLiquidityAccum - crossTick.secondsPerLiquidityAccumOutside;
+        ticks[cache.crossTick] = crossTick;
         // observe most recent oracle update
         if (zeroForOne) {
-            IRangePoolStructs.Tick memory crossTick = ticks[cache.crossTick];
-            crossTick.feeGrowthOutside0       = pool.feeGrowthGlobal0 - crossTick.feeGrowthOutside0;
-            crossTick.feeGrowthOutside1       = pool.feeGrowthGlobal1 - crossTick.feeGrowthOutside1;
-            crossTick.tickSecondsAccumOutside = cache.tickSecondsAccum - crossTick.tickSecondsAccumOutside;
-            crossTick.secondsGrowthOutside    = uint32(block.timestamp) - crossTick.secondsGrowthOutside;
-            crossTick.secondsPerLiquidityAccumOutside = cache.secondsPerLiquidityAccum - crossTick.secondsPerLiquidityAccumOutside;
-            ticks[cache.crossTick] = crossTick;
-            if (cache.crossTick == 20){
-                console.log('crossing 20', crossTick.feeGrowthOutside1);
-            } 
             unchecked {
                 pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
             }
@@ -332,8 +328,6 @@ library Ticks {
             unchecked {
                 pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
             }
-            console.log('cross tick pass');
-            console.logInt(cache.crossTick);
             cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
             pool.tickAtPrice = cache.crossTick;
         } else {
@@ -385,10 +379,7 @@ library Ticks {
                     state.secondsGrowthGlobal
                 );
             } else {
-                ticks[lower] = IRangePoolStructs.Tick(
-                    int128(amount),
-                    0,0,0,0,0
-                );
+                ticks[lower].liquidityDelta = int128(amount);
             }
         }
 
@@ -405,10 +396,7 @@ library Ticks {
                     state.secondsGrowthGlobal
                 );
             } else {
-                ticks[upper] = IRangePoolStructs.Tick(
-                    -int128(amount),
-                    0,0,0,0,0
-                );
+                ticks[upper].liquidityDelta = -int128(amount);
             }
         }
         state.liquidityGlobal += amount;

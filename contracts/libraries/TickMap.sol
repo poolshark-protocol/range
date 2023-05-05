@@ -92,7 +92,7 @@ library TickMap {
                 if (block_ == 0) {
                     uint256 blockMap = tickMap.blocks & ((1 << blockIndex) - 1);
                     // assert(blockMap != 0);
-                    // if blockMap == 0 return type(int24).min() or MIN_TICK
+                    if (blockMap == 0) return tick;
 
                     blockIndex = _msb(blockMap);
                     block_ = tickMap.words[blockIndex];

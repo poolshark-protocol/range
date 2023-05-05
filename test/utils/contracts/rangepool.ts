@@ -141,8 +141,6 @@ export async function validateSwap(params: ValidateSwapParams) {
   const poolState: PoolState = quote[0]
   const swapCache: SwapCache = quote[1]
 
-  console.log('transferring in:', amountIn.toString())
-
   if (revertMessage == '') {
     let txn = await hre.props.rangePool
       .connect(signer)
@@ -321,8 +319,6 @@ export async function validateMint(params: ValidateMintParams) {
   expect(upperTickAfter.liquidityDelta.sub(upperTickBefore.liquidityDelta)).to.be.equal(
     BN_ZERO.sub(liquidityIncrease)
   )
-  // console.log('position liquidity after:', positionAfter.liquidity)
-  // console.log('tick after', )
   expect(positionAfter.liquidity.sub(positionBefore.liquidity)).to.be.equal(liquidityIncrease)
 }
 

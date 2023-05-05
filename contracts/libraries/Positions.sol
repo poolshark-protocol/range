@@ -132,6 +132,17 @@ library Positions {
             params.amount
         );
 
+        (
+            position.feeGrowthInside0Last,
+            position.feeGrowthInside1Last
+        ) = rangeFeeGrowth(
+            ticks[params.mint.lower],
+            ticks[params.mint.upper],
+            params.state,
+            params.mint.lower,
+            params.mint.upper
+        );
+
         if (cache.priceLower < params.state.price && params.state.price < cache.priceUpper) {
             params.state.liquidity += params.amount;
         }
@@ -360,8 +371,6 @@ library Positions {
             params.upper
         );
 
-        if (params.amount > 0) console.log('fee growth check 1', rangeFeeGrowth1, position.feeGrowthInside1Last);
-
         uint128 amount0Fees = uint128(
             PrecisionMath.mulDiv(
                 rangeFeeGrowth0 - position.feeGrowthInside0Last,
@@ -378,10 +387,6 @@ library Positions {
             )
         );
 
-        console.log('amount 1 fees:', amount1Fees);
-
-        if (params.amount == 0) console.log('mint check 0:', position.feeGrowthInside0Last, rangeFeeGrowth0);
-        if (params.amount == 0) console.log('mint check 1:', position.feeGrowthInside1Last, rangeFeeGrowth1);
         position.feeGrowthInside0Last = rangeFeeGrowth0;
         position.feeGrowthInside1Last = rangeFeeGrowth1;
 

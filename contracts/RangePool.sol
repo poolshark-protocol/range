@@ -71,7 +71,6 @@ contract RangePool is
         Position memory position = positions[params.fungible ? address(this) 
                                                              : params.to]
                                             [params.lower][params.upper];
-        console.log('mint fee growth', pool.feeGrowthGlobal1);
         (position, , ) = Positions.update(
                 ticks,
                 position,
