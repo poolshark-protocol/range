@@ -6,7 +6,7 @@ import "./IRangePoolERC1155.sol";
 interface IRangePoolStructs {
     struct PoolState {
         uint8   unlocked;
-        int24   nearestTick;
+        int24   tickAtPrice;
         uint32  secondsGrowthGlobal; /// @dev Multiplied by 2^128
         int56   tickSecondsAccum;
         uint160 secondsPerLiquidityAccum;
@@ -64,6 +64,7 @@ interface IRangePoolStructs {
         uint128 token1;
     }
 
+    //TODO: take out fungible option
     struct MintParams {
         address to;
         int24 lower;
@@ -137,11 +138,12 @@ interface IRangePoolStructs {
         int24   crossTick;
         uint16  swapFee;
         uint16  protocolFee;
+        int56   tickSecondsAccum;
+        uint160 secondsPerLiquidityAccum;
+        uint160 crossPrice;
         uint256 input;
         uint256 output;
         uint256 amountIn;
-        int56   tickSecondsAccum;
-        uint160 secondsPerLiquidityAccum;
     }
 
     struct PositionCache {

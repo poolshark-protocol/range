@@ -25,7 +25,11 @@ interface IRangePool is IRangePoolStructs {
         SwapCache memory
     );
 
-    function collectFees() external returns (
+    function increaseSampleLength(
+        uint16 sampleLengthNext
+    ) external;
+
+    function collectProtocolFees() external returns (
         uint128 token0Fees,
         uint128 token1Fees
     );

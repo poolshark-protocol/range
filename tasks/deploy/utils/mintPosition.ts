@@ -36,9 +36,9 @@ export class MintPosition {
 
     await validateMint({
       signer: hre.props.alice,
-      recipient: hre.props.alice.address,
-      lower: '100',
-      upper: '200',
+      recipient: '0x73a18F0E04A4c7E49C6B25c8f6Bc17674C806b67',
+      lower: '-887270',
+      upper: '887270',
       amount0: token0Amount,
       amount1: token1Amount,
       fungible: false,

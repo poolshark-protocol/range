@@ -11,30 +11,28 @@ contract RangePoolFactory is
     RangePoolFactoryStorage,
     RangePoolFactoryEvents
 {
-    error IdenticalTokenAddresses();
-    error InvalidTokenDecimals();
+    error InvalidTokenAddress();
     error PoolAlreadyExists();
     error FeeTierNotSupported();
 
     constructor(address owner_) {
         _owner = IRangePoolManager(owner_);
-        //TODO: can call initialize to ensure valid admin
     }
 
     function createRangePool(
-        address fromToken,
-        address destToken,
-        uint16 swapFee,
+        address tokenIn,
+        address tokenOut,
+        uint16  swapFee,
         uint160 startPrice
     ) external override returns (address pool) {
         // validate token pair
-        if (fromToken == destToken) {
-            revert IdenticalTokenAddresses();
+        if (tokenIn == tokenOut) {
+            revert InvalidTokenAddress();
         }
-        address token0 = fromToken < destToken ? fromToken : destToken;
-        address token1 = fromToken < destToken ? destToken : fromToken;
-        if (ERC20(token0).decimals() == 0) revert InvalidTokenDecimals();
-        if (ERC20(token1).decimals() == 0) revert InvalidTokenDecimals();
+        address token0 = tokenIn < tokenOut ? tokenIn : tokenOut;
+        address token1 = tokenIn < tokenOut ? tokenOut : tokenIn;
+        if (ERC20(token0).decimals() == 0) revert InvalidTokenAddress();
+        if (ERC20(token1).decimals() == 0) revert InvalidTokenAddress();
 
         // generate key for pool
         bytes32 key = keccak256(abi.encode(token0, token1, swapFee));
@@ -58,16 +56,16 @@ contract RangePoolFactory is
     }
 
     function getRangePool(
-        address fromToken,
-        address destToken,
-        uint256 fee
+        address tokenIn,
+        address tokenOut,
+        uint256 swapFee
     ) public view override returns (address) {
         // set lexographical token address ordering
-        address token0 = fromToken < destToken ? fromToken : destToken;
-        address token1 = fromToken < destToken ? destToken : fromToken;
+        address token0 = tokenIn < tokenOut ? tokenIn : tokenOut;
+        address token1 = tokenIn < tokenOut ? tokenOut : tokenIn;
 
         // get pool address from mapping
-        bytes32 key = keccak256(abi.encode(token0, token1, fee));
+        bytes32 key = keccak256(abi.encode(token0, token1, swapFee));
 
         return rangePools[key];
     }

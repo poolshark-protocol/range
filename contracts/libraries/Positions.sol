@@ -346,7 +346,6 @@ library Positions {
         uint256 totalSupply;
         if (params.fungible) {
             totalSupply = Tokens.totalSupply(address(this), params.lower, params.upper);
-            if (totalSupply == 0) return (position, 0, 0);
             if (params.amount > 0) {
                 uint256 tokenId = Tokens.id(params.lower, params.upper);
                 IRangePoolERC1155(address(this)).burnFungible(msg.sender, tokenId, params.amount);
@@ -360,6 +359,8 @@ library Positions {
             params.lower,
             params.upper
         );
+
+        if (params.amount > 0) console.log('fee growth check 1', rangeFeeGrowth1, position.feeGrowthInside1Last);
 
         uint128 amount0Fees = uint128(
             PrecisionMath.mulDiv(
@@ -377,6 +378,10 @@ library Positions {
             )
         );
 
+        console.log('amount 1 fees:', amount1Fees);
+
+        if (params.amount == 0) console.log('mint check 0:', position.feeGrowthInside0Last, rangeFeeGrowth0);
+        if (params.amount == 0) console.log('mint check 1:', position.feeGrowthInside1Last, rangeFeeGrowth1);
         position.feeGrowthInside0Last = rangeFeeGrowth0;
         position.feeGrowthInside1Last = rangeFeeGrowth1;
 
@@ -399,39 +404,37 @@ library Positions {
     }
 
     function rangeFeeGrowth(
-        IRangePoolStructs.Tick memory tickLower,
-        IRangePoolStructs.Tick memory tickUpper,
+        IRangePoolStructs.Tick memory lowerTick,
+        IRangePoolStructs.Tick memory upperTick,
         IRangePoolStructs.PoolState memory state,
         int24 lower,
         int24 upper
     ) internal pure returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
 
-        int24 currentTick = state.nearestTick;
+        uint256 feeGrowthGlobal0 = state.feeGrowthGlobal0;
+        uint256 feeGrowthGlobal1 = state.feeGrowthGlobal1;
 
-        uint256 _feeGrowthGlobal0 = state.feeGrowthGlobal0;
-        uint256 _feeGrowthGlobal1 = state.feeGrowthGlobal1;
         uint256 feeGrowthBelow0;
         uint256 feeGrowthBelow1;
+        if (state.tickAtPrice >= lower) {
+            feeGrowthBelow0 = lowerTick.feeGrowthOutside0;
+            feeGrowthBelow1 = lowerTick.feeGrowthOutside1;
+        } else {
+            feeGrowthBelow0 = feeGrowthGlobal0 - lowerTick.feeGrowthOutside0;
+            feeGrowthBelow1 = feeGrowthGlobal1 - lowerTick.feeGrowthOutside1;
+        }
+
         uint256 feeGrowthAbove0;
         uint256 feeGrowthAbove1;
-
-        if (lower <= currentTick) {
-            feeGrowthBelow0 = tickLower.feeGrowthOutside0;
-            feeGrowthBelow1 = tickLower.feeGrowthOutside1;
+        if (state.tickAtPrice < upper) {
+            feeGrowthAbove0 = upperTick.feeGrowthOutside0;
+            feeGrowthAbove1 = upperTick.feeGrowthOutside1;
         } else {
-            feeGrowthBelow0 = _feeGrowthGlobal0 - tickLower.feeGrowthOutside0;
-            feeGrowthBelow1 = _feeGrowthGlobal1 - tickLower.feeGrowthOutside1;
+            feeGrowthAbove0 = feeGrowthGlobal0 - upperTick.feeGrowthOutside0;
+            feeGrowthAbove1 = feeGrowthGlobal1 - upperTick.feeGrowthOutside1;
         }
-
-        if (currentTick < upper) {
-            feeGrowthAbove0 = tickUpper.feeGrowthOutside0;
-            feeGrowthAbove1 = tickUpper.feeGrowthOutside1;
-        } else {
-            feeGrowthAbove0 = _feeGrowthGlobal0 - tickUpper.feeGrowthOutside0;
-            feeGrowthAbove1 = _feeGrowthGlobal1 - tickUpper.feeGrowthOutside1;
-        }
-        feeGrowthInside0 = _feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
-        feeGrowthInside1 = _feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
+        feeGrowthInside0 = feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0;
+        feeGrowthInside1 = feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1;
     }
 
     function rangeFeeGrowth(

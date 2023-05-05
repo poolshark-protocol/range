@@ -48,8 +48,8 @@ contract RangePool is
         // set global state
         PoolState memory pool;
         pool.price = _startPrice;
+        pool.tickAtPrice = TickMath.getTickAtSqrtRatio(pool.price);
         pool.unlocked = 1;
-        pool.nearestTick = TickMath.MIN_TICK;
 
         // set immutables
         swapFee = _swapFee;
@@ -71,6 +71,7 @@ contract RangePool is
         Position memory position = positions[params.fungible ? address(this) 
                                                              : params.to]
                                             [params.lower][params.upper];
+        console.log('mint fee growth', pool.feeGrowthGlobal1);
         (position, , ) = Positions.update(
                 ticks,
                 position,
@@ -122,7 +123,9 @@ contract RangePool is
         poolState = pool;   
     }
 
-    function burn(BurnParams memory params) external lock {
+    function burn(
+        BurnParams memory params
+    ) external lock {
         PoolState memory pool = poolState;
         Position memory position = positions[params.fungible ? address(this) 
                                                              : msg.sender]
@@ -201,7 +204,6 @@ contract RangePool is
     {
         if (amountIn == 0) return;
         _transferIn(zeroForOne ? token0 : token1, amountIn);
-
         PoolState memory pool = poolState;
         SwapCache memory cache;
         (pool, cache) = Ticks.swap(
@@ -233,7 +235,7 @@ contract RangePool is
 
     function increaseSampleLength(
         uint16 sampleLengthNext
-    ) external lock {
+    ) external override lock {
         poolState = Samples.expand(
             samples,
             poolState,
@@ -264,13 +266,12 @@ contract RangePool is
             amountIn,
             pool
         );
-        
         cache.input  = amountIn - cache.input;
         cache.output = cache.output;
         return (pool, cache);
     }
 
-    function collectFees() external lock returns (
+    function collectProtocolFees() external lock returns (
         uint128 token0Fees,
         uint128 token1Fees
     ) {
