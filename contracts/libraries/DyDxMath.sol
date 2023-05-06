@@ -7,6 +7,7 @@ import './PrecisionMath.sol';
 library DyDxMath {
     uint256 internal constant Q96 = 0x1000000000000000000000000;
 
+    error AmountsOutOfBounds();
     error PriceOutsideBounds();
 
     function getDy(
@@ -98,17 +99,24 @@ library DyDxMath {
         uint256 currentPrice,
         uint256 liquidityAmount,
         bool roundUp
-    ) external pure returns (uint128 token0amount, uint128 token1amount) {
+    ) external pure returns (
+        uint128,
+        uint128
+    ) {
+        uint256 dx; uint256 dy;
         if (currentPrice <= priceLower) {
             // token0 (X) is supplied
-            token0amount = uint128(_getDx(liquidityAmount, priceLower, priceUpper, roundUp));
+            dx = _getDx(liquidityAmount, priceLower, priceUpper, roundUp);
         } else if (priceUpper <= currentPrice) {
             // token1 (y) is supplied
-            token1amount = uint128(_getDy(liquidityAmount, priceLower, priceUpper, roundUp));
+            dy = _getDy(liquidityAmount, priceLower, priceUpper, roundUp);
         } else {
             // Both token0 (x) and token1 (y) are supplied
-            token0amount = uint128(_getDx(liquidityAmount, currentPrice, priceUpper, roundUp));
-            token1amount = uint128(_getDy(liquidityAmount, priceLower, currentPrice, roundUp));
+            dx = _getDx(liquidityAmount, currentPrice, priceUpper, roundUp);
+            dy = _getDy(liquidityAmount, priceLower, currentPrice, roundUp);
         }
+        if (dx > uint128(type(int128).max)) revert AmountsOutOfBounds();
+        if (dy > uint128(type(int128).max)) revert AmountsOutOfBounds();
+        return (uint128(dx), uint128(dy));
     }
 }

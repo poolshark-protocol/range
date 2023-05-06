@@ -14,18 +14,26 @@ interface IRangePool is IRangePoolStructs {
         bool zeroForOne,
         uint256 amountIn,
         uint160 priceLimit
-    ) external;
+    ) external returns (
+        int256 amount0,
+        int256 amount1
+    );
 
     function quote(
         bool zeroForOne,
         uint256 amountIn,
         uint160 priceLimit
     ) external view returns (
-        PoolState memory,
-        SwapCache memory
+        uint256 inAmount,
+        uint256 outAmount,
+        uint160 priceAfter
     );
 
-    function collectFees() external returns (
+    function increaseSampleLength(
+        uint16 sampleLengthNext
+    ) external;
+
+    function collectProtocolFees() external returns (
         uint128 token0Fees,
         uint128 token1Fees
     );

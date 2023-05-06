@@ -58,6 +58,6 @@ abstract contract RangePoolEvents {
         uint256 amountOut,
         uint160 price,
         uint128 liquidity,
-        int24 nearestTick
+        int24 tickAtPrice
     );
 }

@@ -11,7 +11,6 @@ import './PrecisionMath.sol';
 import './TickMath.sol';
 import './TickMap.sol';
 import './Samples.sol';
-import 'hardhat/console.sol';
 
 /// @notice Tick management library
 library Ticks {
@@ -29,7 +28,7 @@ library Ticks {
         uint256 amountOut,
         uint160 price,
         uint128 liquidity,
-        int24 nearestTick
+        int24 tickAtPrice
     );
 
     uint256 internal constant Q96 = 0x1000000000000000000000000;
@@ -47,6 +46,7 @@ library Ticks {
     {
         TickMap.set(tickMap, TickMath.MIN_TICK);
         TickMap.set(tickMap, TickMath.MAX_TICK);
+        state.tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
         return Samples.initialize(
             samples,
             state
@@ -83,8 +83,10 @@ library Ticks {
     {
         IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
             cross: true,
-            tick: TickMath.getTickAtSqrtRatio(pool.price),
-            crossTick: zeroForOne ? pool.nearestTick : TickMap.next(tickMap, pool.nearestTick),
+            tick: pool.tickAtPrice,
+            crossTick: zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
+                                  : TickMap.next(tickMap, pool.tickAtPrice),
+            crossPrice: 0,
             swapFee: swapFee,
             protocolFee: 0,
             input: amountIn,
@@ -98,19 +100,20 @@ library Ticks {
             cache.tickSecondsAccum,
             cache.secondsPerLiquidityAccum
         ) = Samples.getSingle(
-            IRangePool(address(this)), 
-            IRangePoolStructs.SampleParams(
-                pool.samples.index,
-                pool.samples.length,
-                uint32(block.timestamp),
-                new uint32[](2),
-                cache.tick,
-                pool.liquidity
-            ),
-            0
+                IRangePool(address(this)), 
+                IRangePoolStructs.SampleParams(
+                    pool.samples.index,
+                    pool.samples.length,
+                    uint32(block.timestamp),
+                    new uint32[](2),
+                    cache.tick,
+                    pool.liquidity
+                ),
+                0
         );
         cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
         while (cache.cross) {
+            cache.crossPrice = TickMath.getSqrtRatioAtTick(cache.crossTick);
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
                 (pool, cache) = _cross(
@@ -122,7 +125,11 @@ library Ticks {
                 );
             }
         }
-        (pool, cache) = FeeMath.calculate(pool, cache, zeroForOne);
+        if (pool.price != cache.crossPrice) {
+            pool.tickAtPrice = TickMath.getTickAtSqrtRatio(pool.price);
+        } else {
+            pool.tickAtPrice = cache.crossTick;
+        }
         /// @dev - write oracle entry after start of block
         (
             pool.samples.index,
@@ -130,7 +137,7 @@ library Ticks {
         ) = Samples.save(
             samples,
             pool,
-            cache.tick
+            pool.tickAtPrice
         );
         emit Swap(
             recipient,
@@ -139,7 +146,7 @@ library Ticks {
             cache.output, /// @dev - subgraph will do math to compute fee amount
             pool.price,
             pool.liquidity,
-            pool.nearestTick
+            pool.tickAtPrice
         );
         return (pool, cache);
     }
@@ -161,7 +168,9 @@ library Ticks {
         IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
             cross: true,
             tick: 0,
-            crossTick: zeroForOne ? pool.nearestTick : TickMap.next(tickMap, pool.nearestTick),
+            crossTick: zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
+                                  : TickMap.next(tickMap, pool.tickAtPrice),
+            crossPrice: 0,
             swapFee: swapFee,
             protocolFee: 0,
             input: amountIn,
@@ -172,6 +181,7 @@ library Ticks {
         });
         cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
         while (cache.cross) {
+            cache.crossPrice = TickMath.getSqrtRatioAtTick(cache.crossTick);
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
             if (cache.cross) {
                 (pool, cache) = _pass(
@@ -183,7 +193,6 @@ library Ticks {
                 );
             }
         }
-        (pool, cache) = FeeMath.calculate(pool, cache, zeroForOne);
         return (pool, cache);
     }
 
@@ -192,7 +201,7 @@ library Ticks {
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache
-    ) internal pure returns (
+    ) internal view returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
     ) {
@@ -202,8 +211,8 @@ library Ticks {
             cache.cross = false;
             return (pool, cache);
         }
-        uint256 nextTickPrice = TickMath.getSqrtRatioAtTick(cache.crossTick);
-        uint256 nextPrice = nextTickPrice;
+        uint256 nextPrice = cache.crossPrice;
+        uint256 amountOut;
         if (zeroForOne) {
             // Trading token 0 (x) for token 1 (y).
             // price  is decreasing.
@@ -224,14 +233,16 @@ library Ticks {
                 // if (!(nextTickPrice <= newPrice && newPrice < pool.price)) {
                 //     newPrice = uint160(PrecisionMath.divRoundingUp(liquidityPadded, liquidityPadded / pool.price + cache.input));
                 //  }
+                amountOut = DyDxMath.getDy(pool.liquidity, newPrice, uint256(pool.price), false);
                 cache.input = 0;
-                cache.output += DyDxMath.getDy(pool.liquidity, newPrice, uint256(pool.price), false);
                 cache.cross = false;
                 pool.price = uint160(newPrice);
-            } else {
+            } else { 
+                amountOut = DyDxMath.getDy(pool.liquidity, nextPrice, pool.price, false);
                 cache.input -= maxDx;
-                cache.output += DyDxMath.getDy(pool.liquidity, nextPrice, pool.price, false);
-                if (nextPrice == nextTickPrice) { cache.cross = true; }
+                if (nextPrice == cache.crossPrice 
+                        && nextPrice != pool.price
+                        && cache.crossTick != TickMath.MIN_TICK) { cache.cross = true; }
                 else cache.cross = false;
                 pool.price = uint160(nextPrice);
             }
@@ -247,19 +258,22 @@ library Ticks {
                 uint256 newPrice = pool.price +
                     PrecisionMath.mulDiv(cache.input, Q96, pool.liquidity);
                 // Calculate output of swap
-                cache.output += DyDxMath.getDx(pool.liquidity, pool.price, newPrice, false);
-                pool.price = uint160(newPrice);
-                cache.cross = false;
+                amountOut = DyDxMath.getDx(pool.liquidity, pool.price, newPrice, false);
                 cache.input = 0;
+                cache.cross = false;
+                pool.price = uint160(newPrice);
             } else {
                 // Swap & cross the tick.
-                cache.output += DyDxMath.getDx(pool.liquidity, pool.price, nextPrice, false);
-                pool.price = uint160(nextPrice);
-                if (nextPrice == nextTickPrice) { cache.cross = true; }
-                else cache.cross = false;
+                amountOut = DyDxMath.getDx(pool.liquidity, pool.price, nextPrice, false);
                 cache.input -= maxDy;
+                if (nextPrice == cache.crossPrice 
+                    && nextPrice != pool.price
+                    && cache.crossTick != TickMath.MAX_TICK) { cache.cross = true; }
+                else cache.cross = false;
+                pool.price = uint160(nextPrice);
             }
         }
+        (pool, cache) = FeeMath.calculate(pool, cache, amountOut, zeroForOne);
         return (pool, cache);
     }
 
@@ -276,8 +290,6 @@ library Ticks {
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
-        // observe most recent oracle update
-
         IRangePoolStructs.Tick memory crossTick = ticks[cache.crossTick];
         crossTick.feeGrowthOutside0       = pool.feeGrowthGlobal0 - crossTick.feeGrowthOutside0;
         crossTick.feeGrowthOutside1       = pool.feeGrowthGlobal1 - crossTick.feeGrowthOutside1;
@@ -285,18 +297,18 @@ library Ticks {
         crossTick.secondsGrowthOutside    = uint32(block.timestamp) - crossTick.secondsGrowthOutside;
         crossTick.secondsPerLiquidityAccumOutside = cache.secondsPerLiquidityAccum - crossTick.secondsPerLiquidityAccumOutside;
         ticks[cache.crossTick] = crossTick;
-
+        // observe most recent oracle update
         if (zeroForOne) {
             unchecked {
                 pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
             }
+            pool.tickAtPrice = cache.crossTick;
             cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
-            pool.nearestTick = cache.crossTick;
         } else {
             unchecked {
                 pool.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
             }
-            pool.nearestTick = cache.crossTick;
+            pool.tickAtPrice = cache.crossTick;
             cache.crossTick = TickMap.next(tickMap, cache.crossTick);
         }
         return (pool, cache);
@@ -317,12 +329,12 @@ library Ticks {
                 pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
             }
             cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
-            pool.nearestTick = cache.crossTick;
+            pool.tickAtPrice = cache.crossTick;
         } else {
             unchecked {
                 pool.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
             }
-            pool.nearestTick = cache.crossTick;
+            pool.tickAtPrice = cache.crossTick;
             cache.crossTick = TickMap.next(tickMap, cache.crossTick);
         }
         return (pool, cache);
@@ -345,7 +357,7 @@ library Ticks {
         if (type(uint128).max - state.liquidityGlobal < amount) revert LiquidityOverflow();
 
         // get tick at price
-        int24 tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
+        int24 tickAtPrice = state.tickAtPrice;
 
         // write an oracle entry
         (state.samples.index, state.samples.length) = Samples.save(
@@ -367,10 +379,7 @@ library Ticks {
                     state.secondsGrowthGlobal
                 );
             } else {
-                ticks[lower] = IRangePoolStructs.Tick(
-                    int128(amount),
-                    0,0,0,0,0
-                );
+                ticks[lower].liquidityDelta = int128(amount);
             }
         }
 
@@ -387,19 +396,11 @@ library Ticks {
                     state.secondsGrowthGlobal
                 );
             } else {
-                ticks[upper] = IRangePoolStructs.Tick(
-                    -int128(amount),
-                    0,0,0,0,0
-                );
+                ticks[upper].liquidityDelta = -int128(amount);
             }
         }
         state.liquidityGlobal += amount;
-        
-        if (state.nearestTick < upper && upper <= tickAtPrice) {
-            state.nearestTick = upper;
-        } else if (state.nearestTick < lower && lower <= tickAtPrice) {
-            state.nearestTick = lower;
-        }
+
         return state;
     }
 
@@ -418,7 +419,7 @@ library Ticks {
         if (amount > state.liquidityGlobal) revert LiquidityUnderflow();
 
         // get tick at price
-        int24 tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
+        int24 tickAtPrice = state.tickAtPrice;
 
         // write an oracle entry
         (state.samples.index, state.samples.length) = Samples.save(
@@ -427,17 +428,11 @@ library Ticks {
             tickAtPrice
         );
 
-        if (state.nearestTick >= lower && state.nearestTick < upper) {
+        if (state.tickAtPrice >= lower && state.tickAtPrice < upper) {
             state.liquidity -= amount;
         }
         IRangePoolStructs.Tick storage current = ticks[lower];
         if (lower != TickMath.MIN_TICK && current.liquidityDelta == int128(amount)) {
-            if (state.nearestTick == lower) {
-                state.nearestTick = TickMap.previous(tickMap, lower);
-                if (state.liquidity == 0) {
-                    state.price = TickMath.getSqrtRatioAtTick(state.nearestTick);
-                }
-            }
             TickMap.unset(tickMap, lower);
             delete ticks[lower];
         } else {
@@ -448,8 +443,6 @@ library Ticks {
         current = ticks[upper];
 
         if (upper != TickMath.MAX_TICK && current.liquidityDelta == -int128(amount)) {
-            if (state.nearestTick == upper)
-                state.nearestTick = TickMap.previous(tickMap, upper);
             TickMap.unset(tickMap, upper);
             delete ticks[upper];
         } else {

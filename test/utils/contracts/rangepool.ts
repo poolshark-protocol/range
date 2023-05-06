@@ -14,7 +14,7 @@ export interface Position {
 
 export interface PoolState {
   unlocked: number
-  nearestTick: number
+  tickAtPrice: number
   secondsGrowthGlobal: number
   tickSecondsAccum: BigNumber
   secondsPerLiquidityAccum: BigNumber
@@ -96,6 +96,19 @@ export interface ValidateBurnParams {
   revertMessage: string
 }
 
+export async function getTickAtPrice() {
+  const price = (await hre.props.rangePool.poolState()).price
+  const tick = await hre.props.tickMathLib.getTickAtSqrtRatio(price)
+  console.log('tick at price:', tick)
+}
+
+export async function getFeeGrowthGlobal(isToken0: boolean = true) {
+  const price = isToken0 ? (await hre.props.rangePool.poolState()).feeGrowthGlobal0
+                         : (await hre.props.rangePool.poolState()).feeGrowthGlobal1
+  const tick = await hre.props.tickMathLib.getTickAtSqrtRatio(price)
+  console.log('fee growth', isToken0 ? '0:' : '1:', tick)
+}
+
 export async function validateSwap(params: ValidateSwapParams) {
   const signer = params.signer
   const recipient = params.recipient
@@ -121,12 +134,13 @@ export async function validateSwap(params: ValidateSwapParams) {
   const poolBefore: PoolState = await hre.props.rangePool.poolState()
   const liquidityBefore = poolBefore.liquidity
   const priceBefore = poolBefore.price
-  const nearestTickBefore = poolBefore.nearestTick
+  const nearestTickBefore = poolBefore.tickAtPrice
 
   // quote pre-swap and validate balance changes match post-swap
   const quote = await hre.props.rangePool.quote(zeroForOne, amountIn, sqrtPriceLimitX96)
-  const poolState: PoolState = quote[0]
-  const swapCache: SwapCache = quote[1]
+  const inAmount = quote[0]
+  const outAmount = quote[1]
+  const priceAfterQuote = quote[2]
 
   if (revertMessage == '') {
     let txn = await hre.props.rangePool
@@ -154,13 +168,15 @@ export async function validateSwap(params: ValidateSwapParams) {
 
   expect(balanceInBefore.sub(balanceInAfter)).to.be.equal(balanceInDecrease)
   expect(balanceOutAfter.sub(balanceOutBefore)).to.be.equal(balanceOutIncrease)
-  expect(balanceInBefore.sub(balanceInAfter)).to.be.equal(swapCache.input)
-  expect(balanceOutAfter.sub(balanceOutBefore)).to.be.equal(swapCache.output)
+  expect(balanceInBefore.sub(balanceInAfter)).to.be.equal(inAmount)
+  expect(balanceOutAfter.sub(balanceOutBefore)).to.be.equal(outAmount)
 
   const poolAfter: PoolState = await hre.props.rangePool.poolState()
   const liquidityAfter = poolAfter.liquidity
-  //TODO: check feeGrowth before and after swap
   const priceAfter = poolAfter.price
+
+  expect(priceAfter).to.be.equal(priceAfterQuote)
+  //TODO: check feeGrowth before and after swap
 
   // expect(liquidityAfter).to.be.equal(finalLiquidity);
   // expect(priceAfter).to.be.equal(finalPrice);
@@ -223,8 +239,8 @@ export async function validateMint(params: ValidateMintParams) {
   let positionTokens: Contract
   let positionTokenId: BigNumber
   let positionTokenBalanceBefore: BigNumber
-  // lowerTickBefore = await hre.props.rangePool.ticks(lower)
-  // upperTickBefore = await hre.props.rangePool.ticks(upper)
+  lowerTickBefore = await hre.props.rangePool.ticks(lower)
+  upperTickBefore = await hre.props.rangePool.ticks(upper)
   if (fungible) {
     positionBefore = await hre.props.rangePool.positions(
       hre.props.rangePool.address,
@@ -274,15 +290,15 @@ export async function validateMint(params: ValidateMintParams) {
   balance0After = await hre.props.token0.balanceOf(params.signer.address)
   balance1After = await hre.props.token1.balanceOf(params.signer.address)
 
-  // expect(balance0Before.sub(balance0After)).to.be.equal(balance0Decrease)
-  // expect(balance1Before.sub(balance1After)).to.be.equal(balance1Decrease)
+  expect(balance0Before.sub(balance0After)).to.be.equal(balance0Decrease)
+  expect(balance1Before.sub(balance1After)).to.be.equal(balance1Decrease)
 
   let lowerTickAfter: Tick
   let upperTickAfter: Tick
   let positionAfter: Position
   let positionTokenBalanceAfter: BigNumber
-  // lowerTickAfter = await hre.props.rangePool.ticks(lower)
-  // upperTickAfter = await hre.props.rangePool.ticks(upper)
+  lowerTickAfter = await hre.props.rangePool.ticks(lower)
+  upperTickAfter = await hre.props.rangePool.ticks(upper)
   if (fungible) {
     positionAfter = await hre.props.rangePool.positions(
       hre.props.rangePool.address,
@@ -300,13 +316,13 @@ export async function validateMint(params: ValidateMintParams) {
       upper
     )
   }
-  // expect(lowerTickAfter.liquidityDelta.sub(lowerTickBefore.liquidityDelta)).to.be.equal(
-  //   liquidityIncrease
-  // )
-  // expect(upperTickAfter.liquidityDelta.sub(upperTickBefore.liquidityDelta)).to.be.equal(
-  //   BN_ZERO.sub(liquidityIncrease)
-  // )
-  // expect(positionAfter.liquidity.sub(positionBefore.liquidity)).to.be.equal(liquidityIncrease)
+  expect(lowerTickAfter.liquidityDelta.sub(lowerTickBefore.liquidityDelta)).to.be.equal(
+    liquidityIncrease
+  )
+  expect(upperTickAfter.liquidityDelta.sub(upperTickBefore.liquidityDelta)).to.be.equal(
+    BN_ZERO.sub(liquidityIncrease)
+  )
+  expect(positionAfter.liquidity.sub(positionBefore.liquidity)).to.be.equal(liquidityIncrease)
 }
 
 export async function validateBurn(params: ValidateBurnParams) {

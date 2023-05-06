@@ -39,7 +39,7 @@ describe('RangePoolFactory Tests', function () {
           '500',
           '177159557114295710296101716160'
         )
-    ).to.be.revertedWith('IdenticalTokenAddresses()')
+    ).to.be.revertedWith('InvalidTokenAddress()')
   })
 
   it('Should not create pool if the pair already exists', async function () {
@@ -64,7 +64,7 @@ describe('RangePoolFactory Tests', function () {
       hre.props.rangePoolFactory
         .connect(hre.props.admin)
         .createRangePool(hre.props.token1.address, hre.props.token0.address, '1000', '177159557114295710296101716160')
-    ).to.be.revertedWith('InvalidTokenDecimals()')
+    ).to.be.revertedWith('InvalidTokenAddress()')
     await hre.props.token0.connect(hre.props.admin).setDecimals(18)
   })
 
@@ -74,7 +74,7 @@ describe('RangePoolFactory Tests', function () {
       hre.props.rangePoolFactory
         .connect(hre.props.admin)
         .createRangePool(hre.props.token1.address, hre.props.token0.address, '1000', '177159557114295710296101716160')
-    ).to.be.revertedWith('InvalidTokenDecimals()')
+    ).to.be.revertedWith('InvalidTokenAddress()')
     await hre.props.token1.connect(hre.props.admin).setDecimals(18)
   })
 

@@ -158,7 +158,7 @@ contract RangePoolManager is
     ) external onlyFeeTo {
         for (uint i; i < collectPools.length; i++) {
             uint128 token0Fees; uint128 token1Fees;
-            (token0Fees, token1Fees) = IRangePool(collectPools[i]).collectFees();
+            (token0Fees, token1Fees) = IRangePool(collectPools[i]).collectProtocolFees();
             emit ProtocolFeeCollected(collectPools[i], token0Fees, token1Fees);
         }
     }

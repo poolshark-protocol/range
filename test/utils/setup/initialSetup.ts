@@ -297,7 +297,7 @@ export class InitialSetup {
       .createRangePool(
         hre.props.token0.address,
         hre.props.token1.address,
-        '3000',
+        '500',
         '177159557114295710296101716160'
     )
     hre.nonce += 1

@@ -11,6 +11,7 @@ library FeeMath {
     function calculate(
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache,
+        uint256 amountOut,
         bool zeroForOne
     ) internal pure returns (
             IRangePoolStructs.PoolState memory,
@@ -18,10 +19,11 @@ library FeeMath {
         )
     {
         if (pool.liquidity == 0 ) return (pool, cache);
-        uint256 feeAmount = PrecisionMath.mulDivRoundingUp(cache.output, cache.swapFee, 1e6); 
+        uint256 feeAmount = PrecisionMath.mulDivRoundingUp(amountOut, cache.swapFee, 1e6); 
         uint256 protocolFee = PrecisionMath.mulDivRoundingUp(feeAmount, cache.protocolFee, 1e6);
-        cache.output -= feeAmount;
+        amountOut -= feeAmount;
         feeAmount -= protocolFee;
+
         if (zeroForOne) {
            pool.protocolFees.token1 += uint128(protocolFee);
            pool.feeGrowthGlobal1 += uint200(PrecisionMath.mulDiv(feeAmount, Q128, pool.liquidity));
@@ -29,6 +31,7 @@ library FeeMath {
           pool.protocolFees.token0 += uint128(protocolFee);
           pool.feeGrowthGlobal0 += uint200(PrecisionMath.mulDiv(feeAmount, Q128, pool.liquidity));
         }
+        cache.output += amountOut;
         return (pool, cache);
     }
 }
