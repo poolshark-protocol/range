@@ -201,7 +201,7 @@ library Ticks {
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache
-    ) internal view returns (
+    ) internal pure returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
     ) {
@@ -365,6 +365,9 @@ library Ticks {
             state,
             tickAtPrice
         );
+        if (tickAtPrice >= lower && tickAtPrice < upper) {
+            state.liquidity += amount;
+        }
 
         if(TickMap.set(tickMap, lower)) {
             ticks[lower].liquidityDelta += int128(amount);
@@ -427,10 +430,10 @@ library Ticks {
             state,
             tickAtPrice
         );
-
         if (state.tickAtPrice >= lower && state.tickAtPrice < upper) {
             state.liquidity -= amount;
         }
+
         IRangePoolStructs.Tick storage current = ticks[lower];
         if (lower != TickMath.MIN_TICK && current.liquidityDelta == int128(amount)) {
             TickMap.unset(tickMap, lower);

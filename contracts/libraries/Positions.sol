@@ -146,9 +146,6 @@ library Positions {
             params.mint.upper
         );
 
-        if (cache.priceLower < params.state.price && params.state.price < cache.priceUpper) {
-            params.state.liquidity += params.amount;
-        }
         position.liquidity += uint128(params.amount);
         
         // modify liquidity minted to account for fees accrued
