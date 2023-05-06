@@ -15,7 +15,6 @@ library TickMath {
 
     error TickOutOfBounds();
     error PriceOutOfBounds();
-    error WaitUntilEnoughObservations();
 
     function getSqrtRatioAtTick(int24 tick) external pure returns (uint160 getSqrtPriceX96) {
         return _getSqrtRatioAtTick(tick);
@@ -32,7 +31,8 @@ library TickMath {
     /// at the given tick.
     function _getSqrtRatioAtTick(int24 tick) internal pure returns (uint160 sqrtPriceX96) {
         uint256 absTick = tick < 0 ? uint256(-int256(tick)) : uint256(int256(tick));
-        if (absTick > uint256(uint24(MAX_TICK))) revert TickOutOfBounds();
+        if (absTick > uint256(uint24(MAX_TICK))) require(false, 'TickOutOfBounds()');
+        
         unchecked {
             uint256 ratio = absTick & 0x1 != 0
                 ? 0xfffcb933bd6fad37aa2d162d1a594001
@@ -67,7 +67,7 @@ library TickMath {
 
     function validatePrice(uint160 price) external pure {
         if (price < MIN_SQRT_RATIO || price >= MAX_SQRT_RATIO) {
-            revert PriceOutOfBounds();
+            require(false, 'PriceOutOfBounds()');
         }
     }
 
@@ -79,7 +79,7 @@ library TickMath {
     function _getTickAtSqrtRatio(uint160 sqrtPriceX96) internal pure returns (int24 tick) {
         // Second inequality must be < because the price can never reach the price at the max tick.
         if (sqrtPriceX96 < MIN_SQRT_RATIO || sqrtPriceX96 >= MAX_SQRT_RATIO)
-            revert PriceOutOfBounds();
+            require(false, 'PriceOutOfBounds()');
         uint256 ratio = uint256(sqrtPriceX96) << 32;
 
         uint256 r = ratio;

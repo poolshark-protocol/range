@@ -115,8 +115,8 @@ library DyDxMath {
             dx = _getDx(liquidityAmount, currentPrice, priceUpper, roundUp);
             dy = _getDy(liquidityAmount, priceLower, currentPrice, roundUp);
         }
-        if (dx > uint128(type(int128).max)) revert AmountsOutOfBounds();
-        if (dy > uint128(type(int128).max)) revert AmountsOutOfBounds();
+        if (dx > uint128(type(int128).max)) require(false, 'AmountsOutOfBounds()');
+        if (dy > uint128(type(int128).max)) require(false, 'AmountsOutOfBounds()');
         return (uint128(dx), uint128(dy));
     }
 }

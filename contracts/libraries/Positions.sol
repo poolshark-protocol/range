@@ -90,7 +90,7 @@ library Positions {
             params.amount1,
             params.amount0
         );
-        if (liquidityMinted == 0) revert NoLiquidityBeingAdded();
+        if (liquidityMinted == 0) require(false, 'NoLiquidityBeingAdded()');
         (params.amount0, params.amount1) = DyDxMath.getAmountsForLiquidity(
             priceLower,
             priceUpper,
@@ -98,7 +98,7 @@ library Positions {
             liquidityMinted,
             true
         );
-        if (liquidityMinted > uint128(type(int128).max)) revert LiquidityOverflow();
+        if (liquidityMinted > uint128(type(int128).max)) require(false, 'LiquidityOverflow()');
 
         return (params, liquidityMinted);
     }
@@ -228,7 +228,7 @@ library Positions {
             );
             return (state, position, removeParams.amount0, removeParams.amount1);
         } 
-        if (params.amount > position.liquidity) revert NotEnoughPositionLiquidity();
+        if (params.amount > position.liquidity) require(false, 'NotEnoughPositionLiquidity()');
         {
             uint128 amount0Removed; uint128 amount1Removed;
             (amount0Removed, amount1Removed) = DyDxMath.getAmountsForLiquidity(
