@@ -84,7 +84,7 @@ contract RangePool is
                 )
         );
         uint256 liquidityMinted;
-        (params, liquidityMinted) = Positions.validate(params, pool);
+        (params, liquidityMinted) = Positions.validate(params, pool, _immutables());
         if (params.amount0 > 0) _transferIn(token0, params.amount0);
         if (params.amount1 > 0) _transferIn(token1, params.amount1);
         if (position.amount0 > 0 || position.amount1 > 0) {
@@ -186,8 +186,8 @@ contract RangePool is
                 )
             );
         }
-        _transferOut(params.to, token0, amount0);
-        _transferOut(params.to, token1, amount1);
+        if (amount0 > 0) _transferOut(params.to, token0, amount0);
+        if (amount1 > 0) _transferOut(params.to, token1, amount1);
         poolState = pool;
         positions[params.fungible ? address(this) : msg.sender][
             params.lower
@@ -199,9 +199,12 @@ contract RangePool is
         bool zeroForOne,
         uint256 amountIn,
         uint160 priceLimit
-    ) external override lock
+    ) external override lock returns(
+        int256,
+        int256
+    )
     {
-        if (amountIn == 0) return;
+        if (amountIn == 0) return (0,0);
         _transferIn(zeroForOne ? token0 : token1, amountIn);
         PoolState memory pool = poolState;
         SwapCache memory cache;
@@ -247,8 +250,9 @@ contract RangePool is
         uint256 amountIn,
         uint160 priceLimit
     ) external view override returns (
-        PoolState memory,
-        SwapCache memory
+        uint256,
+        uint256,
+        uint160
     ) {
         // figure out price limit for user
         // quote with low price limit
@@ -265,9 +269,11 @@ contract RangePool is
             amountIn,
             pool
         );
-        cache.input  = amountIn - cache.input;
-        cache.output = cache.output;
-        return (pool, cache);
+        return (
+            amountIn - cache.input,
+            cache.output,
+            pool.price
+        );
     }
 
     function collectProtocolFees() external lock returns (
@@ -280,6 +286,13 @@ contract RangePool is
         poolState.protocolFees.token1 = 0;
         _transferOut(owner.feeTo(), token0, token0Fees);
         _transferOut(owner.feeTo(), token1, token1Fees);
+    }
+
+    function _immutables() private view returns (Immutables memory) {
+        return Immutables(
+            swapFee,
+            tickSpacing
+        );
     }
 
     function _prelock() private {

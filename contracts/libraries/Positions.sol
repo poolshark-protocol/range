@@ -75,8 +75,11 @@ library Positions {
 
     function validate(
         IRangePoolStructs.MintParams memory params,
-        IRangePoolStructs.PoolState memory state
+        IRangePoolStructs.PoolState memory state,
+        IRangePoolStructs.Immutables memory constants
     ) external pure returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
+        Ticks.validate(params.lower, params.upper, constants.tickSpacing);
+        
         uint256 priceLower = uint256(TickMath.getSqrtRatioAtTick(params.lower));
         uint256 priceUpper = uint256(TickMath.getSqrtRatioAtTick(params.upper));
 

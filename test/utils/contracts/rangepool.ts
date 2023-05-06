@@ -138,8 +138,9 @@ export async function validateSwap(params: ValidateSwapParams) {
 
   // quote pre-swap and validate balance changes match post-swap
   const quote = await hre.props.rangePool.quote(zeroForOne, amountIn, sqrtPriceLimitX96)
-  const poolState: PoolState = quote[0]
-  const swapCache: SwapCache = quote[1]
+  const inAmount = quote[0]
+  const outAmount = quote[1]
+  const priceAfterQuote = quote[2]
 
   if (revertMessage == '') {
     let txn = await hre.props.rangePool
@@ -167,13 +168,15 @@ export async function validateSwap(params: ValidateSwapParams) {
 
   expect(balanceInBefore.sub(balanceInAfter)).to.be.equal(balanceInDecrease)
   expect(balanceOutAfter.sub(balanceOutBefore)).to.be.equal(balanceOutIncrease)
-  expect(balanceInBefore.sub(balanceInAfter)).to.be.equal(swapCache.input)
-  expect(balanceOutAfter.sub(balanceOutBefore)).to.be.equal(swapCache.output)
+  expect(balanceInBefore.sub(balanceInAfter)).to.be.equal(inAmount)
+  expect(balanceOutAfter.sub(balanceOutBefore)).to.be.equal(outAmount)
 
   const poolAfter: PoolState = await hre.props.rangePool.poolState()
   const liquidityAfter = poolAfter.liquidity
-  //TODO: check feeGrowth before and after swap
   const priceAfter = poolAfter.price
+
+  expect(priceAfter).to.be.equal(priceAfterQuote)
+  //TODO: check feeGrowth before and after swap
 
   // expect(liquidityAfter).to.be.equal(finalLiquidity);
   // expect(priceAfter).to.be.equal(finalPrice);

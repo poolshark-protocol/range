@@ -64,6 +64,11 @@ interface IRangePoolStructs {
         uint128 token1;
     }
 
+    struct Immutables {
+        uint16 swapFee;
+        int24  tickSpacing;
+    }
+
     //TODO: take out fungible option
     struct MintParams {
         address to;
