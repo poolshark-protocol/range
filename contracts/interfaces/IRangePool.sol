@@ -11,6 +11,7 @@ interface IRangePool is IRangePoolStructs {
 
     function swap(
         address recipient,
+        address refundRecipient,
         bool zeroForOne,
         uint256 amountIn,
         uint160 priceLimit

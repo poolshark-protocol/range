@@ -196,6 +196,7 @@ contract RangePool is
 
     function swap(
         address recipient,
+        address refundRecipient,
         bool zeroForOne,
         uint256 amountIn,
         uint160 priceLimit
@@ -220,15 +221,14 @@ contract RangePool is
             pool
         );
 
-        // handle fee return and transfer out
         if (zeroForOne) {
             if (cache.input > 0) {
-                _transferOut(recipient, token0, cache.input);
+                _transferOut(refundRecipient, token0, cache.input);
             }
             _transferOut(recipient, token1, cache.output);
         } else {
             if (cache.input > 0) {
-                _transferOut(recipient, token1, cache.input);
+                _transferOut(refundRecipient, token1, cache.input);
             }
             _transferOut(recipient, token0, cache.output);
         }
