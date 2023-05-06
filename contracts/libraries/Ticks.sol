@@ -58,11 +58,11 @@ library Ticks {
         int24 upper,
         int24 tickSpacing
     ) public pure {
-        if (lower % tickSpacing != 0) revert InvalidLowerTick();
-        if (lower <= TickMath.MIN_TICK) revert InvalidLowerTick();
-        if (upper % tickSpacing != 0) revert InvalidUpperTick();
-        if (upper >= TickMath.MAX_TICK) revert InvalidUpperTick();
-        if (lower >= upper) revert InvalidPositionBounds();
+        if (lower % tickSpacing != 0) require(false, 'InvalidLowerTick()');
+        if (lower <= TickMath.MIN_TICK) require(false, 'InvalidLowerTick()');
+        if (upper % tickSpacing != 0) require(false, 'InvalidUpperTick()');
+        if (upper >= TickMath.MAX_TICK) require(false, 'InvalidUpperTick()');
+        if (lower >= upper) require(false, 'InvalidPositionBounds()');
     }
 
     function swap(
@@ -353,8 +353,8 @@ library Ticks {
         //TODO: doesn't check if upper/lowerOld is greater/less than MAX/MIN_TICK
         validate(lower, upper, IRangePool(address(this)).tickSpacing());
         // check for amount to overflow liquidity delta & global
-        if (amount > uint128(type(int128).max)) revert LiquidityOverflow();
-        if (type(uint128).max - state.liquidityGlobal < amount) revert LiquidityOverflow();
+        if (amount > uint128(type(int128).max)) require(false, 'LiquidityOverflow()');
+        if (type(uint128).max - state.liquidityGlobal < amount) require(false, 'LiquidityOverflow()');
 
         // get tick at price
         int24 tickAtPrice = state.tickAtPrice;
@@ -418,8 +418,8 @@ library Ticks {
     ) external returns (IRangePoolStructs.PoolState memory) {
         validate(lower, upper, IRangePool(address(this)).tickSpacing());
         //check for amount to overflow liquidity delta & global
-        if (amount > uint128(type(int128).max)) revert LiquidityUnderflow();
-        if (amount > state.liquidityGlobal) revert LiquidityUnderflow();
+        if (amount > uint128(type(int128).max)) require(false, 'LiquidityUnderflow()');
+        if (amount > state.liquidityGlobal) require(false, 'LiquidityUnderflow()');
 
         // get tick at price
         int24 tickAtPrice = state.tickAtPrice;

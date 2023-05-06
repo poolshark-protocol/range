@@ -82,7 +82,7 @@ library Samples {
     ) external returns (
         IRangePoolStructs.PoolState memory
     ) {
-        if (state.samples.length == 0) revert SampleArrayUninitialized();
+        if (state.samples.length == 0) require(false, 'SampleArrayUninitialized()');
         for (uint16 i = state.samples.lengthNext; i < sampleLengthNext; i++) {
             samples[i].tickSecondsAccum = 1;
         }
@@ -98,7 +98,7 @@ library Samples {
         int56[]   memory tickSecondsAccum,
         uint160[] memory secondsPerLiquidityAccum
     ) {
-        if (params.sampleLength == 0) revert InvalidSampleLength();
+        if (params.sampleLength == 0) require(false, 'InvalidSampleLength()');
 
         tickSecondsAccum = new int56[](params.secondsAgos.length);
         secondsPerLiquidityAccum = new uint160[](params.secondsAgos.length);
@@ -299,7 +299,7 @@ library Samples {
         if (firstSample.blockTimestamp == 0) {
             firstSample = _poolSample(pool, 0);
         }
-        if(!_lte(firstSample.blockTimestamp, targetTime)) revert SampleLengthNotAvailable();
+        if(!_lte(firstSample.blockTimestamp, targetTime)) require(false, 'SampleLengthNotAvailable()');
 
         return _binarySearch(
             pool,
