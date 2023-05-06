@@ -17,6 +17,7 @@ contract RangePoolManager is
     address public _owner;
     address private _feeTo;
     address private _factory;
+    uint16 internal constant MAX_FEE = 1e4; // @dev - max fee of 1%
 
     mapping(uint16 => int24)   public feeTiers;
     mapping(address => uint16) public protocolFees;
@@ -26,6 +27,7 @@ contract RangePoolManager is
     error FeeTierAlreadyEnabled();
     error TransferredToZeroAddress();
     error FeeTierTickSpacingInvalid();
+    error ProtocolFeeMaxExceeded();
     
     constructor() {
         _owner = msg.sender;
@@ -145,6 +147,7 @@ contract RangePoolManager is
         address[] calldata addPools,
         uint16 protocolFee
     ) external onlyOwner {
+        if (protocolFee > MAX_FEE) revert ProtocolFeeMaxExceeded();
         uint128[] memory token0Fees = new uint128[](removePools.length);
         uint128[] memory token1Fees = new uint128[](removePools.length);
         for (uint i; i < removePools.length; i++) {
