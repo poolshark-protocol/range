@@ -16,11 +16,11 @@ contract RangePool is
     RangePoolErrors,
     SafeTransfers
 {
+    address public immutable owner;
     address internal immutable token0;
     address internal immutable token1;
     uint16 public immutable swapFee;
     int24 public immutable tickSpacing;
-    address internal immutable _factory;
 
     modifier lock() {
         _prelock();
@@ -28,19 +28,23 @@ contract RangePool is
         _postlock();
     }
 
+    modifier onlyManager() {
+        _onlyManager();
+        _;
+    }
+
     constructor(
         address _token0,
         address _token1,
-        int24 _tickSpacing,
-        uint16 _swapFee,
+        address _owner,
         uint160 _startPrice,
-        IRangePoolManager _owner
+        int24 _tickSpacing,
+        uint16 _swapFee
     ) {
         // validate start price
         TickMath.validatePrice(_startPrice);
 
         // set addresses
-        _factory = msg.sender;
         token0 = _token0;
         token1 = _token1;
         owner  = _owner;
@@ -220,7 +224,6 @@ contract RangePool is
             amountIn,
             pool
         );
-
         if (zeroForOne) {
             if (cache.input > 0) {
                 _transferOut(refundRecipient, token0, cache.input);
@@ -276,16 +279,21 @@ contract RangePool is
         );
     }
 
-    function collectProtocolFees() external lock returns (
+    function protocolFees(
+        uint16 protocolFee,
+        bool setFee
+    ) external lock onlyManager returns (
         uint128 token0Fees,
         uint128 token1Fees
     ) {
+        if (setFee) poolState.protocolFee = protocolFee;
+        address feeTo = IRangePoolManager(owner).feeTo();
         token0Fees = poolState.protocolFees.token0;
         token1Fees = poolState.protocolFees.token1;
         poolState.protocolFees.token0 = 0;
         poolState.protocolFees.token1 = 0;
-        _transferOut(owner.feeTo(), token0, token0Fees);
-        _transferOut(owner.feeTo(), token1, token1Fees);
+        _transferOut(feeTo, token0, token0Fees);
+        _transferOut(feeTo, token1, token1Fees);
     }
 
     function _immutables() private view returns (Immutables memory) {
@@ -293,6 +301,10 @@ contract RangePool is
             swapFee,
             tickSpacing
         );
+    }
+
+    function _onlyManager() private view {
+        if (msg.sender != owner) revert ManagerOnly();
     }
 
     function _prelock() private {

@@ -136,21 +136,20 @@ describe('RangePoolAdmin Tests', function () {
     // set protocol fees on top pools
     await hre.props.rangePoolManager.connect(hre.props.admin).setTopPools([], [hre.props.rangePool.address], "500")
     // check new fee set
-    expect(await
-        hre.props.rangePoolManager
-          .protocolFees(hre.props.rangePool.address)
+    expect((await
+        hre.props.rangePool.poolState())
+          .protocolFee
       ).to.be.equal(500)
-    
     await hre.props.rangePoolManager.connect(hre.props.admin).transferOwner(hre.props.bob.address)
 
     // remove protocol fees on top pools
     await hre.props.rangePoolManager.connect(hre.props.bob).setTopPools([hre.props.rangePool.address], [], "500")
 
     // check new fee set
-    expect(await
-        hre.props.rangePoolManager
-            .protocolFees(hre.props.rangePool.address)
-        ).to.be.equal(0)
+    expect((await
+      hre.props.rangePool.poolState())
+        .protocolFee
+    ).to.be.equal(0)
 
     // should revert when non-admin calls
     await expect(

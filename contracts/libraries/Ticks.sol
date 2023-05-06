@@ -88,7 +88,7 @@ library Ticks {
                                   : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
             swapFee: swapFee,
-            protocolFee: 0,
+            protocolFee: pool.protocolFee,
             input: amountIn,
             output: 0,
             amountIn: amountIn,
@@ -111,7 +111,6 @@ library Ticks {
                 ),
                 0
         );
-        cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
         while (cache.cross) {
             cache.crossPrice = TickMath.getSqrtRatioAtTick(cache.crossTick);
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
@@ -172,14 +171,13 @@ library Ticks {
                                   : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
             swapFee: swapFee,
-            protocolFee: 0,
+            protocolFee: pool.protocolFee,
             input: amountIn,
             output: 0,
             amountIn: amountIn,
             tickSecondsAccum: 0,
             secondsPerLiquidityAccum: 0
         });
-        cache.protocolFee = IRangePool(address(this)).owner().protocolFees(address(this));
         while (cache.cross) {
             cache.crossPrice = TickMath.getSqrtRatioAtTick(cache.crossTick);
             (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
@@ -294,7 +292,6 @@ library Ticks {
         crossTick.feeGrowthOutside0       = pool.feeGrowthGlobal0 - crossTick.feeGrowthOutside0;
         crossTick.feeGrowthOutside1       = pool.feeGrowthGlobal1 - crossTick.feeGrowthOutside1;
         crossTick.tickSecondsAccumOutside = cache.tickSecondsAccum - crossTick.tickSecondsAccumOutside;
-        crossTick.secondsGrowthOutside    = uint32(block.timestamp) - crossTick.secondsGrowthOutside;
         crossTick.secondsPerLiquidityAccumOutside = cache.secondsPerLiquidityAccum - crossTick.secondsPerLiquidityAccumOutside;
         ticks[cache.crossTick] = crossTick;
         // observe most recent oracle update
@@ -378,8 +375,7 @@ library Ticks {
                     state.feeGrowthGlobal0,
                     state.feeGrowthGlobal1,
                     state.tickSecondsAccum,
-                    state.secondsPerLiquidityAccum,
-                    state.secondsGrowthGlobal
+                    state.secondsPerLiquidityAccum
                 );
             } else {
                 ticks[lower].liquidityDelta = int128(amount);
@@ -395,8 +391,7 @@ library Ticks {
                     state.feeGrowthGlobal0,
                     state.feeGrowthGlobal1,
                     state.tickSecondsAccum,
-                    state.secondsPerLiquidityAccum,
-                    state.secondsGrowthGlobal
+                    state.secondsPerLiquidityAccum
                 );
             } else {
                 ticks[upper].liquidityDelta = -int128(amount);

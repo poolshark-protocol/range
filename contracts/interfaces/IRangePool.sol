@@ -34,13 +34,16 @@ interface IRangePool is IRangePoolStructs {
         uint16 sampleLengthNext
     ) external;
 
-    function collectProtocolFees() external returns (
+    function protocolFees(
+        uint16 protocolFee,
+        bool setFee
+    ) external returns (
         uint128 token0Fees,
         uint128 token1Fees
     );
 
     function owner() external view returns (
-        IRangePoolManager
+        address
     );
 
     function tickSpacing() external view returns (
@@ -55,8 +58,8 @@ interface IRangePool is IRangePoolStructs {
 
     function poolState() external view returns (
         uint8,
+        uint16,
         int24,
-        uint32,
         int56,
         uint160,
         uint160,
@@ -73,7 +76,6 @@ interface IRangePool is IRangePoolStructs {
         uint200,
         uint200,
         int56,
-        uint160,
-        uint32
+        uint160
     );
 }
