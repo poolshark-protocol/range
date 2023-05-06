@@ -25,6 +25,7 @@ contract RangePoolManager is
     error FeeToOnly();
     error FeeTierAlreadyEnabled();
     error TransferredToZeroAddress();
+    error FeeTierTickSpacingInvalid();
     
     constructor() {
         _owner = msg.sender;
@@ -127,6 +128,7 @@ contract RangePoolManager is
         if (feeTiers[swapFee] != 0) {
             revert FeeTierAlreadyEnabled();
         }
+        if(tickSpacing <= 0 || tickSpacing >= 16384) revert FeeTierTickSpacingInvalid();
         feeTiers[swapFee] = tickSpacing;
         emit FeeTierEnabled(swapFee, tickSpacing);
     }
