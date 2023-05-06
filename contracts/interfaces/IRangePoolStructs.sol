@@ -6,8 +6,8 @@ import "./IRangePoolERC1155.sol";
 interface IRangePoolStructs {
     struct PoolState {
         uint8   unlocked;
+        uint16  protocolFee;
         int24   tickAtPrice;
-        uint32  secondsGrowthGlobal; /// @dev Multiplied by 2^128
         int56   tickSecondsAccum;
         uint160 secondsPerLiquidityAccum;
         uint160 price;               /// @dev Starting price current
@@ -31,7 +31,6 @@ interface IRangePoolStructs {
         uint200 feeGrowthOutside1;
         int56   tickSecondsAccumOutside;
         uint160 secondsPerLiquidityAccumOutside;
-        uint32  secondsGrowthOutside;
     }
 
     struct TickMap {

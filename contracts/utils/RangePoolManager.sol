@@ -17,6 +17,7 @@ contract RangePoolManager is
     address public _owner;
     address private _feeTo;
     address private _factory;
+    uint16 internal constant MAX_FEE = 1e4; // @dev - max fee of 1%
 
     mapping(uint16 => int24)   public feeTiers;
     mapping(address => uint16) public protocolFees;
@@ -26,6 +27,7 @@ contract RangePoolManager is
     error FeeTierAlreadyEnabled();
     error TransferredToZeroAddress();
     error FeeTierTickSpacingInvalid();
+    error ProtocolFeeMaxExceeded();
     
     constructor() {
         _owner = msg.sender;
@@ -145,23 +147,35 @@ contract RangePoolManager is
         address[] calldata addPools,
         uint16 protocolFee
     ) external onlyOwner {
+        if (protocolFee > MAX_FEE) revert ProtocolFeeMaxExceeded();
+        uint128[] memory token0Fees = new uint128[](removePools.length);
+        uint128[] memory token1Fees = new uint128[](removePools.length);
         for (uint i; i < removePools.length; i++) {
-            protocolFees[removePools[i]] = 0;
-            emit ProtocolFeeUpdated(removePools[i], 0);
+            (token0Fees[i], token1Fees[i]) = IRangePool(removePools[i]).protocolFees(0, true); 
         }
+        if (removePools.length > 0) {
+            emit ProtocolFeeUpdated(removePools, protocolFee);
+            emit ProtocolFeeCollected(removePools, token0Fees, token1Fees);
+        }
+        token0Fees = new uint128[](addPools.length);
+        token1Fees = new uint128[](addPools.length);
         for (uint i; i < addPools.length; i++) {
-            protocolFees[addPools[i]] = protocolFee;
-            emit ProtocolFeeUpdated(addPools[i], protocolFee);
+            (token0Fees[i], token1Fees[i]) = IRangePool(addPools[i]).protocolFees(protocolFee, true);
+        }
+        if (addPools.length > 0) {
+            emit ProtocolFeeUpdated(removePools, protocolFee);
+            emit ProtocolFeeCollected(removePools, token0Fees, token1Fees);
         }
     }
 
     function collectTopPools(
         address[] calldata collectPools
     ) external onlyFeeTo {
+        uint128[] memory token0Fees = new uint128[](collectPools.length);
+        uint128[] memory token1Fees = new uint128[](collectPools.length);
         for (uint i; i < collectPools.length; i++) {
-            uint128 token0Fees; uint128 token1Fees;
-            (token0Fees, token1Fees) = IRangePool(collectPools[i]).collectProtocolFees();
-            emit ProtocolFeeCollected(collectPools[i], token0Fees, token1Fees);
+            (token0Fees[i], token1Fees[i]) = IRangePool(collectPools[i]).protocolFees(0, false);
+            emit ProtocolFeeCollected(collectPools, token0Fees, token1Fees);
         }
     }
 }

@@ -452,9 +452,9 @@ library Positions {
     ) {
         Ticks.validate(lower, upper, IRangePool(pool).tickSpacing());
         (
-            ,
+            ,,
             int24 currentTick,
-            ,,,,,,
+            ,,,,,
             uint256 _feeGrowthGlobal0,
             uint256 _feeGrowthGlobal1,
             ,
@@ -463,14 +463,14 @@ library Positions {
             ,
             uint216 tickLowerFeeGrowthOutside0,
             uint216 tickLowerFeeGrowthOutside1,
-            ,,
+            ,
         )
             = IRangePool(pool).ticks(lower);
         (
             ,
             uint216 tickUpperFeeGrowthOutside0,
             uint216 tickUpperFeeGrowthOutside1,
-            ,,
+            ,
         )
             = IRangePool(pool).ticks(upper);
 
@@ -529,8 +529,7 @@ library Positions {
         (
             ,,,
             cache.tickSecondsAccumLower,
-            cache.secondsPerLiquidityAccumLower,
-            cache.secondsOutsideLower
+            cache.secondsPerLiquidityAccumLower
         )
             = IRangePool(pool).ticks(lower);
 
@@ -538,8 +537,7 @@ library Positions {
         (
             ,,,
             cache.tickSecondsAccumUpper,
-            cache.secondsPerLiquidityAccumUpper,
-            cache.secondsOutsideUpper
+            cache.secondsPerLiquidityAccumUpper
         )
             = IRangePool(pool).ticks(upper);
 

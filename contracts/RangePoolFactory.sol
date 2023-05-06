@@ -11,12 +11,13 @@ contract RangePoolFactory is
     RangePoolFactoryStorage,
     RangePoolFactoryEvents
 {
+    address public immutable owner;
     error InvalidTokenAddress();
     error PoolAlreadyExists();
     error FeeTierNotSupported();
 
-    constructor(address owner_) {
-        _owner = IRangePoolManager(owner_);
+    constructor(address _owner) {
+        owner = _owner;
     }
 
     function createRangePool(
@@ -41,13 +42,13 @@ contract RangePoolFactory is
         }
 
         // check fee tier exists and get tick spacing
-        int24 tickSpacing = _owner.feeTiers(swapFee);
+        int24 tickSpacing = IRangePoolManager(owner).feeTiers(swapFee);
         if (tickSpacing == 0) {
             revert FeeTierNotSupported();
         }
 
         // launch pool and save address
-        pool = address(new RangePool(token0, token1, int24(tickSpacing), swapFee, startPrice, _owner));
+        pool = address(new RangePool(token0, token1, owner, startPrice, int24(tickSpacing), swapFee));
 
         rangePools[key] = pool;
 
@@ -68,9 +69,5 @@ contract RangePoolFactory is
         bytes32 key = keccak256(abi.encode(token0, token1, swapFee));
 
         return rangePools[key];
-    }
-
-    function owner() public view override returns (address) {
-        return address(_owner);
     }
 }

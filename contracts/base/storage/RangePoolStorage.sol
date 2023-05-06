@@ -10,7 +10,6 @@ import '../../utils/RangePoolErrors.sol';
 
 abstract contract RangePoolStorage is IRangePoolStructs, IRangePool {
     PoolState public poolState;
-    IRangePoolManager public owner;
     TickMap public tickMap;
     //TODO: convert to mapping
     Sample[65535] public samples;
