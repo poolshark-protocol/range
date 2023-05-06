@@ -69,7 +69,6 @@ interface IRangePoolStructs {
         int24  tickSpacing;
     }
 
-    //TODO: take out fungible option
     struct MintParams {
         address to;
         int24 lower;

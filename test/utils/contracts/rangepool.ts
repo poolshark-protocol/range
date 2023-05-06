@@ -145,13 +145,13 @@ export async function validateSwap(params: ValidateSwapParams) {
   if (revertMessage == '') {
     let txn = await hre.props.rangePool
       .connect(signer)
-      .swap(signer.address, zeroForOne, amountIn, sqrtPriceLimitX96)
+      .swap(signer.address, signer.address, zeroForOne, amountIn, sqrtPriceLimitX96)
     await txn.wait()
   } else {
     await expect(
       hre.props.rangePool
         .connect(signer)
-        .swap(signer.address, zeroForOne, amountIn, sqrtPriceLimitX96)
+        .swap(signer.address, signer.address, zeroForOne, amountIn, sqrtPriceLimitX96)
     ).to.be.revertedWith(revertMessage)
     return
   }
