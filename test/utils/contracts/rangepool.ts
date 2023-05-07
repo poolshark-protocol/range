@@ -14,8 +14,8 @@ export interface Position {
 
 export interface PoolState {
   unlocked: number
+  protocolFee: number
   tickAtPrice: number
-  secondsGrowthGlobal: number
   tickSecondsAccum: BigNumber
   secondsPerLiquidityAccum: BigNumber
   price: BigNumber
@@ -54,7 +54,6 @@ export interface Tick {
   feeGrowthOutside1: BigNumber
   tickSecondsAccumOutside: BigNumber
   secondsPerLiquidityAccumOutside: BigNumber
-  secondsGrowthOutside: number
 }
 
 export interface ValidateMintParams {

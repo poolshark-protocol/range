@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import './TickMath.sol';
 import '../interfaces/IRangePoolStructs.sol';
-import 'hardhat/console.sol';
 
 library TickMap {
 
