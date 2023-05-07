@@ -48,8 +48,8 @@ library Ticks {
     {
         console.log('tick spacing check:');
         console.logInt(tickSpacing);
-        TickMap.init(tickMap, TickMath.MIN_TICK / tickSpacing * tickSpacing, tickSpacing);
-        TickMap.init(tickMap, TickMath.MAX_TICK / tickSpacing * tickSpacing, tickSpacing);
+        TickMap.init(tickMap, TickMath.MIN_TICK, tickSpacing);
+        TickMap.init(tickMap, TickMath.MAX_TICK, tickSpacing);
         state.tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
         return Samples.initialize(
             samples,
