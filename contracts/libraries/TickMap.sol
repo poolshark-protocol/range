@@ -274,5 +274,4 @@ library TickMap {
     ) {
         return tick / tickSpacing * tickSpacing;
     }
-    
 }

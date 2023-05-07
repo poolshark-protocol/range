@@ -41,9 +41,6 @@ contract RangePool is
         int24 _tickSpacing,
         uint16 _swapFee
     ) {
-        // validate start price
-        TickMath.validatePrice(_startPrice);
-
         // set addresses
         token0 = _token0;
         token1 = _token1;
@@ -258,7 +255,6 @@ contract RangePool is
         uint256,
         uint160
     ) {
-        // figure out price limit for user
         // quote with low price limit
         PoolState memory pool = poolState;
         SwapCache memory cache;

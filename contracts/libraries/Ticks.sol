@@ -45,12 +45,14 @@ library Ticks {
         IRangePoolStructs.PoolState memory
     )    
     {
+        uint160 minPrice = TickMath.getSqrtRatioAtTick(TickMap._round(TickMath.MIN_TICK, tickSpacing));
+        uint160 maxPrice = TickMath.getSqrtRatioAtTick(TickMap._round(TickMath.MAX_TICK, tickSpacing));
+        if (state.price < minPrice || state.price >= maxPrice) require(false, 'StartPriceInvalid()');
         TickMap.init(tickMap, TickMath.MIN_TICK, tickSpacing);
         TickMap.init(tickMap, TickMath.MAX_TICK, tickSpacing);
         state.tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
-        return Samples.initialize(
-            samples,
-            state
+        return (
+            Samples.initialize(samples, state)
         );
     }
 
@@ -239,9 +241,8 @@ library Ticks {
             } else { 
                 amountOut = DyDxMath.getDy(pool.liquidity, nextPrice, pool.price, false);
                 cache.input -= maxDx;
-                if (nextPrice == cache.crossPrice 
-                        && nextPrice != pool.price
-                        && cache.crossTick != TickMath.MIN_TICK) { cache.cross = true; }
+                if (nextPrice == cache.crossPrice
+                        && nextPrice != pool.price) { cache.cross = true; }
                 else cache.cross = false;
                 pool.price = uint160(nextPrice);
             }
@@ -266,8 +267,7 @@ library Ticks {
                 amountOut = DyDxMath.getDx(pool.liquidity, pool.price, nextPrice, false);
                 cache.input -= maxDy;
                 if (nextPrice == cache.crossPrice 
-                    && nextPrice != pool.price
-                    && cache.crossTick != TickMath.MAX_TICK) { cache.cross = true; }
+                    && nextPrice != pool.price) { cache.cross = true; }
                 else cache.cross = false;
                 pool.price = uint160(nextPrice);
             }
