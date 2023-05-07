@@ -104,7 +104,6 @@ contract RangePool is
                 )
             );
         }
-        //TODO: if fees > 0 emit PositionUpdated event
         // update position with latest fees accrued
         (pool, position, liquidityMinted) = Positions.add(
             position,

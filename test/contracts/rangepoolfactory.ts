@@ -21,7 +21,7 @@ describe('RangePoolFactory Tests', function () {
   const minTickIdx = BigNumber.from('-887272')
   const maxTickIdx = BigNumber.from('887272')
 
-  //TODO: mint position and burn as if there were 100
+
 
   before(async function () {
     await gBefore()

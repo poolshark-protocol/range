@@ -62,7 +62,7 @@ export function handleRangePoolCreated(event: RangePoolCreated): void {
         }
         token1.decimals = decimals
     }
-    //TODO: calculate tick at initial sqrt price
+    // calculate tick at initial sqrt price
 
     pool.token0 = token0.id
     pool.token1 = token1.id
