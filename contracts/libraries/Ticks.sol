@@ -39,17 +39,20 @@ library Ticks {
     function initialize(
         IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.Sample[65535] storage samples,
-        IRangePoolStructs.PoolState memory state
+        IRangePoolStructs.PoolState memory state,
+        int24 tickSpacing
     ) external returns (
         IRangePoolStructs.PoolState memory
     )    
     {
-        TickMap.set(tickMap, TickMath.MIN_TICK);
-        TickMap.set(tickMap, TickMath.MAX_TICK);
+        uint160 minPrice = TickMath.getSqrtRatioAtTick(TickMap._round(TickMath.MIN_TICK, tickSpacing));
+        uint160 maxPrice = TickMath.getSqrtRatioAtTick(TickMap._round(TickMath.MAX_TICK, tickSpacing));
+        if (state.price < minPrice || state.price >= maxPrice) require(false, 'StartPriceInvalid()');
+        TickMap.init(tickMap, TickMath.MIN_TICK, tickSpacing);
+        TickMap.init(tickMap, TickMath.MAX_TICK, tickSpacing);
         state.tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
-        return Samples.initialize(
-            samples,
-            state
+        return (
+            Samples.initialize(samples, state)
         );
     }
 
@@ -203,8 +206,8 @@ library Ticks {
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
     ) {
-        if (zeroForOne ? priceLimit >= pool.price || pool.price == TickMath.MIN_SQRT_RATIO
-                       : priceLimit <= pool.price || pool.price == TickMath.MAX_SQRT_RATIO)
+        if (zeroForOne ? priceLimit >= pool.price
+                       : priceLimit <= pool.price)
         {
             cache.cross = false;
             return (pool, cache);
@@ -227,10 +230,6 @@ library Ticks {
                     pool.price,
                     liquidityPadded + uint256(pool.price) * uint256(cache.input)
                 );
-                /// @auditor - check tests to see if we need overflow handle
-                // if (!(nextTickPrice <= newPrice && newPrice < pool.price)) {
-                //     newPrice = uint160(PrecisionMath.divRoundingUp(liquidityPadded, liquidityPadded / pool.price + cache.input));
-                //  }
                 amountOut = DyDxMath.getDy(pool.liquidity, newPrice, uint256(pool.price), false);
                 cache.input = 0;
                 cache.cross = false;
@@ -238,9 +237,8 @@ library Ticks {
             } else { 
                 amountOut = DyDxMath.getDy(pool.liquidity, nextPrice, pool.price, false);
                 cache.input -= maxDx;
-                if (nextPrice == cache.crossPrice 
-                        && nextPrice != pool.price
-                        && cache.crossTick != TickMath.MIN_TICK) { cache.cross = true; }
+                if (nextPrice == cache.crossPrice
+                        && nextPrice != pool.price) { cache.cross = true; }
                 else cache.cross = false;
                 pool.price = uint160(nextPrice);
             }
@@ -265,8 +263,7 @@ library Ticks {
                 amountOut = DyDxMath.getDx(pool.liquidity, pool.price, nextPrice, false);
                 cache.input -= maxDy;
                 if (nextPrice == cache.crossPrice 
-                    && nextPrice != pool.price
-                    && cache.crossTick != TickMath.MAX_TICK) { cache.cross = true; }
+                    && nextPrice != pool.price) { cache.cross = true; }
                 else cache.cross = false;
                 pool.price = uint160(nextPrice);
             }
@@ -274,8 +271,6 @@ library Ticks {
         (pool, cache) = FeeMath.calculate(pool, cache, amountOut, zeroForOne);
         return (pool, cache);
     }
-
-    //TODO: set custom metadata for NFT pic
 
     //maybe call ticks on msg.sender to get tick
     function _cross(
@@ -337,7 +332,6 @@ library Ticks {
         return (pool, cache);
     }
 
-    //TODO: pass in lowerTick and upperTick
     function insert(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.Sample[65535] storage samples,
@@ -347,7 +341,6 @@ library Ticks {
         int24 upper,
         uint128 amount
     ) external returns (IRangePoolStructs.PoolState memory) {
-        //TODO: doesn't check if upper/lowerOld is greater/less than MAX/MIN_TICK
         validate(lower, upper, IRangePool(address(this)).tickSpacing());
         // check for amount to overflow liquidity delta & global
         if (amount > uint128(type(int128).max)) require(false, 'LiquidityOverflow()');

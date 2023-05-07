@@ -17,13 +17,12 @@ describe('DyDxMath Library Tests', function () {
   let bob: SignerWithAddress
   let carol: SignerWithAddress
 
-  //TODO: mint position and burn as if there were 100
+
 
   before(async function () {
     await gBefore()
     let currentBlock = await ethers.provider.getBlockNumber()
-    //TODO: maybe just have one view function that grabs all these
-    //TODO: map it to an interface
+
     const pool: PoolState = await hre.props.rangePool.poolState()
     const liquidity = pool.liquidity
     const price = pool.price

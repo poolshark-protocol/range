@@ -41,9 +41,6 @@ contract RangePool is
         int24 _tickSpacing,
         uint16 _swapFee
     ) {
-        // validate start price
-        TickMath.validatePrice(_startPrice);
-
         // set addresses
         token0 = _token0;
         token1 = _token1;
@@ -63,7 +60,8 @@ contract RangePool is
         pool = Ticks.initialize(
             tickMap,
             samples,
-            pool
+            pool,
+            tickSpacing
         );
 
         // save pool state
@@ -106,7 +104,6 @@ contract RangePool is
                 )
             );
         }
-        //TODO: if fees > 0 emit PositionUpdated event
         // update position with latest fees accrued
         (pool, position, liquidityMinted) = Positions.add(
             position,
@@ -257,7 +254,6 @@ contract RangePool is
         uint256,
         uint160
     ) {
-        // figure out price limit for user
         // quote with low price limit
         PoolState memory pool = poolState;
         SwapCache memory cache;

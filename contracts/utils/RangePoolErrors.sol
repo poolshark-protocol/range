@@ -4,16 +4,6 @@ pragma solidity 0.8.13;
 abstract contract RangePoolErrors {
     error Locked();
     error ManagerOnly();
-    error InvalidToken();
-    error InvalidPosition();
-    error InvalidSwapFee();
-    error InvalidTickSpread();
-    error LiquidityOverflow();
-    error RangeErc20NotFound();
-    error RangeErc20InsufficientBalance();
-    error InvalidTick();
-    error NotEnoughOutputLiquidity();
-    error WaitUntilEnoughObservations();
 }
 
 abstract contract RangePoolERC1155Errors {

@@ -175,7 +175,7 @@ export async function validateSwap(params: ValidateSwapParams) {
   const priceAfter = poolAfter.price
 
   expect(priceAfter).to.be.equal(priceAfterQuote)
-  //TODO: check feeGrowth before and after swap
+  // check feeGrowth before and after swap
 
   // expect(liquidityAfter).to.be.equal(finalLiquidity);
   // expect(priceAfter).to.be.equal(finalPrice);
@@ -368,7 +368,6 @@ export async function validateBurn(params: ValidateBurnParams) {
         collect: true
     })
     await burnTxn.wait()
-    //TODO: expect balances to remain unchanged until collect
   } else {
     await expect(
       hre.props.rangePool.connect(signer).burn({

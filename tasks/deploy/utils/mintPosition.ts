@@ -42,7 +42,7 @@ export class MintPosition {
       amount0: token0Amount,
       amount1: token1Amount,
       fungible: false,
-      balance0Decrease: BigNumber.from('0'), //TODO: make optional
+      balance0Decrease: BigNumber.from('0'),
       balance1Decrease: token1Amount,
       liquidityIncrease: liquidityAmount,
       revertMessage: '',
