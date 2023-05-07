@@ -236,7 +236,7 @@ library Positions {
                 cache.priceUpper,
                 state.price,
                 cache.liquidityAmount,
-                true
+                false
             );
             if (params.fungible && params.amount > 0) {
                 params.collect = true;
@@ -329,8 +329,8 @@ library Positions {
                 cache.liquidityAmount,
                 true
             );
-            position.amount0 -= uint128(amount0);
-            position.amount1 -= uint128(amount1);
+            position.amount0 -= (amount0 <= position.amount0) ? uint128(amount0) : position.amount0;
+            position.amount1 -= (amount1 <= position.amount1) ? uint128(amount1) : position.amount1;
             position.liquidity += uint128(cache.liquidityAmount);
         }
         emit Compound(
