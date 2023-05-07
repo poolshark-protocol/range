@@ -63,7 +63,8 @@ contract RangePool is
         pool = Ticks.initialize(
             tickMap,
             samples,
-            pool
+            pool,
+            tickSpacing
         );
 
         // save pool state

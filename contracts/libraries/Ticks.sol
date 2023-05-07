@@ -11,6 +11,7 @@ import './PrecisionMath.sol';
 import './TickMath.sol';
 import './TickMap.sol';
 import './Samples.sol';
+import 'hardhat/console.sol';
 
 /// @notice Tick management library
 library Ticks {
@@ -39,13 +40,16 @@ library Ticks {
     function initialize(
         IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.Sample[65535] storage samples,
-        IRangePoolStructs.PoolState memory state
+        IRangePoolStructs.PoolState memory state,
+        int24 tickSpacing
     ) external returns (
         IRangePoolStructs.PoolState memory
     )    
     {
-        TickMap.set(tickMap, TickMath.MIN_TICK);
-        TickMap.set(tickMap, TickMath.MAX_TICK);
+        console.log('tick spacing check:');
+        console.logInt(tickSpacing);
+        TickMap.init(tickMap, TickMath.MIN_TICK / tickSpacing * tickSpacing, tickSpacing);
+        TickMap.init(tickMap, TickMath.MAX_TICK / tickSpacing * tickSpacing, tickSpacing);
         state.tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
         return Samples.initialize(
             samples,
