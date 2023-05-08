@@ -343,32 +343,38 @@ library Ticks {
     ) external returns (IRangePoolStructs.PoolState memory) {
         validate(lower, upper, IRangePool(address(this)).tickSpacing());
         // check for amount to overflow liquidity delta & global
+        if (amount == 0) return state;
         if (amount > uint128(type(int128).max)) require(false, 'LiquidityOverflow()');
         if (type(uint128).max - state.liquidityGlobal < amount) require(false, 'LiquidityOverflow()');
 
         // get tick at price
         int24 tickAtPrice = state.tickAtPrice;
 
-        // write an oracle entry
-        (state.samples.index, state.samples.length) = Samples.save(
-            samples,
-            state,
-            tickAtPrice
-        );
-        if (tickAtPrice >= lower && tickAtPrice < upper) {
-            state.liquidity += amount;
-        }
-
         if(TickMap.set(tickMap, lower)) {
             ticks[lower].liquidityDelta += int128(amount);
         } else {
             if (lower <= tickAtPrice) {
+                (
+                    int56 tickSecondsAccum,
+                    uint160 secondsPerLiquidityAccum
+                ) = Samples.getSingle(
+                        IRangePool(address(this)), 
+                        IRangePoolStructs.SampleParams(
+                            state.samples.index,
+                            state.samples.length,
+                            uint32(block.timestamp),
+                            new uint32[](2),
+                            state.tickAtPrice,
+                            state.liquidity
+                        ),
+                        0
+                );
                 ticks[lower] = IRangePoolStructs.Tick(
                     int128(amount),
                     state.feeGrowthGlobal0,
                     state.feeGrowthGlobal1,
-                    state.tickSecondsAccum,
-                    state.secondsPerLiquidityAccum
+                    tickSecondsAccum,
+                    secondsPerLiquidityAccum
                 );
             } else {
                 ticks[lower].liquidityDelta = int128(amount);
@@ -379,17 +385,43 @@ library Ticks {
             ticks[upper].liquidityDelta -= int128(amount);
         } else {
             if (upper <= tickAtPrice) {
+                (
+                    int56 tickSecondsAccum,
+                    uint160 secondsPerLiquidityAccum
+                ) = Samples.getSingle(
+                        IRangePool(address(this)), 
+                        IRangePoolStructs.SampleParams(
+                            state.samples.index,
+                            state.samples.length,
+                            uint32(block.timestamp),
+                            new uint32[](2),
+                            state.tickAtPrice,
+                            state.liquidity
+                        ),
+                        0
+                );
                 ticks[upper] = IRangePoolStructs.Tick(
                     -int128(amount),
                     state.feeGrowthGlobal0,
                     state.feeGrowthGlobal1,
-                    state.tickSecondsAccum,
-                    state.secondsPerLiquidityAccum
+                    tickSecondsAccum,
+                    secondsPerLiquidityAccum
                 );
             } else {
                 ticks[upper].liquidityDelta = -int128(amount);
             }
         }
+        if (tickAtPrice >= lower && tickAtPrice < upper) {
+            // write an oracle entry
+            (state.samples.index, state.samples.length) = Samples.save(
+                samples,
+                state,
+                state.tickAtPrice
+            );
+            // update pool liquidity
+            state.liquidity += amount;
+        }
+        // update global liquidity
         state.liquidityGlobal += amount;
 
         return state;
@@ -406,21 +438,12 @@ library Ticks {
     ) external returns (IRangePoolStructs.PoolState memory) {
         validate(lower, upper, IRangePool(address(this)).tickSpacing());
         //check for amount to overflow liquidity delta & global
+        if (amount == 0) return state;
         if (amount > uint128(type(int128).max)) require(false, 'LiquidityUnderflow()');
         if (amount > state.liquidityGlobal) require(false, 'LiquidityUnderflow()');
 
         // get tick at price
         int24 tickAtPrice = state.tickAtPrice;
-
-        // write an oracle entry
-        (state.samples.index, state.samples.length) = Samples.save(
-            samples,
-            state,
-            tickAtPrice
-        );
-        if (state.tickAtPrice >= lower && state.tickAtPrice < upper) {
-            state.liquidity -= amount;
-        }
 
         IRangePoolStructs.Tick storage current = ticks[lower];
         if (lower != TickMath.MIN_TICK && current.liquidityDelta == int128(amount)) {
@@ -440,6 +463,15 @@ library Ticks {
             unchecked {
                 current.liquidityDelta += int128(amount);
             }
+        }
+        if (tickAtPrice >= lower && tickAtPrice < upper) {
+            // write an oracle entry
+            (state.samples.index, state.samples.length) = Samples.save(
+                samples,
+                state,
+                tickAtPrice
+            );
+            state.liquidity -= amount;  
         }
         state.liquidityGlobal -= amount;
 
