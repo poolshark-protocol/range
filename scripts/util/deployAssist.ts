@@ -67,14 +67,14 @@ export class DeployAssist {
         ...constructorArguments,
         {
           nonce: hre.nonce,
-          gasLimit: 6000000000
+          // gasLimit: 6000000000
         }
       )
     } else {
       // @ts-ignore
       contract = await new contractFactory(hre.props.admin).deploy(...constructorArguments, {
         nonce: hre.nonce,
-        gasLimit: 6000000000
+        // gasLimit: 6000000000
       })
     }
     await contract.deployTransaction.wait(1)
