@@ -128,7 +128,7 @@ export function handleBurn(event: Burn): void {
 
 export function handleBurnFungible(event: BurnFungible): void {
     let recipientParam = event.params.recipient.toHex()
-    let tokenParam = event.params.token.toHex()
+    let tokenIdParam = event.params.tokenId.toHex()
     let tokenBurnedParam = event.params.tokenBurned
     let liquidityBurnedParam = event.params.liquidityBurned
     let amount0Param = event.params.amount0
@@ -136,10 +136,10 @@ export function handleBurnFungible(event: BurnFungible): void {
     let poolAddress = event.address.toHex()
     let msgSender = event.transaction.from.toHex()
 
-    let loadPositionToken = safeLoadPositionToken(tokenParam)
+    let loadPositionToken = safeLoadPositionToken(tokenIdParam)
     let positionToken = loadPositionToken.entity
     //TODO: handle positionToken transfers
-    let loadPositionFraction = safeLoadPositionFraction(tokenParam, msgSender)
+    let loadPositionFraction = safeLoadPositionFraction(tokenIdParam, msgSender)
     let positionFraction = loadPositionFraction.entity
     let loadPosition = safeLoadPositionById(positionToken.position)
     let position = loadPosition.entity
@@ -182,7 +182,7 @@ export function handleBurnFungible(event: BurnFungible): void {
         let fractionIndex = positionTokenFractions.indexOf(positionFraction.id)
         positionTokenFractions.splice(fractionIndex, 1)
         positionToken.fractions = positionTokenFractions
-        store.remove('PositionFraction', tokenParam.concat(msgSender))
+        store.remove('PositionFraction', tokenIdParam.concat(msgSender))
     } else {
         positionFraction.amount = positionFraction.amount.minus(tokenBurnedParam)
         positionFraction.updatedAtBlockNumber = event.block.number
@@ -202,7 +202,7 @@ export function handleBurnFungible(event: BurnFungible): void {
         position.save()
     }
     if (positionToken.totalSupply.equals(tokenBurnedParam)) {
-        store.remove('PositionToken', tokenParam)
+        store.remove('PositionToken', tokenIdParam)
     } else {
         positionToken.totalSupply = positionToken.totalSupply.minus(tokenBurnedParam)
         positionToken.save()

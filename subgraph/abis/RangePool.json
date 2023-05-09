@@ -65,9 +65,9 @@
       },
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -187,18 +187,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
-      },
-      {
         "indexed": false,
         "internalType": "int24",
         "name": "lower",
@@ -209,12 +197,6 @@
         "internalType": "int24",
         "name": "upper",
         "type": "int24"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint128",
-        "name": "tokenMinted",
-        "type": "uint128"
       },
       {
         "indexed": false,
@@ -280,7 +262,7 @@
       {
         "indexed": false,
         "internalType": "int24",
-        "name": "nearestTick",
+        "name": "tickAtPrice",
         "type": "int24"
       }
     ],

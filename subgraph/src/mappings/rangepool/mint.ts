@@ -117,7 +117,7 @@ export function handleMint(event: Mint): void {
 }
 
 export function handleMintFungible(event: MintFungible): void {
-    let recipientParam = event.params.recipient.toHex()
+    let recipientParam = 
     let lowerParam = event.params.lower
     let upperParam = event.params.upper 
     let liquidityMintedParam = event.params.liquidityMinted

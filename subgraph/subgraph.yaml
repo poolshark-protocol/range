@@ -8,9 +8,9 @@ dataSources:
       name: RangePoolFactory
       network: arbitrum-goerli
       source:
-          address: '0x1598DCe2D358F652E6625039C3c12e63b0444Bef'
+          address: '0xebF57CB31Ed38e6ccB53FB71bA246eA549c42E51'
           abi: RangePoolFactory
-          startBlock: 18640000
+          startBlock: 9073200
       mapping:
           kind: ethereum/events
           apiVersion: 0.0.6
@@ -37,9 +37,9 @@ dataSources:
       name: RangePoolManager
       network: arbitrum-goerli
       source:
-          address: '0xa254ff03db8b7d59C3f537c41b2b1D9f4147cD85'
+          address: '0x895e1c476130cE9e1b19E01be8801f19122a958C'
           abi: RangePoolManager
-          startBlock: 18640000
+          startBlock: 9073200
       mapping:
           kind: ethereum/events
           apiVersion: 0.0.6
@@ -58,9 +58,9 @@ dataSources:
                 handler: handleFeeToTransfer
               - event: OwnerTransfer(indexed address,indexed address)
                 handler: handleOwnerTransfer
-              - event: ProtocolFeeCollected(indexed address,uint128,uint128)
+              - event: ProtocolFeeCollected(address[],uint128[],uint128[])
                 handler: handleProtocolFeeCollected
-              - event: ProtocolFeeUpdated(indexed address,uint16)
+              - event: ProtocolFeeUpdated(address[],uint16)
                 handler: handleProtocolFeeUpdated
               - event: FactoryChanged(indexed address,indexed address)
                 handler: handleFactoryChanged
@@ -95,11 +95,11 @@ templates:
                 handler: handleSwap
               - event: Mint(indexed address,indexed int24,indexed int24,uint128,uint128,uint128)
                 handler: handleMint
-              - event: MintFungible(indexed address,indexed address,int24,int24,uint128,uint128,uint128,uint128)
+              - event: MintFungible(int24,int24,uint128,uint128,uint128)
                 handler: handleMintFungible
               - event: Burn(address,indexed address,indexed int24,indexed int24,uint128,uint128,uint128,bool)
                 handler: handleBurn
-              - event: BurnFungible(indexed address,indexed address,uint128,uint128,uint128,uint128)
+              - event: BurnFungible(indexed address,indexed uint256,uint128,uint128,uint128,uint128)
                 handler: handleBurnFungible
               - event: Compound(indexed address,indexed int24,indexed int24,uint128,uint128,uint128)
                 handler: handleCompound

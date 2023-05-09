@@ -79,22 +79,22 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
+        "indexed": false,
+        "internalType": "address[]",
         "name": "pool",
-        "type": "address"
+        "type": "address[]"
       },
       {
         "indexed": false,
-        "internalType": "uint128",
+        "internalType": "uint128[]",
         "name": "token0Fees",
-        "type": "uint128"
+        "type": "uint128[]"
       },
       {
         "indexed": false,
-        "internalType": "uint128",
+        "internalType": "uint128[]",
         "name": "token1Fees",
-        "type": "uint128"
+        "type": "uint128[]"
       }
     ],
     "name": "ProtocolFeeCollected",
@@ -104,10 +104,10 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
+        "indexed": false,
+        "internalType": "address[]",
         "name": "pool",
-        "type": "address"
+        "type": "address[]"
       },
       {
         "indexed": false,

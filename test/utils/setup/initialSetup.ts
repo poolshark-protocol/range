@@ -31,118 +31,172 @@ export class InitialSetup {
   public async initialRangePoolSetup(): Promise<number> {
     const network = SUPPORTED_NETWORKS[hre.network.name.toUpperCase()]
 
-    // const token0Address = (
-    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-    //     {
-    //       networkName: hre.network.name,
-    //       objectName: 'token0',
-    //     },
-    //     'readRangePoolSetup'
-    //   )
-    // ).contractAddress
-    // const token1Address = (
-    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-    //     {
-    //       networkName: hre.network.name,
-    //       objectName: 'token1',
-    //     },
-    //     'readRangePoolSetup'
-    //   )
-    // ).contractAddress
+    const token0Address = (
+      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+        {
+          networkName: hre.network.name,
+          objectName: 'token0',
+        },
+        'readRangePoolSetup'
+      )
+    ).contractAddress
+    const token1Address = (
+      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+        {
+          networkName: hre.network.name,
+          objectName: 'token1',
+        },
+        'readRangePoolSetup'
+      )
+    ).contractAddress
+    const tickMathLib = (
+      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+        {
+          networkName: hre.network.name,
+          objectName: 'tickMathLib',
+        },
+        'readRangePoolSetup'
+      )
+    ).contractAddress
+    const precisionMathLib = (
+      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+        {
+          networkName: hre.network.name,
+          objectName: 'precisionMathLib',
+        },
+        'readRangePoolSetup'
+      )
+    ).contractAddress
+    const dydxMathLib = (
+      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+        {
+          networkName: hre.network.name,
+          objectName: 'dydxMathLib',
+        },
+        'readRangePoolSetup'
+      )
+    ).contractAddress
+    const tickMapLib = (
+      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+        {
+          networkName: hre.network.name,
+          objectName: 'tickMapLib',
+        },
+        'readRangePoolSetup'
+      )
+    ).contractAddress
+    const samplesLib = (
+      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+        {
+          networkName: hre.network.name,
+          objectName: 'samplesLib',
+        },
+        'readRangePoolSetup'
+      )
+    ).contractAddress
 
-    // hre.props.token0 = await hre.ethers.getContractAt('Token20', token0Address)
-    // hre.props.token1 = await hre.ethers.getContractAt('Token20', token1Address)
+    hre.props.token0 = await hre.ethers.getContractAt('Token20', token0Address)
+    hre.props.token1 = await hre.ethers.getContractAt('Token20', token1Address)
+    hre.props.tickMathLib = await hre.ethers.getContractAt('TickMath', tickMathLib)
+    hre.props.precisionMathLib = await hre.ethers.getContractAt('PrecisionMath', precisionMathLib)
+    hre.props.dydxMathLib = await hre.ethers.getContractAt('DyDxMath', dydxMathLib)
+    hre.props.tickMapLib = await hre.ethers.getContractAt('TickMap', tickMapLib)
+    hre.props.samplesLib = await hre.ethers.getContractAt('Samples', samplesLib)
 
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
-      Token20__factory,
-      'tokenA',
-      ['Token20A', 'TOKEN20A', this.token0Decimals]
-    )
+    // console.log('deploy token')
 
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
-      Token20__factory,
-      'tokenB',
-      ['Token20B', 'TOKEN20B', this.token1Decimals]
-    )
+    // await this.deployAssist.deployContractWithRetry(
+    //   network,
+    //   // @ts-ignore
+    //   Token20__factory,
+    //   'tokenA',
+    //   ['Token20A', 'TOKEN20A', this.token0Decimals]
+    // )
+    // console.log('deploy token')
 
-    const tokenOrder = hre.props.tokenA.address.localeCompare(hre.props.tokenB.address)
-    let token0Args
-    let token1Args
-    if (tokenOrder < 0) {
-      hre.props.token0 = hre.props.tokenA
-      hre.props.token1 = hre.props.tokenB
-      token0Args = ['Token20A', 'TOKEN20A', this.token0Decimals]
-      token1Args = ['Token20B', 'TOKEN20B', this.token1Decimals]
-    } else {
-      hre.props.token0 = hre.props.tokenB
-      hre.props.token1 = hre.props.tokenA
-      token0Args = ['Token20B', 'TOKEN20B', this.token1Decimals]
-      token1Args = ['Token20A', 'TOKEN20A', this.token0Decimals]
-    }
-    this.deployAssist.saveContractDeployment(
-      network,
-      'Token20',
-      'token0',
-      hre.props.token0,
-      token0Args
-    )
-    this.deployAssist.saveContractDeployment(
-      network,
-      'Token20',
-      'token1',
-      hre.props.token1,
-      token1Args
-    )
-    this.deployAssist.deleteContractDeployment(network, 'tokenA')
-    this.deployAssist.deleteContractDeployment(network, 'tokenB')
+    // await this.deployAssist.deployContractWithRetry(
+    //   network,
+    //   // @ts-ignore
+    //   Token20__factory,
+    //   'tokenB',
+    //   ['Token20B', 'TOKEN20B', this.token1Decimals]
+    // )
+    // console.log('deploy token')
 
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
-      TickMath__factory,
-      'tickMathLib',
-      []
-    )
+    // const tokenOrder = hre.props.tokenA.address.localeCompare(hre.props.tokenB.address)
+    // let token0Args
+    // let token1Args
+    // if (tokenOrder < 0) {
+    //   hre.props.token0 = hre.props.tokenA
+    //   hre.props.token1 = hre.props.tokenB
+    //   token0Args = ['Token20A', 'TOKEN20A', this.token0Decimals]
+    //   token1Args = ['Token20B', 'TOKEN20B', this.token1Decimals]
+    // } else {
+    //   hre.props.token0 = hre.props.tokenB
+    //   hre.props.token1 = hre.props.tokenA
+    //   token0Args = ['Token20B', 'TOKEN20B', this.token1Decimals]
+    //   token1Args = ['Token20A', 'TOKEN20A', this.token0Decimals]
+    // }
+    // this.deployAssist.saveContractDeployment(
+    //   network,
+    //   'Token20',
+    //   'token0',
+    //   hre.props.token0,
+    //   token0Args
+    // )
+    // this.deployAssist.saveContractDeployment(
+    //   network,
+    //   'Token20',
+    //   'token1',
+    //   hre.props.token1,
+    //   token1Args
+    // )
+    // this.deployAssist.deleteContractDeployment(network, 'tokenA')
+    // this.deployAssist.deleteContractDeployment(network, 'tokenB')
 
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
-      PrecisionMath__factory,
-      'precisionMathLib',
-      []
-    )
+    // await this.deployAssist.deployContractWithRetry(
+    //   network,
+    //   // @ts-ignore
+    //   TickMath__factory,
+    //   'tickMathLib',
+    //   []
+    // )
 
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
-      DyDxMath__factory,
-      'dydxMathLib',
-      [],
-      {
-        'contracts/libraries/PrecisionMath.sol:PrecisionMath':
-          hre.props.precisionMathLib.address,
-      }
-    )
+    // await this.deployAssist.deployContractWithRetry(
+    //   network,
+    //   // @ts-ignore
+    //   PrecisionMath__factory,
+    //   'precisionMathLib',
+    //   []
+    // )
 
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
-      TickMap__factory,
-      'tickMapLib',
-      []
-    )
+    // await this.deployAssist.deployContractWithRetry(
+    //   network,
+    //   // @ts-ignore
+    //   DyDxMath__factory,
+    //   'dydxMathLib',
+    //   [],
+    //   {
+    //     'contracts/libraries/PrecisionMath.sol:PrecisionMath':
+    //       hre.props.precisionMathLib.address,
+    //   }
+    // )
 
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
-      Samples__factory,
-      'samplesLib',
-      []
-    )
+    // await this.deployAssist.deployContractWithRetry(
+    //   network,
+    //   // @ts-ignore
+    //   TickMap__factory,
+    //   'tickMapLib',
+    //   []
+    // )
+
+    // await this.deployAssist.deployContractWithRetry(
+    //   network,
+    //   // @ts-ignore
+    //   Samples__factory,
+    //   'samplesLib',
+    //   []
+    // )
 
     await this.deployAssist.deployContractWithRetry(
       network,
@@ -263,15 +317,15 @@ export class InitialSetup {
         'readRangePoolSetup'
       )
     ).contractAddress
-    const rangePoolAddress = (
-      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-        {
-          networkName: hre.network.name,
-          objectName: 'rangePool',
-        },
-        'readRangePoolSetup'
-      )
-    ).contractAddress
+    // const rangePoolAddress = (
+    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+    //     {
+    //       networkName: hre.network.name,
+    //       objectName: 'rangePool',
+    //     },
+    //     'readRangePoolSetup'
+    //   )
+    // ).contractAddress
     const rangePoolFactoryAddress = (
       await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
         {
@@ -284,22 +338,44 @@ export class InitialSetup {
 
     hre.props.token0 = await hre.ethers.getContractAt('Token20', token0Address)
     hre.props.token1 = await hre.ethers.getContractAt('Token20', token1Address)
-    hre.props.rangePool = await hre.ethers.getContractAt('RangePool', rangePoolAddress)
+    // hre.props.rangePool = await hre.ethers.getContractAt('RangePool', rangePoolAddress)
     hre.props.rangePoolFactory = await hre.ethers.getContractAt('RangePoolFactory', rangePoolFactoryAddress)
 
     return nonce
   }
 
   public async createRangePool(tokenA: string, tokenB: string): Promise<void> {
-
+    const network = SUPPORTED_NETWORKS[hre.network.name.toUpperCase()]
+    console.log('tokens:', hre.props.token0.address, hre.props.token1.address)
     const createPoolTxn = await hre.props.rangePoolFactory
-      .connect(hre.props.admin)
+      .connect(hre.props.alice)
       .createRangePool(
         hre.props.token0.address,
         hre.props.token1.address,
         '500',
-        '177159557114295710296101716160'
-    )
+        '79228162514264337593543950336'
+    , {gasLimit: 10000000})
+    await createPoolTxn.wait()
+
     hre.nonce += 1
+
+    const rangePoolAddress = await hre.props.rangePoolFactory.getRangePool(
+      hre.props.token0.address,
+      hre.props.token1.address,
+      '500'
+    )
+    hre.props.rangePool = await hre.ethers.getContractAt('RangePool', rangePoolAddress)
+
+    await this.deployAssist.saveContractDeployment(
+      network,
+      'RangePool',
+      'rangePool',
+      hre.props.rangePool,
+      [
+        hre.props.token0.address,
+        hre.props.token1.address,
+        '10', '500', '177159557114295710296101716160'
+      ]
+    )
   }
 }
