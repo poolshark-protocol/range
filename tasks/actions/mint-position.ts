@@ -4,11 +4,11 @@ import { MINT_TOKENS } from '../constants/taskNames'
 import { MintPosition } from '../deploy/utils/mintPosition'
 
 class MintPositionTask {
-  public mintTokens: MintPosition
+  public mintPosition: MintPosition
   public getBeforeEach: GetBeforeEach
 
   constructor() {
-    this.mintTokens = new MintPosition()
+    this.mintPosition = new MintPosition()
     this.getBeforeEach = new GetBeforeEach()
     hre.props = this.getBeforeEach.retrieveProps()
   }
@@ -17,15 +17,15 @@ class MintPositionTask {
 task(MINT_TOKENS)
   .setDescription('Mint tokens for address')
   .setAction(async function ({ ethers }) {
-    const mintTokens: MintPositionTask = new MintPositionTask()
+    const mintPosition: MintPositionTask = new MintPositionTask()
 
-    if (!mintTokens.mintTokens.canDeploy()) return
+    if (!mintPosition.mintPosition.canDeploy()) return
 
-    await mintTokens.mintTokens.preDeployment()
+    await mintPosition.mintPosition.preDeployment()
 
-    await mintTokens.mintTokens.runDeployment()
+    await mintPosition.mintPosition.runDeployment()
 
-    await mintTokens.mintTokens.postDeployment()
+    await mintPosition.mintPosition.postDeployment()
 
     console.log('Mint tokens task complete.\n')
   })

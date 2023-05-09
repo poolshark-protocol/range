@@ -10,7 +10,7 @@ export function handleSwap(event: Swap): void {
     let amountInParam = event.params.amountIn
     let amountOutParam = event.params.amountOut
     let liquidityParam = event.params.liquidity
-    let nearestTickParam = event.params.nearestTick
+    let tickAtPriceParam = event.params.tickAtPrice
     let priceParam = event.params.price
     let recipientParam = event.params.recipient
     let zeroForOneParam = event.params.zeroForOne
@@ -74,7 +74,7 @@ export function handleSwap(event: Swap): void {
     token1.volumeUsd = token1.volumeUsd.plus(volumeUsd)
 
     pool.liquidity = liquidityParam
-    pool.nearestTick = BigInt.fromI32(nearestTickParam)
+    pool.nearestTick = BigInt.fromI32(tickAtPriceParam)
     pool.price = priceParam
 
     let prices = sqrtPriceX96ToTokenPrices(pool.price, token0, token1)
@@ -107,7 +107,7 @@ export function handleSwap(event: Swap): void {
         swap.amount1 = amount1
         swap.amountUsd = volumeUsd
         swap.priceAfter = priceParam
-        swap.tickAfter = BigInt.fromI32(nearestTickParam)
+        swap.tickAfter = BigInt.fromI32(tickAtPriceParam)
         swap.txnIndex = pool.txnCount
     }
 

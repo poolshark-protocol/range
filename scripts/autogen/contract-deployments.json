@@ -89,5 +89,95 @@
             ],
             "created": "2023-05-08T19:16:24.137Z"
         }
+    },
+    "arb_goerli": {
+        "token0": {
+            "contractName": "Token20",
+            "contractAddress": "0x6774be1a283Faed7ED8e40463c40Fb33A8da3461",
+            "constructorArguments": [
+                "Token20B",
+                "TOKEN20B",
+                18
+            ],
+            "created": "2023-05-09T02:17:23.948Z"
+        },
+        "token1": {
+            "contractName": "Token20",
+            "contractAddress": "0xC26906E10E8BDaDeb2cf297eb56DF59775eE52c4",
+            "constructorArguments": [
+                "Token20A",
+                "TOKEN20A",
+                18
+            ],
+            "created": "2023-05-09T02:17:23.954Z"
+        },
+        "tickMathLib": {
+            "contractName": "TickMath",
+            "contractAddress": "0xC0A5e34d581c62c8D62ADa24A304E67A20DF9f45",
+            "constructorArguments": [],
+            "created": "2023-05-09T02:17:24.721Z"
+        },
+        "precisionMathLib": {
+            "contractName": "PrecisionMath",
+            "contractAddress": "0x6DDBbC01604aE13660071637045b3eB4bC393853",
+            "constructorArguments": [],
+            "created": "2023-05-09T02:17:25.452Z"
+        },
+        "dydxMathLib": {
+            "contractName": "DyDxMath",
+            "contractAddress": "0x8c42172f23be016F94291E53230566D66489F3EB",
+            "constructorArguments": [],
+            "created": "2023-05-09T02:17:26.178Z"
+        },
+        "tickMapLib": {
+            "contractName": "TickMap",
+            "contractAddress": "0xbFC410e4eDEAa8Ac90e66e38Ba94afB26D33B821",
+            "constructorArguments": [],
+            "created": "2023-05-09T02:17:26.906Z"
+        },
+        "samplesLib": {
+            "contractName": "Samples",
+            "contractAddress": "0x83E8d1b99111c393Be0d7537561d1D70C3280d2b",
+            "constructorArguments": [],
+            "created": "2023-05-09T02:17:27.736Z"
+        },
+        "ticksLib": {
+            "contractName": "Ticks",
+            "contractAddress": "0xaDFc9fA2d156eB599CeBD60cf4e75e42db4490e3",
+            "constructorArguments": [],
+            "created": "2023-05-09T02:17:28.584Z"
+        },
+        "positionsLib": {
+            "contractName": "Positions",
+            "contractAddress": "0x66b4Ae724974de784f941e2F354011C2C5cB5b49",
+            "constructorArguments": [],
+            "created": "2023-05-09T02:17:29.534Z"
+        },
+        "rangePoolManager": {
+            "contractName": "RangePoolManager",
+            "contractAddress": "0x23974CC891984C690b3A728A7825F410Ee79Ad35",
+            "constructorArguments": [],
+            "created": "2023-05-09T02:17:30.272Z"
+        },
+        "rangePoolFactory": {
+            "contractName": "RangePoolFactory",
+            "contractAddress": "0x50475D93B8E374F4E34d910cb9696392a435d4F6",
+            "constructorArguments": [
+                "0x23974CC891984C690b3A728A7825F410Ee79Ad35"
+            ],
+            "created": "2023-05-09T02:17:31.226Z"
+        },
+        "rangePool": {
+            "contractName": "RangePool",
+            "contractAddress": "0x8d35973D1c806EBb7408843654f84cB10fd21621",
+            "constructorArguments": [
+                "0x6774be1a283Faed7ED8e40463c40Fb33A8da3461",
+                "0xC26906E10E8BDaDeb2cf297eb56DF59775eE52c4",
+                "177159557114295710296101716160",
+                "10",
+                "500"
+            ],
+            "created": "2023-05-09T03:06:51.744Z"
+        }
     }
 }

@@ -117,12 +117,13 @@ export function handleMint(event: Mint): void {
 }
 
 export function handleMintFungible(event: MintFungible): void {
-    let recipientParam = 
+    //TODO: fix event to emit 'recipient' and make new deployment
+    let recipientParam = event.transaction.from.toHex()
     let lowerParam = event.params.lower
     let upperParam = event.params.upper 
     let liquidityMintedParam = event.params.liquidityMinted
-    let positionTokenParam = event.params.token.toHex()
-    let tokenMintedParam = event.params.tokenMinted
+    //TODO: emit tokenId
+    let tokenMintedParam = event.params.liquidityMinted
     let amount0Param = event.params.amount0
     let amoun1Param = event.params.amount1
     let poolAddress = event.address.toHex()
@@ -157,16 +158,16 @@ export function handleMintFungible(event: MintFungible): void {
         lower,
         upper
     )
-    let loadPositionToken = safeLoadPositionToken(
-        positionTokenParam
-    )
-    let loadPositionFraction = safeLoadPositionFraction(
-        positionTokenParam,
-        recipientParam
-    )
+    // let loadPositionToken = safeLoadPositionToken(
+    //     positionTokenParam
+    // )
+    // let loadPositionFraction = safeLoadPositionFraction(
+    //     positionTokenParam,
+    //     recipientParam
+    // )
     let position = loadPosition.entity
-    let positionToken = loadPositionToken.entity
-    let positionTokenFraction = loadPositionFraction.entity
+    // let positionToken = loadPositionToken.entity
+    // let positionTokenFraction = loadPositionFraction.entity
     let lowerTick = loadLowerTick.entity
     let upperTick = loadUpperTick.entity
 
@@ -185,19 +186,19 @@ export function handleMintFungible(event: MintFungible): void {
     position.updatedAtBlockNumber = event.block.number
     position.updatedAtTimestamp = event.block.timestamp
 
-    if (!loadPositionToken.exists) {
-        positionToken.position = position.id
-    }
-    positionToken.totalSupply = positionToken.totalSupply.plus(tokenMintedParam)
+    // if (!loadPositionToken.exists) {
+    //     positionToken.position = position.id
+    // }
+    // positionToken.totalSupply = positionToken.totalSupply.plus(tokenMintedParam)
 
-    if (!loadPositionFraction.exists) {
-        let positionTokenFractions = positionToken.fractions
-        positionTokenFractions.push(positionTokenFraction.id)
-        positionToken.fractions = positionTokenFractions
-        positionTokenFraction.amount = positionTokenFraction.amount.plus(tokenMintedParam)
-    }
-    positionTokenFraction.updatedAtBlockNumber = event.block.number
-    positionTokenFraction.updatedAtTimestamp = event.block.timestamp
+    // if (!loadPositionFraction.exists) {
+    //     let positionTokenFractions = positionToken.fractions
+    //     positionTokenFractions.push(positionTokenFraction.id)
+    //     positionToken.fractions = positionTokenFractions
+    //     positionTokenFraction.amount = positionTokenFraction.amount.plus(tokenMintedParam)
+    // }
+    // positionTokenFraction.updatedAtBlockNumber = event.block.number
+    // positionTokenFraction.updatedAtTimestamp = event.block.timestamp
 
     let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
     let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
@@ -234,6 +235,6 @@ export function handleMintFungible(event: MintFungible): void {
     lowerTick.save()
     upperTick.save()
     position.save() 
-    positionToken.save()
-    positionTokenFraction.save()
+    // positionToken.save()
+    // positionTokenFraction.save()
 }

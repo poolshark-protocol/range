@@ -1,3 +1,3 @@
 module.exports = {
-    TickMath: "0x9F479560cd8A531E6C0fe04521Cb246264fE6b71",
+    TickMath: "0xC0A5e34d581c62c8D62ADa24A304E67A20DF9f45",
 };
