@@ -32,8 +32,11 @@ abstract contract RangePoolEvents {
     );
 
     event MintFungible(
+        address indexed recipient,
         int24 lower,
         int24 upper,
+        uint256 indexed tokenId,
+        uint128 tokenMinted,
         uint128 liquidityMinted,
         uint128 amount0,
         uint128 amount1
@@ -41,6 +44,8 @@ abstract contract RangePoolEvents {
 
     event BurnFungible(
         address indexed recipient,
+        int24 lower,
+        int24 upper,
         uint256 indexed tokenId,
         uint128 tokenBurned,
         uint128 liquidityBurned,

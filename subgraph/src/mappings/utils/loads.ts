@@ -267,15 +267,18 @@ class LoadPositionTokenRet {
     exists: boolean
 }
 export function safeLoadPositionToken(
-    tokenAddress: string
+    poolAddress: string,
+    tokenId: BigInt
 ): LoadPositionTokenRet {
     let exists = true
-    let fromToken: string
 
-    let positionTokenEntity = PositionToken.load(tokenAddress)
+    let positionTokenId = poolAddress.concat(tokenId.toString())
+
+    let positionTokenEntity = PositionToken.load(positionTokenId)
 
     if (!positionTokenEntity) {
-        positionTokenEntity = new PositionToken(tokenAddress)
+        positionTokenEntity = new PositionToken(positionTokenId)
+        positionTokenEntity.pool = poolAddress
         positionTokenEntity.totalSupply = BIGINT_ZERO
         positionTokenEntity.fractions = new Array<string>();
         exists = false
@@ -292,19 +295,21 @@ class LoadPositionFractionRet {
     exists: boolean
 }
 export function safeLoadPositionFraction(
-    tokenAddress: string,
-    recipient: string
+    poolAddress: string,
+    tokenId: BigInt,
+    owner: Address
 ): LoadPositionFractionRet {
     let exists = true
-    let fromToken: string
 
-    let positionFractionId = tokenAddress.concat(recipient)
+    let positionTokenId = poolAddress.concat(tokenId.toString())
+    let positionFractionId = poolAddress.concat(tokenId.toString()).concat(owner.toHex())
 
     let positionFractionEntity = PositionFraction.load(positionFractionId)
 
     if (!positionFractionEntity) {
         positionFractionEntity = new PositionFraction(positionFractionId)
-        positionFractionEntity.token = tokenAddress
+        positionFractionEntity.owner = owner
+        positionFractionEntity.token = positionTokenId
         positionFractionEntity.amount = BIGINT_ZERO
         exists = false
     }

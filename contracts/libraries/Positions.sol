@@ -29,8 +29,8 @@ library Positions {
 
     event Mint(
         address indexed recipient,
-        int24 indexed lower,
-        int24 indexed upper,
+        int24 lower,
+        int24 upper,
         uint128 liquidityMinted,
         uint128 amount0,
         uint128 amount1
@@ -57,8 +57,11 @@ library Positions {
     );
 
     event MintFungible(
+        address indexed recipient,
         int24 lower,
         int24 upper,
+        uint256 indexed tokenId,
+        uint128 tokenMinted,
         uint128 liquidityMinted,
         uint128 amount0,
         uint128 amount1
@@ -66,6 +69,8 @@ library Positions {
 
     event BurnFungible(
         address indexed recipient,
+        int24 lower,
+        int24 upper,
         uint256 indexed tokenId,
         uint128 tokenBurned,
         uint128 liquidityBurned,
@@ -167,8 +172,11 @@ library Positions {
             }
             IRangePoolERC1155(address(this)).mintFungible(params.mint.to, cache.tokenId, params.amount);
             emit MintFungible(
+                params.mint.to,
                 params.mint.lower,
                 params.mint.upper,
+                cache.tokenId,
+                params.amount,
                 params.liquidity,
                 params.mint.amount0,
                 params.mint.amount1
@@ -265,6 +273,8 @@ library Positions {
         if (params.fungible) {
             emit BurnFungible(
                 params.to,
+                params.lower,
+                params.upper,
                 cache.tokenId,
                 params.amount,
                 uint128(cache.liquidityAmount),

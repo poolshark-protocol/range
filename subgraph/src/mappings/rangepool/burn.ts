@@ -1,4 +1,4 @@
-import { store } from "@graphprotocol/graph-ts"
+import { Address, store } from "@graphprotocol/graph-ts"
 import { Burn, BurnFungible } from "../../../generated/RangePoolFactory/RangePool"
 import { safeLoadBasePrice, safeLoadPosition, safeLoadPositionById, safeLoadPositionFraction, safeLoadPositionToken, safeLoadRangePool, safeLoadRangePoolFactory, safeLoadTick, safeLoadToken } from "../utils/loads"
 import {
@@ -128,7 +128,9 @@ export function handleBurn(event: Burn): void {
 
 export function handleBurnFungible(event: BurnFungible): void {
     let recipientParam = event.params.recipient.toHex()
-    let tokenIdParam = event.params.tokenId.toHex()
+    let lowerParam = event.params.lower
+    let upperParam = event.params.upper
+    let tokenIdParam = event.params.tokenId
     let tokenBurnedParam = event.params.tokenBurned
     let liquidityBurnedParam = event.params.liquidityBurned
     let amount0Param = event.params.amount0
@@ -136,16 +138,22 @@ export function handleBurnFungible(event: BurnFungible): void {
     let poolAddress = event.address.toHex()
     let msgSender = event.transaction.from.toHex()
 
-    let loadPositionToken = safeLoadPositionToken(tokenIdParam)
+    let lower = BigInt.fromI32(lowerParam)
+    let upper = BigInt.fromI32(upperParam)
+
+    let loadPositionToken = safeLoadPositionToken(
+        poolAddress,
+        tokenIdParam
+    )
     let positionToken = loadPositionToken.entity
-    //TODO: handle positionToken transfers
-    let loadPositionFraction = safeLoadPositionFraction(tokenIdParam, msgSender)
+    let loadPositionFraction = safeLoadPositionFraction(
+        poolAddress,
+        tokenIdParam,
+        Address.fromString(msgSender)
+    )
     let positionFraction = loadPositionFraction.entity
     let loadPosition = safeLoadPositionById(positionToken.position)
     let position = loadPosition.entity
-
-    let lower = position.lower
-    let upper = position.upper
 
     let loadBasePrice = safeLoadBasePrice('eth')
     let loadRangePool = safeLoadRangePool(poolAddress)
@@ -182,7 +190,7 @@ export function handleBurnFungible(event: BurnFungible): void {
         let fractionIndex = positionTokenFractions.indexOf(positionFraction.id)
         positionTokenFractions.splice(fractionIndex, 1)
         positionToken.fractions = positionTokenFractions
-        store.remove('PositionFraction', tokenIdParam.concat(msgSender))
+        store.remove('PositionFraction', poolAddress.concat(tokenIdParam.toHex()).concat(msgSender))
     } else {
         positionFraction.amount = positionFraction.amount.minus(tokenBurnedParam)
         positionFraction.updatedAtBlockNumber = event.block.number
@@ -202,12 +210,11 @@ export function handleBurnFungible(event: BurnFungible): void {
         position.save()
     }
     if (positionToken.totalSupply.equals(tokenBurnedParam)) {
-        store.remove('PositionToken', tokenIdParam)
+        store.remove('PositionToken', poolAddress.concat(tokenIdParam.toHex()))
     } else {
         positionToken.totalSupply = positionToken.totalSupply.minus(tokenBurnedParam)
         positionToken.save()
     }
-
     lowerTick.liquidityDelta = lowerTick.liquidityDelta.minus(liquidityBurnedParam)
     upperTick.liquidityDelta = upperTick.liquidityDelta.plus(liquidityBurnedParam)
     upperTick.liquidityDeltaMinus = upperTick.liquidityDeltaMinus.minus(liquidityBurnedParam)

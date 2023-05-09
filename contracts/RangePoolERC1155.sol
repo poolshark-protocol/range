@@ -162,7 +162,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         unchecked {
             _tokenBalances[_id][_account] = _accountBalance + _amount;
         }
-        emit TransferSingle(msg.sender, address(0), _account, _id, _amount);
     }
 
     function burnFungible(
@@ -186,7 +185,6 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
             _tokenBalances[_id][_account] = _accountBalance - _amount;
             _totalSupplyById[_id] -= _amount;
         }
-        emit TransferSingle(msg.sender, _account, address(0), _id, _amount);
     }
 
     function _setApprovalForAll(

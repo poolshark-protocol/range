@@ -29,6 +29,7 @@ function handleRangePoolTasks() {
     logTask(MINT_TOKENS)
   } else if (process.argv.includes(MINT_POSITION)) {
     import('./tasks/deploy/mint-position')
+    console.log(process.env.ARBITRUM_GOERLI_URL)
     logTask(MINT_POSITION)
   } else if (process.argv.includes(VERIFY_CONTRACTS)) {
     import('./tasks/deploy/verify-contracts')

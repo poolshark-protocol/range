@@ -24,6 +24,7 @@ export class MintPosition {
       hre.props.bob = signers[1]
       hre.carol = signers[2]
     }
+    console.log('key:', process.env.PRIVATE_KEY)
     hre.nonce = await getNonce(hre, hre.props.alice.address)
     console.log(this.nonce)
     await this.initialSetup.readRangePoolSetup(this.nonce)
@@ -34,14 +35,45 @@ export class MintPosition {
 
     const liquidityAmount = BigNumber.from('19851540375107355238395')
 
+    // 0x34e800D1456d87A5F62B774AD98cea54a3A40048
+    // 0x1DcF623EDf118E4B21b4C5Dc263bb735E170F9B8
+    // await validateMint({
+    //   signer: hre.props.alice,
+    //   recipient: hre.props.alice.address,
+    //   lower: '-887270',
+    //   upper: '887270',
+    //   amount0: token0Amount,
+    //   amount1: token1Amount,
+    //   fungible: true,
+    //   balance0Decrease: BigNumber.from('0'),
+    //   balance1Decrease: token1Amount,
+    //   liquidityIncrease: liquidityAmount,
+    //   revertMessage: '',
+    //   balanceCheck: false
+    // })
+
     await validateMint({
       signer: hre.props.alice,
-      recipient: '0x73a18F0E04A4c7E49C6B25c8f6Bc17674C806b67',
+      recipient: '0x34e800D1456d87A5F62B774AD98cea54a3A40048',
       lower: '-887270',
       upper: '887270',
       amount0: token0Amount,
       amount1: token1Amount,
-      fungible: false,
+      fungible: true,
+      balance0Decrease: BigNumber.from('0'),
+      balance1Decrease: token1Amount,
+      liquidityIncrease: liquidityAmount,
+      revertMessage: '',
+    })
+
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: '0x1DcF623EDf118E4B21b4C5Dc263bb735E170F9B8',
+      lower: '-887270',
+      upper: '887270',
+      amount0: token0Amount,
+      amount1: token1Amount,
+      fungible: true,
       balance0Decrease: BigNumber.from('0'),
       balance1Decrease: token1Amount,
       liquidityIncrease: liquidityAmount,

@@ -57,20 +57,14 @@ export function handleOwnerTransfer(event: OwnerTransfer): void {
     let newOwnerParam      = event.params.newOwner
 
     let loadManager = safeLoadManager(event.address.toHex())
-    let loadFactory = safeLoadRangePoolFactory(FACTORY_ADDRESS)
 
     let manager = loadManager.entity
-    let factory = loadFactory.entity
 
     if(!loadManager.exists) {
         manager.owner = newOwnerParam
         manager.feeTo = newOwnerParam
     }
-    if(!loadFactory.exists) {
-        factory.owner = manager.id
-    }
     manager.save()
-    factory.save()
 }
 
 export function handleProtocolFeeCollected(event: ProtocolFeeCollected): void {

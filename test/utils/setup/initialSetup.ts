@@ -292,7 +292,10 @@ export class InitialSetup {
       [
         hre.props.token0.address,
         hre.props.token1.address,
-        '10', '500', '177159557114295710296101716160'
+        hre.props.rangePoolManager.address,
+        '177159557114295710296101716160',
+        '10',
+        '500'
       ]
     )
     return hre.nonce
@@ -317,15 +320,15 @@ export class InitialSetup {
         'readRangePoolSetup'
       )
     ).contractAddress
-    // const rangePoolAddress = (
-    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-    //     {
-    //       networkName: hre.network.name,
-    //       objectName: 'rangePool',
-    //     },
-    //     'readRangePoolSetup'
-    //   )
-    // ).contractAddress
+    const rangePoolAddress = (
+      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+        {
+          networkName: hre.network.name,
+          objectName: 'rangePool',
+        },
+        'readRangePoolSetup'
+      )
+    ).contractAddress
     const rangePoolFactoryAddress = (
       await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
         {
@@ -335,10 +338,20 @@ export class InitialSetup {
         'readRangePoolSetup'
       )
     ).contractAddress
+    const positionsLibAddress = (
+      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+        {
+          networkName: hre.network.name,
+          objectName: 'positionsLib',
+        },
+        'readRangePoolSetup'
+      )
+    ).contractAddress
 
     hre.props.token0 = await hre.ethers.getContractAt('Token20', token0Address)
     hre.props.token1 = await hre.ethers.getContractAt('Token20', token1Address)
-    // hre.props.rangePool = await hre.ethers.getContractAt('RangePool', rangePoolAddress)
+    hre.props.positionsLib = await hre.ethers.getContractAt('Positions', positionsLibAddress)
+    hre.props.rangePool = await hre.ethers.getContractAt('RangePool', rangePoolAddress)
     hre.props.rangePoolFactory = await hre.ethers.getContractAt('RangePoolFactory', rangePoolFactoryAddress)
 
     return nonce
