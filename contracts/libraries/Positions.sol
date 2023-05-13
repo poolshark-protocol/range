@@ -456,7 +456,7 @@ library Positions {
         address pool,
         int24 lower,
         int24 upper
-    ) external view returns (
+    ) public view returns (
         uint256 feeGrowthInside0,
         uint256 feeGrowthInside1
     ) {
@@ -518,12 +518,15 @@ library Positions {
 
     function snapshot(
         address pool,
+        address owner,
         int24 lower,
         int24 upper
     ) external view returns (
         int56   tickSecondsAccum,
         uint160 secondsPerLiquidityAccum,
-        uint32  secondsGrowth
+        uint32  secondsGrowth,
+        uint128 feesOwed0,
+        uint128 feesOwed1
     ) {
         Ticks.validate(lower, upper, IRangePool(pool).tickSpacing());
 
@@ -550,11 +553,47 @@ library Positions {
             cache.secondsPerLiquidityAccumUpper
         )
             = IRangePool(pool).ticks(upper);
+        (
+            cache.position.liquidity,
+            cache.position.amount0,
+            cache.position.amount1,
+            cache.position.feeGrowthInside0Last,
+            cache.position.feeGrowthInside1Last
+        )
+            = IRangePool(pool).positions(owner, lower, upper);
+        
+        cache.userBalance = Tokens.balanceOf(pool, owner, lower, upper);
+        cache.totalSupply = Tokens.totalSupply(pool, lower, upper);
+
+        (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
+            pool,
+            lower,
+            upper
+        );
+
+        cache.position.amount0 += uint128(
+            PrecisionMath.mulDiv(
+                rangeFeeGrowth0 - cache.position.feeGrowthInside0Last,
+                uint256(cache.position.liquidity),
+                Q128
+            )
+        );
+
+        cache.position.amount1 += uint128(
+            PrecisionMath.mulDiv(
+                rangeFeeGrowth1 - cache.position.feeGrowthInside1Last,
+                cache.position.liquidity,
+                Q128
+            )
+        );
+
+        cache.position.amount0 = uint128(cache.position.amount0 * cache.userBalance / cache.totalSupply);
+        cache.position.amount1 = uint128(cache.position.amount1 * cache.userBalance / cache.totalSupply);
 
         // ticks not initialized or range not crossed into
         if (cache.secondsOutsideUpper == 0
             && cache.secondsOutsideLower == 0){
-            return (0,0,0);
+            return (0,0,0,0,0);
         }
         
         cache.tick = TickMath.getTickAtSqrtRatio(cache.price);
@@ -563,7 +602,9 @@ library Positions {
             return (
                 cache.tickSecondsAccumLower - cache.tickSecondsAccumUpper,
                 cache.secondsPerLiquidityAccumLower - cache.secondsPerLiquidityAccumUpper,
-                cache.secondsOutsideLower - cache.secondsOutsideUpper
+                cache.secondsOutsideLower - cache.secondsOutsideUpper,
+                cache.position.amount0,
+                cache.position.amount1
             );
         } else if (upper >= cache.tick) {
             cache.blockTimestamp = uint32(block.timestamp);
@@ -591,7 +632,9 @@ library Positions {
                   - cache.secondsPerLiquidityAccumUpper,
                 cache.blockTimestamp
                   - cache.secondsOutsideLower
-                  - cache.secondsOutsideUpper
+                  - cache.secondsOutsideUpper,
+                cache.position.amount0,
+                cache.position.amount1
             );
         }
     }

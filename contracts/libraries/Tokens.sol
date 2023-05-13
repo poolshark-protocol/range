@@ -19,6 +19,18 @@ library Tokens {
         return uint256(keccak256(abi.encode(lower, upper)));
     }
 
+    function balanceOf(
+        address tokens,
+        address owner,
+        int24 lower,
+        int24 upper
+    ) internal view returns (
+        uint256
+    )
+    {
+        return IRangePoolERC1155(tokens).balanceOf(owner, id(lower, upper));
+    }
+
     function totalSupply(
         address tokens,
         int24 lower,

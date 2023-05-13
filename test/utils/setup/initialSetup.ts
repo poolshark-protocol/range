@@ -103,8 +103,6 @@ export class InitialSetup {
     // hre.props.tickMapLib = await hre.ethers.getContractAt('TickMap', tickMapLib)
     // hre.props.samplesLib = await hre.ethers.getContractAt('Samples', samplesLib)
 
-    console.log('deploy token')
-
     await this.deployAssist.deployContractWithRetry(
       network,
       // @ts-ignore
@@ -112,7 +110,6 @@ export class InitialSetup {
       'tokenA',
       ['Token20A', 'TOKEN20A', this.token0Decimals]
     )
-    console.log('deploy token')
 
     await this.deployAssist.deployContractWithRetry(
       network,
@@ -121,7 +118,6 @@ export class InitialSetup {
       'tokenB',
       ['Token20B', 'TOKEN20B', this.token1Decimals]
     )
-    console.log('deploy token')
 
     const tokenOrder = hre.props.tokenA.address.localeCompare(hre.props.tokenB.address)
     let token0Args

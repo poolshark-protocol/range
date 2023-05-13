@@ -275,6 +275,23 @@ contract RangePool is
         );
     }
 
+    function snapshot(
+       SnapshotParams memory params 
+    ) external view returns (
+        int56   tickSecondsAccum,
+        uint160 secondsPerLiquidityAccum,
+        uint32  secondsGrowth,
+        uint128 feesOwed0,
+        uint128 feesOwed1
+    ) {
+        return Positions.snapshot(
+            address(this),
+            params.owner,
+            params.lower,
+            params.upper
+        );
+    }
+
     function protocolFees(
         uint16 protocolFee,
         bool setFee
