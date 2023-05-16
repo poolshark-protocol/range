@@ -53,7 +53,7 @@ export function updateDerivedTVLAmounts(
   token1.totalValueLockedUsd = token1.totalValueLocked.times(token1.ethPrice.times(basePrice.USD))
 
   // Get tracked and untracked amounts based on tokens in pool.
-  let amounts: AmountType = getAdjustedAmounts(pool.totalValueLocked0, token0, pool.totalValueLocked1, token1)
+  let amounts: AmountType = getAdjustedAmounts(pool.totalValueLocked0, token0, pool.totalValueLocked1, token1, basePrice)
 
   // Update pool TVL values.
   pool.totalValueLockedEth = amounts.eth

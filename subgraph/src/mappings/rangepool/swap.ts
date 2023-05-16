@@ -38,9 +38,36 @@ export function handleSwap(event: Swap): void {
         amount0 = convertTokenToDecimal(amountOutParam, token0.decimals)
     }
 
+    pool.liquidity = liquidityParam
+    pool.tickAtPrice = BigInt.fromI32(tickAtPriceParam)
+    pool.price = priceParam
+
+    let prices = sqrtPriceX96ToTokenPrices(pool.price, token0, token1)
+    pool.price0 = prices[0]
+    pool.price1 = prices[1]
+    pool.save()
+
+    // price updates
+    token0.ethPrice = findEthPerToken(token0, token1)
+    token1.ethPrice = findEthPerToken(token1, token0)
+    token0.usdPrice = token0.ethPrice.times(basePrice.USD)
+    token1.usdPrice = token1.ethPrice.times(basePrice.USD)
+
+    let oldPoolTVLEth = pool.totalValueLockedEth
+    pool.totalValueLocked0 = pool.totalValueLocked0.plus(amount0)
+    pool.totalValueLocked1 = pool.totalValueLocked1.plus(amount1)
+    token0.totalValueLocked = token0.totalValueLocked.plus(amount0)
+    token1.totalValueLocked = token1.totalValueLocked.plus(amount1)
+    let updateTvlRet = updateDerivedTVLAmounts(token0, token1, pool, factory, oldPoolTVLEth)
+    token0 = updateTvlRet.token0
+    token1 = updateTvlRet.token1
+    pool = updateTvlRet.pool
+    factory = updateTvlRet.factory
+
+    // update volume and fees
     let amount0Abs = amount0.times(BigDecimal.fromString(amount0.lt(ZERO_BD) ? '-1' : '1'))
     let amount1Abs = amount1.times(BigDecimal.fromString(amount1.lt(ZERO_BD) ? '-1' : '1'))
-    let volumeAmounts: AmountType = getAdjustedAmounts(amount0Abs, token0, amount1Abs, token1)
+    let volumeAmounts: AmountType = getAdjustedAmounts(amount0Abs, token0, amount1Abs, token1, basePrice)
     let volumeEth = volumeAmounts.eth.div(TWO_BD)
     let volumeUsd = volumeAmounts.usd.div(TWO_BD)
     // not being indexed for now
@@ -70,35 +97,12 @@ export function handleSwap(event: Swap): void {
     pool.volumeUsd = pool.volumeUsd.plus(volumeUsd)
     token0.volume = token0.volume.plus(amount0Abs)
     token0.volumeUsd = token0.volumeUsd.plus(volumeUsd)
+    token0.volumeEth = token0.volumeEth.plus(volumeEth)
     token1.volume = token1.volume.plus(amount1Abs)
     token1.volumeUsd = token1.volumeUsd.plus(volumeUsd)
+    token1.volumeEth = token1.volumeEth.plus(volumeEth)
 
-    pool.liquidity = liquidityParam
-    pool.tickAtPrice = BigInt.fromI32(tickAtPriceParam)
-    pool.price = priceParam
-
-    let prices = sqrtPriceX96ToTokenPrices(pool.price, token0, token1)
-    pool.price0 = prices[0]
-    pool.price1 = prices[1]
-    pool.save()
-
-    // eth price updates
-    token0.ethPrice = findEthPerToken(token0, token1)
-    token1.ethPrice = findEthPerToken(token1, token0)
-    token0.usdPrice = token0.ethPrice.times(basePrice.USD)
-    token1.usdPrice = token1.ethPrice.times(basePrice.USD)
-
-    let oldPoolTVLEth = pool.totalValueLockedEth
-    pool.totalValueLocked0 = pool.totalValueLocked0.plus(amount0)
-    pool.totalValueLocked1 = pool.totalValueLocked1.plus(amount1)
-    token0.totalValueLocked = token0.totalValueLocked.plus(amount0)
-    token1.totalValueLocked = token1.totalValueLocked.plus(amount1)
-    let updateTvlRet = updateDerivedTVLAmounts(token0, token1, pool, factory, oldPoolTVLEth)
-    token0 = updateTvlRet.token0
-    token1 = updateTvlRet.token1
-    pool = updateTvlRet.pool
-    factory = updateTvlRet.factory
-
+    // save swap transaction
     let transaction = safeLoadTransaction(event).entity
     let loadSwap = safeLoadSwap(event, pool)
     let swap = loadSwap.entity

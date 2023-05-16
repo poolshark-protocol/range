@@ -52,6 +52,7 @@ type Token @entity {
   # token specific volume
   volume: BigDecimal!
   volumeUsd: BigDecimal!
+  volumeEth: BigDecimal!
   txnCount: BigInt!
 
   feesUsdTotal: BigDecimal!

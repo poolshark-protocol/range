@@ -206,11 +206,11 @@ export function getAdjustedAmounts(
   tokenAmount0: BigDecimal,
   token0: Token,
   tokenAmount1: BigDecimal,
-  token1: Token
+  token1: Token,
+  basePrice: BasePrice
 ): AmountType {
   let ethPrice0 = token0.ethPrice
   let ethPrice1 = token1.ethPrice
-  let basePrice = safeLoadBasePrice('eth').entity
 
   if (basePrice === null) {
     return { eth: ZERO_BD, usd: ZERO_BD, ethUntracked: ZERO_BD, usdUntracked: ZERO_BD }
