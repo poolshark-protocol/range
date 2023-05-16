@@ -95,6 +95,7 @@ export function handleSwap(event: Swap): void {
     pool.volumeToken0 = pool.volumeToken0.plus(amount0Abs)
     pool.volumeToken1 = pool.volumeToken1.plus(amount1Abs)
     pool.volumeUsd = pool.volumeUsd.plus(volumeUsd)
+    pool.volumeEth = pool.volumeEth.plus(volumeEth)
     token0.volume = token0.volume.plus(amount0Abs)
     token0.volumeUsd = token0.volumeUsd.plus(volumeUsd)
     token0.volumeEth = token0.volumeEth.plus(volumeEth)
