@@ -1,14 +1,14 @@
 import { Address } from '@graphprotocol/graph-ts'
-import { TransferBatch, TransferSingle } from '../../generated/templates/RangePoolTemplate/RangePoolERC1155'
+import { TransferBatch, TransferSingle } from '../../generated/templates/RangePoolTemplate/RangePool'
 import { safeLoadPositionFraction, safeLoadPositionToken } from './utils/loads'
 
 export function handleTransferSingle(event: TransferSingle): void {
-    // let poolAddress = event.address.toHex()
-    // let senderParam = event.params.sender
-    // let fromParam = event.params.from
-    // let toParam = event.params.to
-    // let tokenIdParam = event.params.id
-    // let amountParam = event.params.amount
+    let poolAddress = event.address.toHex()
+    let senderParam = event.params.sender
+    let fromParam = event.params.from
+    let toParam = event.params.to
+    let tokenIdParam = event.params.id
+    let amountParam = event.params.amount
 
     // let loadPositionFractionFrom = safeLoadPositionFraction(
     //     poolAddress,

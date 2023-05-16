@@ -1,9 +1,18 @@
 /* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { BigDecimal } from '@graphprotocol/graph-ts'
+import { BigDecimal, log } from '@graphprotocol/graph-ts'
 import { BasePrice, RangePoolFactory, RangePool, Token } from '../../../generated/schema'
 import { AmountType, getAdjustedAmounts } from './price'
+import { ZERO_ADDRESS } from './helpers'
+import { safeLoadBasePrice, safeLoadToken } from './loads'
 
+
+class UpdateDerivedTVLAmountsRet {
+  token0: Token
+  token1: Token
+  pool: RangePool
+  factory: RangePoolFactory
+}
 /**
  * Updates all dervived TVL values. This includes all ETH and USD
  * TVL metrics for a given pool, as well as in the aggregate factory.
@@ -18,23 +27,30 @@ import { AmountType, getAdjustedAmounts } from './price'
  * @param pool
  * @param factory
  * @param oldPoolTotalValueLockedETH
+ * @returns tvlReturnInter
  */
 export function updateDerivedTVLAmounts(
+  token0: Token,
+  token1: Token,
   pool: RangePool,
   factory: RangePoolFactory,
   oldRangePoolTotalValueLockedEth: BigDecimal
-): void {
-  let basePrice = BasePrice.load('1')
-  let token0 = Token.load(pool.token0)
-  let token1 = Token.load(pool.token1)
+): UpdateDerivedTVLAmountsRet {
+  let basePrice = safeLoadBasePrice('eth').entity
 
   if (token0 === null || token1 === null || basePrice === null) {
-    return
+    return {
+      token0: safeLoadToken(ZERO_ADDRESS).entity,
+      token1: safeLoadToken(ZERO_ADDRESS).entity,
+      pool,
+      factory
+    }
   }
-
+  log.info('token0 ethPrice: {} :: basePrice: {}', [token0.ethPrice.toString(), basePrice.USD.toString()])
+  log.info('token1 ethPrice: {} :: basePrice: {}', [token1.ethPrice.toString(), basePrice.USD.toString()])
   // Update token TVL values.
-  token0.totalValueLockedUsd = token0.totalValueLocked.times(token0.ethPrice.times(basePrice.ethUsd))
-  token1.totalValueLockedUsd = token1.totalValueLocked.times(token1.ethPrice.times(basePrice.ethUsd))
+  token0.totalValueLockedUsd = token0.totalValueLocked.times(token0.ethPrice.times(basePrice.USD))
+  token1.totalValueLockedUsd = token1.totalValueLocked.times(token1.ethPrice.times(basePrice.USD))
 
   // Get tracked and untracked amounts based on tokens in pool.
   let amounts: AmountType = getAdjustedAmounts(pool.totalValueLocked0, token0, pool.totalValueLocked1, token1)
@@ -47,11 +63,13 @@ export function updateDerivedTVLAmounts(
 
   // Add new TVL based on pool.
   factory.totalValueLockedEth = factory.totalValueLockedEth.plus(amounts.eth)
-  factory.totalValueLockedUsd = factory.totalValueLockedEth.times(basePrice.ethUsd)
+  factory.totalValueLockedUsd = factory.totalValueLockedEth.times(basePrice.USD)
 
   // Save entities.
-  token0.save()
-  token1.save()
-  factory.save()
-  pool.save()
+  return {
+    token0,
+    token1,
+    pool,
+    factory
+  }
 }

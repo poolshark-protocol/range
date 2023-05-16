@@ -9,6 +9,7 @@ import { ONE_BI } from "../../constants/constants"
 import { updateDerivedTVLAmounts } from "../utils/tvl"
 import { BIGDECIMAL_ZERO, BIGINT_ZERO, convertTokenToDecimal } from "../utils/helpers"
 import { Position } from "../../../generated/schema"
+import { findEthPerToken } from "../utils/price"
 
 export function handleBurn(event: Burn): void {
     let recipientParam = event.params.recipient.toHex()
@@ -59,8 +60,8 @@ export function handleBurn(event: Burn): void {
     let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
     let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
     let amountUsd = amount0
-        .times(token0.ethPrice.times(basePrice.ethUsd))
-        .plus(amount1.times(token1.ethPrice.times(basePrice.ethUsd)))
+        .times(token0.ethPrice.times(basePrice.USD))
+        .plus(amount1.times(token1.ethPrice.times(basePrice.USD)))
 
     if (!loadPosition.exists) {
         //something is wrong
@@ -104,18 +105,28 @@ export function handleBurn(event: Burn): void {
     pool.txnCount = pool.txnCount.plus(ONE_BI)
     factory.txnCount = factory.txnCount.plus(ONE_BI)
 
+    // eth price updates
+    token0.ethPrice = findEthPerToken(token0, token1)
+    token1.ethPrice = findEthPerToken(token1, token0)
+    token0.usdPrice = token0.ethPrice.times(basePrice.USD)
+    token1.usdPrice = token1.ethPrice.times(basePrice.USD)
+
     // tvl updates
     let oldPoolTotalValueLockedEth = pool.totalValueLockedEth
     token0.totalValueLocked = token0.totalValueLocked.minus(amount0)
     token1.totalValueLocked = token1.totalValueLocked.minus(amount1)
     pool.totalValueLocked0 = pool.totalValueLocked0.minus(amount0)
     pool.totalValueLocked1 = pool.totalValueLocked1.minus(amount1)
-    updateDerivedTVLAmounts(pool, factory, oldPoolTotalValueLockedEth)
+    let updateTvlRet = updateDerivedTVLAmounts(token0, token1, pool, factory, oldPoolTotalValueLockedEth)
+    token0 = updateTvlRet.token0
+    token1 = updateTvlRet.token1
+    pool = updateTvlRet.pool
+    factory = updateTvlRet.factory
 
     if (
-        pool.nearestTick !== null &&
-        lower.le(pool.nearestTick) &&
-        upper.gt(pool.nearestTick)
+        pool.tickAtPrice !== null &&
+        lower.le(pool.tickAtPrice) &&
+        upper.gt(pool.tickAtPrice)
       ) {
         pool.liquidity = pool.liquidity.minus(liquidityBurnedParam)
     }
@@ -124,6 +135,7 @@ export function handleBurn(event: Burn): void {
     token1.save()
     pool.save()
     factory.save()
+    basePrice.save()
 }
 
 export function handleBurnFungible(event: BurnFungible): void {
@@ -182,8 +194,8 @@ export function handleBurnFungible(event: BurnFungible): void {
     let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
     let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
     let amountUsd = amount0
-        .times(token0.ethPrice.times(basePrice.ethUsd))
-        .plus(amount1.times(token1.ethPrice.times(basePrice.ethUsd)))
+        .times(token0.ethPrice.times(basePrice.USD))
+        .plus(amount1.times(token1.ethPrice.times(basePrice.USD)))
 
     if (positionFraction.amount.equals(tokenBurnedParam)) {
         let positionTokenFractions = positionToken.fractions
@@ -236,24 +248,34 @@ export function handleBurnFungible(event: BurnFungible): void {
     pool.txnCount = pool.txnCount.plus(ONE_BI)
     factory.txnCount = factory.txnCount.plus(ONE_BI)
 
+    // eth price updates
+    token0.ethPrice = findEthPerToken(token0, token1)
+    token1.ethPrice = findEthPerToken(token1, token0)
+    token0.usdPrice = token0.ethPrice.times(basePrice.USD)
+    token1.usdPrice = token1.ethPrice.times(basePrice.USD)
+
     // tvl updates
     let oldPoolTotalValueLockedEth = pool.totalValueLockedEth
     token0.totalValueLocked = token0.totalValueLocked.minus(amount0)
     token1.totalValueLocked = token1.totalValueLocked.minus(amount1)
     pool.totalValueLocked0 = pool.totalValueLocked0.minus(amount0)
     pool.totalValueLocked1 = pool.totalValueLocked1.minus(amount1)
-    updateDerivedTVLAmounts(pool, factory, oldPoolTotalValueLockedEth)
+    let updateTvlRet = updateDerivedTVLAmounts(token0, token1, pool, factory, oldPoolTotalValueLockedEth)
+    token0 = updateTvlRet.token0
+    token1 = updateTvlRet.token1
+    pool = updateTvlRet.pool
+    factory = updateTvlRet.factory
 
     if (
-        pool.nearestTick !== null &&
-        lower.le(pool.nearestTick) &&
-        upper.gt(pool.nearestTick)
+        pool.tickAtPrice !== null &&
+        lower.le(pool.tickAtPrice) &&
+        upper.gt(pool.tickAtPrice)
       ) {
         pool.liquidity = pool.liquidity.minus(liquidityBurnedParam)
     }
-    
     token0.save()
     token1.save()
     pool.save()
     factory.save()
+    basePrice.save()
 }

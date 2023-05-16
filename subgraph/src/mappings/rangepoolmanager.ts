@@ -1,7 +1,6 @@
-import { FeeTierEnabled, FeeToTransfer, OwnerTransfer, ProtocolFeeCollected, ProtocolFeeUpdated } from '../../generated/RangePoolAdmin/RangePoolAdmin'
+import { FeeTierEnabled, FeeToTransfer, OwnerTransfer, ProtocolFeeCollected, ProtocolFeeUpdated } from '../../generated/RangePoolManager/RangePoolManager'
 import { safeLoadFeeTier, safeLoadManager, safeLoadRangePoolFactory } from './utils/loads'
 import { BigInt, log } from '@graphprotocol/graph-ts'
-import { FACTORY_ADDRESS } from '../constants/constants'
 import { FactoryChanged } from '../../generated/RangePoolManager/RangePoolManager'
 
 export function handleFeeTierEnabled(event: FeeTierEnabled): void {

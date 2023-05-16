@@ -8,6 +8,7 @@ import {
     BIGINT_ZERO,
 } from './helpers'
 import { bigDecimalExponated, safeDiv } from './math'
+import { getEthPriceInUSD } from './price'
 
 class LoadTokenRet {
     entity: Token
@@ -68,6 +69,8 @@ export function safeLoadBasePrice(name: string): LoadBasePriceRet {
         basePriceEntity = new BasePrice(name)
         exists = false
     }
+
+    basePriceEntity.USD = getEthPriceInUSD()
 
     return {
         entity: basePriceEntity,

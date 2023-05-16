@@ -298,7 +298,8 @@
     ],
     "name": "Swap",
     "type": "event"
-  },
+  }
+  ,
   {
     "anonymous": false,
     "inputs": [

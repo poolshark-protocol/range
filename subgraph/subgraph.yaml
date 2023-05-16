@@ -8,9 +8,9 @@ dataSources:
       name: RangePoolFactory
       network: arbitrum-goerli
       source:
-          address: '0x453B53B16EA3ea598950094df5D6eAc8346c5a61'
+          address: '0x2ee926Eb4bBf3C49c6D1434C8083cF09a0266fE2'
           abi: RangePoolFactory
-          startBlock: 19233400
+          startBlock: 19717300
       mapping:
           kind: ethereum/events
           apiVersion: 0.0.6
@@ -37,9 +37,9 @@ dataSources:
       name: RangePoolManager
       network: arbitrum-goerli
       source:
-          address: '0xabb6Ba9377Fc98E75979A75d8e76205012C970e6'
+          address: '0xf6E41cFEa90909D9d23CA11d992Fce4a50DEe1B4'
           abi: RangePoolManager
-          startBlock: 19233400
+          startBlock: 19717300
       mapping:
           kind: ethereum/events
           apiVersion: 0.0.6
