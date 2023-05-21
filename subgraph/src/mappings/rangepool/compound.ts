@@ -6,7 +6,7 @@ import { convertTokenToDecimal } from "../utils/helpers"
 import { Compound } from "../../../generated/RangePoolFactory/RangePool"
 
 export function handleCompound(event: Compound): void {
-    let ownerParam = event.params.owner.toHex()
+    let ownerParam = event.address.toHex()
     let lowerParam = event.params.lower
     let upperParam = event.params.upper
     let liquidityCompoundedParam = event.params.liquidityCompounded
