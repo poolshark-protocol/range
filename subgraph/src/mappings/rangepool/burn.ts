@@ -1,4 +1,4 @@
-import { store } from "@graphprotocol/graph-ts"
+import { Address, store } from "@graphprotocol/graph-ts"
 import { Burn, BurnFungible } from "../../../generated/RangePoolFactory/RangePool"
 import { safeLoadBasePrice, safeLoadPosition, safeLoadPositionById, safeLoadPositionFraction, safeLoadPositionToken, safeLoadRangePool, safeLoadRangePoolFactory, safeLoadTick, safeLoadToken } from "../utils/loads"
 import {
@@ -9,6 +9,7 @@ import { ONE_BI } from "../../constants/constants"
 import { updateDerivedTVLAmounts } from "../utils/tvl"
 import { BIGDECIMAL_ZERO, BIGINT_ZERO, convertTokenToDecimal } from "../utils/helpers"
 import { Position } from "../../../generated/schema"
+import { findEthPerToken } from "../utils/price"
 
 export function handleBurn(event: Burn): void {
     let recipientParam = event.params.recipient.toHex()
@@ -59,8 +60,8 @@ export function handleBurn(event: Burn): void {
     let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
     let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
     let amountUsd = amount0
-        .times(token0.ethPrice.times(basePrice.ethUsd))
-        .plus(amount1.times(token1.ethPrice.times(basePrice.ethUsd)))
+        .times(token0.ethPrice.times(basePrice.USD))
+        .plus(amount1.times(token1.ethPrice.times(basePrice.USD)))
 
     if (!loadPosition.exists) {
         //something is wrong
@@ -104,18 +105,28 @@ export function handleBurn(event: Burn): void {
     pool.txnCount = pool.txnCount.plus(ONE_BI)
     factory.txnCount = factory.txnCount.plus(ONE_BI)
 
+    // eth price updates
+    token0.ethPrice = findEthPerToken(token0, token1)
+    token1.ethPrice = findEthPerToken(token1, token0)
+    token0.usdPrice = token0.ethPrice.times(basePrice.USD)
+    token1.usdPrice = token1.ethPrice.times(basePrice.USD)
+
     // tvl updates
     let oldPoolTotalValueLockedEth = pool.totalValueLockedEth
     token0.totalValueLocked = token0.totalValueLocked.minus(amount0)
     token1.totalValueLocked = token1.totalValueLocked.minus(amount1)
     pool.totalValueLocked0 = pool.totalValueLocked0.minus(amount0)
     pool.totalValueLocked1 = pool.totalValueLocked1.minus(amount1)
-    updateDerivedTVLAmounts(pool, factory, oldPoolTotalValueLockedEth)
+    let updateTvlRet = updateDerivedTVLAmounts(token0, token1, pool, factory, oldPoolTotalValueLockedEth)
+    token0 = updateTvlRet.token0
+    token1 = updateTvlRet.token1
+    pool = updateTvlRet.pool
+    factory = updateTvlRet.factory
 
     if (
-        pool.nearestTick !== null &&
-        lower.le(pool.nearestTick) &&
-        upper.gt(pool.nearestTick)
+        pool.tickAtPrice !== null &&
+        lower.le(pool.tickAtPrice) &&
+        upper.gt(pool.tickAtPrice)
       ) {
         pool.liquidity = pool.liquidity.minus(liquidityBurnedParam)
     }
@@ -124,11 +135,14 @@ export function handleBurn(event: Burn): void {
     token1.save()
     pool.save()
     factory.save()
+    basePrice.save()
 }
 
 export function handleBurnFungible(event: BurnFungible): void {
     let recipientParam = event.params.recipient.toHex()
-    let tokenParam = event.params.token.toHex()
+    let lowerParam = event.params.lower
+    let upperParam = event.params.upper
+    let tokenIdParam = event.params.tokenId
     let tokenBurnedParam = event.params.tokenBurned
     let liquidityBurnedParam = event.params.liquidityBurned
     let amount0Param = event.params.amount0
@@ -136,16 +150,22 @@ export function handleBurnFungible(event: BurnFungible): void {
     let poolAddress = event.address.toHex()
     let msgSender = event.transaction.from.toHex()
 
-    let loadPositionToken = safeLoadPositionToken(tokenParam)
+    let lower = BigInt.fromI32(lowerParam)
+    let upper = BigInt.fromI32(upperParam)
+
+    let loadPositionToken = safeLoadPositionToken(
+        poolAddress,
+        tokenIdParam
+    )
     let positionToken = loadPositionToken.entity
-    //TODO: handle positionToken transfers
-    let loadPositionFraction = safeLoadPositionFraction(tokenParam, msgSender)
+    let loadPositionFraction = safeLoadPositionFraction(
+        poolAddress,
+        tokenIdParam,
+        Address.fromString(msgSender)
+    )
     let positionFraction = loadPositionFraction.entity
     let loadPosition = safeLoadPositionById(positionToken.position)
     let position = loadPosition.entity
-
-    let lower = position.lower
-    let upper = position.upper
 
     let loadBasePrice = safeLoadBasePrice('eth')
     let loadRangePool = safeLoadRangePool(poolAddress)
@@ -174,15 +194,15 @@ export function handleBurnFungible(event: BurnFungible): void {
     let amount0 = convertTokenToDecimal(event.params.amount0, token0.decimals)
     let amount1 = convertTokenToDecimal(event.params.amount1, token1.decimals)
     let amountUsd = amount0
-        .times(token0.ethPrice.times(basePrice.ethUsd))
-        .plus(amount1.times(token1.ethPrice.times(basePrice.ethUsd)))
+        .times(token0.ethPrice.times(basePrice.USD))
+        .plus(amount1.times(token1.ethPrice.times(basePrice.USD)))
 
     if (positionFraction.amount.equals(tokenBurnedParam)) {
         let positionTokenFractions = positionToken.fractions
         let fractionIndex = positionTokenFractions.indexOf(positionFraction.id)
         positionTokenFractions.splice(fractionIndex, 1)
         positionToken.fractions = positionTokenFractions
-        store.remove('PositionFraction', tokenParam.concat(msgSender))
+        store.remove('PositionFraction', poolAddress.concat(tokenIdParam.toHex()).concat(msgSender))
     } else {
         positionFraction.amount = positionFraction.amount.minus(tokenBurnedParam)
         positionFraction.updatedAtBlockNumber = event.block.number
@@ -202,12 +222,11 @@ export function handleBurnFungible(event: BurnFungible): void {
         position.save()
     }
     if (positionToken.totalSupply.equals(tokenBurnedParam)) {
-        store.remove('PositionToken', tokenParam)
+        store.remove('PositionToken', poolAddress.concat(tokenIdParam.toHex()))
     } else {
         positionToken.totalSupply = positionToken.totalSupply.minus(tokenBurnedParam)
         positionToken.save()
     }
-
     lowerTick.liquidityDelta = lowerTick.liquidityDelta.minus(liquidityBurnedParam)
     upperTick.liquidityDelta = upperTick.liquidityDelta.plus(liquidityBurnedParam)
     upperTick.liquidityDeltaMinus = upperTick.liquidityDeltaMinus.minus(liquidityBurnedParam)
@@ -229,24 +248,34 @@ export function handleBurnFungible(event: BurnFungible): void {
     pool.txnCount = pool.txnCount.plus(ONE_BI)
     factory.txnCount = factory.txnCount.plus(ONE_BI)
 
+    // eth price updates
+    token0.ethPrice = findEthPerToken(token0, token1)
+    token1.ethPrice = findEthPerToken(token1, token0)
+    token0.usdPrice = token0.ethPrice.times(basePrice.USD)
+    token1.usdPrice = token1.ethPrice.times(basePrice.USD)
+
     // tvl updates
     let oldPoolTotalValueLockedEth = pool.totalValueLockedEth
     token0.totalValueLocked = token0.totalValueLocked.minus(amount0)
     token1.totalValueLocked = token1.totalValueLocked.minus(amount1)
     pool.totalValueLocked0 = pool.totalValueLocked0.minus(amount0)
     pool.totalValueLocked1 = pool.totalValueLocked1.minus(amount1)
-    updateDerivedTVLAmounts(pool, factory, oldPoolTotalValueLockedEth)
+    let updateTvlRet = updateDerivedTVLAmounts(token0, token1, pool, factory, oldPoolTotalValueLockedEth)
+    token0 = updateTvlRet.token0
+    token1 = updateTvlRet.token1
+    pool = updateTvlRet.pool
+    factory = updateTvlRet.factory
 
     if (
-        pool.nearestTick !== null &&
-        lower.le(pool.nearestTick) &&
-        upper.gt(pool.nearestTick)
+        pool.tickAtPrice !== null &&
+        lower.le(pool.tickAtPrice) &&
+        upper.gt(pool.tickAtPrice)
       ) {
         pool.liquidity = pool.liquidity.minus(liquidityBurnedParam)
     }
-    
     token0.save()
     token1.save()
     pool.save()
     factory.save()
+    basePrice.save()
 }

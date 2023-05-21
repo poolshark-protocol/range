@@ -4,6 +4,7 @@ import { BasePrice, RangePool, Token } from '../../../generated/schema'
 import { BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
 import { exponentToBigDecimal, safeDiv } from './math'
 import { BIGDECIMAL_ZERO, BIGINT_ZERO } from './helpers'
+import { safeLoadBasePrice, safeLoadToken } from './loads'
 
 export function sqrtPriceX96ToTokenPrices(sqrtPriceX96: BigInt, token0: Token, token1: Token): BigDecimal[] {
   let num = sqrtPriceX96.times(sqrtPriceX96).toBigDecimal()
@@ -26,8 +27,10 @@ export function getEthPriceInUSD(): BigDecimal {
   let stablePool = RangePool.load(STABLE_POOL_ADDRESS) // stable is token0
   if (stablePool !== null) {
     if (STABLE_IS_TOKEN_0) {
+      log.info('stable pool token0: {}', [stablePool.price0.toString()])
       return stablePool.price0
     } else {
+      log.info('stable pool token1: {}', [stablePool.price1.toString()])
       return stablePool.price1
     }
   } else {
@@ -39,16 +42,19 @@ export function getEthPriceInUSD(): BigDecimal {
  * Search through graph to find derived Eth per token.
  * @todo update to be derived ETH (add stablecoin estimates)
  **/
-export function findEthPerToken(token: Token): BigDecimal {
+export function findEthPerToken(token: Token, otherToken: Token): BigDecimal {
   if (token.id == WETH_ADDRESS) {
+    log.info('weth address match',[])
     return ONE_BD
+  } else {
+    log.info('weth address mismatch {} {}',[WETH_ADDRESS, token.id])
   }
   let whiteList = token.whitelistPools
   // for now just take USD from pool with greatest TVL
   // need to update this to actually detect best rate based on liquidity distribution
   let largestLiquidityETH = ZERO_BD
   let priceSoFar = ZERO_BD
-  let basePrice = BasePrice.load('1')
+  let basePrice = safeLoadBasePrice('eth').entity
 
   if (basePrice === null) {
     return ZERO_BD
@@ -57,7 +63,7 @@ export function findEthPerToken(token: Token): BigDecimal {
   // hardcoded fix for incorrect rates
   // if whitelist includes token - get the safe price
   if (STABLE_COINS.includes(token.id)) {
-    priceSoFar = safeDiv(ONE_BD, basePrice.ethUsd)
+    priceSoFar = safeDiv(ONE_BD, basePrice.USD)
   } else {
     for (let i = 0; i < whiteList.length; ++i) {
       let poolAddress = whiteList[i]
@@ -70,7 +76,11 @@ export function findEthPerToken(token: Token): BigDecimal {
       if (pool.liquidity.gt(ZERO_BI)) {
         if (pool.token0 == token.id) {
           // whitelist token is token1
-          let token1 = Token.load(pool.token1)
+          let token1: Token
+          if (pool.token1 != otherToken.id)
+             token1 = safeLoadToken(pool.token1).entity
+          else
+            token1 = otherToken
           if (token1 === null) {
             continue
           }
@@ -86,7 +96,11 @@ export function findEthPerToken(token: Token): BigDecimal {
           }
         }
         if (pool.token1 == token.id) {
-          let token0 = Token.load(pool.token0)
+          let token0: Token
+          if (pool.token0 != otherToken.id)
+              token0 = safeLoadToken(pool.token0).entity
+          else
+              token0 = otherToken
           if (token0 === null) {
             continue
           }
@@ -119,14 +133,14 @@ export function getTrackedAmountUSD(
   tokenAmount1: BigDecimal,
   token1: Token
 ): BigDecimal {
-  let basePrice = BasePrice.load('1')
+  let basePrice = safeLoadBasePrice('eth').entity
 
   if (basePrice === null) {
     return ZERO_BD
   }
 
-  let price0USD = token0.ethPrice.times(basePrice.ethUsd)
-  let price1USD = token1.ethPrice.times(basePrice.ethUsd)
+  let price0USD = token0.ethPrice.times(basePrice.USD)
+  let price1USD = token1.ethPrice.times(basePrice.USD)
 
   // both are whitelist tokens, return sum of both amounts
   if (WHITELIST_TOKENS.includes(token0.id) && WHITELIST_TOKENS.includes(token1.id)) {
@@ -192,11 +206,11 @@ export function getAdjustedAmounts(
   tokenAmount0: BigDecimal,
   token0: Token,
   tokenAmount1: BigDecimal,
-  token1: Token
+  token1: Token,
+  basePrice: BasePrice
 ): AmountType {
   let ethPrice0 = token0.ethPrice
   let ethPrice1 = token1.ethPrice
-  let basePrice = BasePrice.load('1')
 
   if (basePrice === null) {
     return { eth: ZERO_BD, usd: ZERO_BD, ethUntracked: ZERO_BD, usdUntracked: ZERO_BD }
@@ -221,8 +235,8 @@ export function getAdjustedAmounts(
   }
 
   // Define USD values based on ETH derived values.
-  let usd = eth.times(basePrice.ethUsd)
-  let usdUntracked = ethUntracked.times(basePrice.ethUsd)
+  let usd = eth.times(basePrice.USD)
+  let usdUntracked = ethUntracked.times(basePrice.USD)
 
   return { eth, usd, ethUntracked, usdUntracked }
 }

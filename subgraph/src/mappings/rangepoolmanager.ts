@@ -1,7 +1,6 @@
-import { FeeTierEnabled, FeeToTransfer, OwnerTransfer, ProtocolFeeCollected, ProtocolFeeUpdated } from '../../generated/RangePoolAdmin/RangePoolAdmin'
+import { FeeTierEnabled, FeeToTransfer, OwnerTransfer, ProtocolFeeCollected, ProtocolFeeUpdated } from '../../generated/RangePoolManager/RangePoolManager'
 import { safeLoadFeeTier, safeLoadManager, safeLoadRangePoolFactory } from './utils/loads'
 import { BigInt, log } from '@graphprotocol/graph-ts'
-import { FACTORY_ADDRESS } from '../constants/constants'
 import { FactoryChanged } from '../../generated/RangePoolManager/RangePoolManager'
 
 export function handleFeeTierEnabled(event: FeeTierEnabled): void {
@@ -57,20 +56,14 @@ export function handleOwnerTransfer(event: OwnerTransfer): void {
     let newOwnerParam      = event.params.newOwner
 
     let loadManager = safeLoadManager(event.address.toHex())
-    let loadFactory = safeLoadRangePoolFactory(FACTORY_ADDRESS)
 
     let manager = loadManager.entity
-    let factory = loadFactory.entity
 
     if(!loadManager.exists) {
         manager.owner = newOwnerParam
         manager.feeTo = newOwnerParam
     }
-    if(!loadFactory.exists) {
-        factory.owner = manager.id
-    }
     manager.save()
-    factory.save()
 }
 
 export function handleProtocolFeeCollected(event: ProtocolFeeCollected): void {

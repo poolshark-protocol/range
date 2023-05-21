@@ -4,7 +4,7 @@ const { expect } = require('chai')
 import { gBefore } from '../utils/hooks.test'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { BigNumber } from 'ethers'
-import { BN_ZERO } from '../utils/contracts/rangepool'
+import { BN_ZERO } from '../utils/constants'
 
 alice: SignerWithAddress
 describe('RangePoolAdmin Tests', function () {

@@ -6,6 +6,7 @@ import {
     fetchFactoryOwner,
     BIGINT_ONE,
     BIGDECIMAL_ZERO,
+    BIGINT_ZERO,
 } from './utils/helpers'
 import { safeLoadBasePrice, safeLoadFeeTier, safeLoadRangePool, safeLoadRangePoolFactory, safeLoadTick, safeLoadToken } from './utils/loads'
 import { BigInt, log } from '@graphprotocol/graph-ts'
@@ -38,7 +39,8 @@ export function handleRangePoolCreated(event: RangePoolCreated): void {
         //something is wrong
     }
     if (!loadBasePrice.exists) {
-        basePrice.ethUsd = BIGDECIMAL_ZERO
+        basePrice.USD = BIGDECIMAL_ZERO
+        basePrice.save()
     }
     if (!loadToken0.exists) {
         token0.symbol = fetchTokenSymbol(event.params.token0)
@@ -68,10 +70,11 @@ export function handleRangePoolCreated(event: RangePoolCreated): void {
     pool.token1 = token1.id
     pool.feeTier = feeTier.id
     pool.price = event.params.startPrice
-    pool.nearestTick = minTick.index
+    pool.tickAtPrice = BIGINT_ZERO
     let prices = sqrtPriceX96ToTokenPrices(pool.price, token0, token1)
     pool.price0 = prices[0]
-    pool.price1 = BIGDECIMAL_ZERO
+    pool.price1 = prices[1]
+    
     pool.factory = factory.id
     pool.createdAtBlockNumber = event.block.number
     pool.createdAtTimestamp   = event.block.timestamp
@@ -83,7 +86,6 @@ export function handleRangePoolCreated(event: RangePoolCreated): void {
 
     pool.save()
     factory.save()
-    basePrice.save()
     token0.save()
     token1.save()
     maxTick.save()

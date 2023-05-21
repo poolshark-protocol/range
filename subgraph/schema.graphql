@@ -20,7 +20,7 @@ type RangePoolManager @entity {
 
 type BasePrice @entity {
     id: ID!
-    ethUsd: BigDecimal!
+    USD: BigDecimal!
 }
 
 type FeeTier @entity {
@@ -52,6 +52,7 @@ type Token @entity {
   # token specific volume
   volume: BigDecimal!
   volumeUsd: BigDecimal!
+  volumeEth: BigDecimal!
   txnCount: BigInt!
 
   feesUsdTotal: BigDecimal!
@@ -77,7 +78,7 @@ type RangePool @entity {
   price:     BigInt!
   liquidity: BigInt!
   liquidityGlobal: BigInt!
-  nearestTick: BigInt!
+  tickAtPrice: BigInt!
   feeGrowthGlobal0: BigInt
   feeGrowthGlobal1: BigInt
 
@@ -138,16 +139,19 @@ type Position @entity {
 }
 
 type PositionToken @entity {
-    # token address
+    # pool address + tokenId
     id: ID!
+    pool: RangePool!
     position: Position!
+    tokenId: BigInt!
     totalSupply: BigInt!
     fractions: [PositionFraction!]!
 }
 
 type PositionFraction @entity {
-    # token address + owner
+    # PositionToken id + owner
     id: ID!
+    owner: Bytes!
     amount: BigInt!
     token: PositionToken!
 

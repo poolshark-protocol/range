@@ -11,17 +11,6 @@ abstract contract RangePoolEvents {
         uint128 amount1
     );
 
-    event MintFungible(
-        address indexed token,
-        address indexed recipient,
-        int24 lower,
-        int24 upper,
-        uint128 tokenMinted,
-        uint128 liquidityMinted,
-        uint128 amount0,
-        uint128 amount1
-    );
-
     event Burn(
         address owner,
         address indexed recipient,
@@ -33,15 +22,6 @@ abstract contract RangePoolEvents {
         bool collect
     );
 
-    event BurnFungible(
-        address indexed recipient,
-        address indexed token,
-        uint128 tokenBurned,
-        uint128 liquidityBurned,
-        uint128 amount0,
-        uint128 amount1
-    );
-
     event Compound(
         address indexed owner,
         int24 indexed lower,
@@ -49,6 +29,28 @@ abstract contract RangePoolEvents {
         uint128 liquidityCompounded,
         uint128 positionAmount0,
         uint128 positionAmount1
+    );
+
+    event MintFungible(
+        address indexed recipient,
+        int24 lower,
+        int24 upper,
+        uint256 indexed tokenId,
+        uint128 tokenMinted,
+        uint128 liquidityMinted,
+        uint128 amount0,
+        uint128 amount1
+    );
+
+    event BurnFungible(
+        address indexed recipient,
+        int24 lower,
+        int24 upper,
+        uint256 indexed tokenId,
+        uint128 tokenBurned,
+        uint128 liquidityBurned,
+        uint128 amount0,
+        uint128 amount1
     );
 
     event Swap(

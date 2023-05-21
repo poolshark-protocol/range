@@ -70,6 +70,7 @@ export interface ValidateMintParams {
   liquidityIncrease: BigNumber
   revertMessage: string
   collectRevertMessage?: string
+  balanceCheck?: boolean
 }
 
 export interface ValidateSwapParams {
@@ -194,6 +195,7 @@ export async function validateMint(params: ValidateMintParams) {
   const liquidityIncrease = params.liquidityIncrease
   const revertMessage = params.revertMessage
   const collectRevertMessage = params.collectRevertMessage
+  const balanceCheck = params.balanceCheck ? true : params.balanceCheck
 
   //collect first to recreate positions if necessary
   if (!collectRevertMessage) {
@@ -260,7 +262,7 @@ export async function validateMint(params: ValidateMintParams) {
     const txn = await hre.props.rangePool
       .connect(params.signer)
       .mint({
-        to: params.signer.address,
+        to: recipient,
         lower: lower,
         upper: upper,
         amount0: amount0,
@@ -273,7 +275,7 @@ export async function validateMint(params: ValidateMintParams) {
       hre.props.rangePool
         .connect(params.signer)
         .mint({
-          to: params.signer.address,
+          to: recipient,
           lower: lower,
           upper: upper,
           amount0: amount0,
@@ -289,8 +291,11 @@ export async function validateMint(params: ValidateMintParams) {
   balance0After = await hre.props.token0.balanceOf(params.signer.address)
   balance1After = await hre.props.token1.balanceOf(params.signer.address)
 
-  expect(balance0Before.sub(balance0After)).to.be.equal(balance0Decrease)
-  expect(balance1Before.sub(balance1After)).to.be.equal(balance1Decrease)
+  if (balanceCheck) {
+    expect(balance0Before.sub(balance0After)).to.be.equal(balance0Decrease)
+    expect(balance1Before.sub(balance1After)).to.be.equal(balance1Decrease)
+  }
+
 
   let lowerTickAfter: Tick
   let upperTickAfter: Tick

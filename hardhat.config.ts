@@ -42,15 +42,25 @@ const config: HardhatUserConfig = {
         },
         arb_goerli: {
             chainId: 421613,
-            gasPrice: 5000000000,
+            gasPrice: 120000000,
             url: process.env.ARBITRUM_GOERLI_URL || '',
+            accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+            timeout: 60000,
+            allowUnlimitedContractSize: true,
+        },
+        op_goerli: {
+            chainId: 420,
+            gasPrice: 5,
+            url: process.env.OPTIMISM_GOERLI_URL || '',
             accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
             timeout: 60000,
             allowUnlimitedContractSize: true,
         },
     },
     etherscan: {
-        apiKey: process.env.ARBITRUM_GOERLI_API_KEY,
+        apiKey: {
+            arbitrumGoerli: process.env.ARBITRUM_GOERLI_API_KEY
+        },
     },
 }
 

@@ -78,4 +78,12 @@ interface IRangePool is IRangePoolStructs {
         int56,
         uint160
     );
+
+    function positions(address, int24, int24) external view returns (
+        uint128,
+        uint128,
+        uint128,
+        uint256,
+        uint256
+    );
 }

@@ -86,6 +86,12 @@ interface IRangePoolStructs {
         bool collect;
     }
 
+    struct SnapshotParams {
+        address owner;
+        int24 lower;
+        int24 upper;
+    }
+
     struct CompoundParams {
         address owner;
         int24 lower;
@@ -181,6 +187,9 @@ interface IRangePoolStructs {
         uint160 secondsPerLiquidityAccum;
         uint160 secondsPerLiquidityAccumLower;
         uint160 secondsPerLiquidityAccumUpper;
+        uint256 userBalance;
+        uint256 totalSupply;
+        Position position;
         SampleState samples;
     }
 }

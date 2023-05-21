@@ -29,8 +29,8 @@ library Positions {
 
     event Mint(
         address indexed recipient,
-        int24 indexed lower,
-        int24 indexed upper,
+        int24 lower,
+        int24 upper,
         uint128 liquidityMinted,
         uint128 amount0,
         uint128 amount1
@@ -57,8 +57,11 @@ library Positions {
     );
 
     event MintFungible(
+        address indexed recipient,
         int24 lower,
         int24 upper,
+        uint256 indexed tokenId,
+        uint128 tokenMinted,
         uint128 liquidityMinted,
         uint128 amount0,
         uint128 amount1
@@ -66,6 +69,8 @@ library Positions {
 
     event BurnFungible(
         address indexed recipient,
+        int24 lower,
+        int24 upper,
         uint256 indexed tokenId,
         uint128 tokenBurned,
         uint128 liquidityBurned,
@@ -167,8 +172,11 @@ library Positions {
             }
             IRangePoolERC1155(address(this)).mintFungible(params.mint.to, cache.tokenId, params.amount);
             emit MintFungible(
+                params.mint.to,
                 params.mint.lower,
                 params.mint.upper,
+                cache.tokenId,
+                params.amount,
                 params.liquidity,
                 params.mint.amount0,
                 params.mint.amount1
@@ -265,6 +273,8 @@ library Positions {
         if (params.fungible) {
             emit BurnFungible(
                 params.to,
+                params.lower,
+                params.upper,
                 cache.tokenId,
                 params.amount,
                 uint128(cache.liquidityAmount),
@@ -446,7 +456,7 @@ library Positions {
         address pool,
         int24 lower,
         int24 upper
-    ) external view returns (
+    ) public view returns (
         uint256 feeGrowthInside0,
         uint256 feeGrowthInside1
     ) {
@@ -508,12 +518,15 @@ library Positions {
 
     function snapshot(
         address pool,
+        address owner,
         int24 lower,
         int24 upper
     ) external view returns (
         int56   tickSecondsAccum,
         uint160 secondsPerLiquidityAccum,
-        uint32  secondsGrowth
+        uint32  secondsGrowth,
+        uint128 feesOwed0,
+        uint128 feesOwed1
     ) {
         Ticks.validate(lower, upper, IRangePool(pool).tickSpacing());
 
@@ -540,11 +553,47 @@ library Positions {
             cache.secondsPerLiquidityAccumUpper
         )
             = IRangePool(pool).ticks(upper);
+        (
+            cache.position.liquidity,
+            cache.position.amount0,
+            cache.position.amount1,
+            cache.position.feeGrowthInside0Last,
+            cache.position.feeGrowthInside1Last
+        )
+            = IRangePool(pool).positions(owner, lower, upper);
+        
+        cache.userBalance = Tokens.balanceOf(pool, owner, lower, upper);
+        cache.totalSupply = Tokens.totalSupply(pool, lower, upper);
+
+        (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
+            pool,
+            lower,
+            upper
+        );
+
+        cache.position.amount0 += uint128(
+            PrecisionMath.mulDiv(
+                rangeFeeGrowth0 - cache.position.feeGrowthInside0Last,
+                uint256(cache.position.liquidity),
+                Q128
+            )
+        );
+
+        cache.position.amount1 += uint128(
+            PrecisionMath.mulDiv(
+                rangeFeeGrowth1 - cache.position.feeGrowthInside1Last,
+                cache.position.liquidity,
+                Q128
+            )
+        );
+
+        cache.position.amount0 = uint128(cache.position.amount0 * cache.userBalance / cache.totalSupply);
+        cache.position.amount1 = uint128(cache.position.amount1 * cache.userBalance / cache.totalSupply);
 
         // ticks not initialized or range not crossed into
         if (cache.secondsOutsideUpper == 0
             && cache.secondsOutsideLower == 0){
-            return (0,0,0);
+            return (0,0,0,0,0);
         }
         
         cache.tick = TickMath.getTickAtSqrtRatio(cache.price);
@@ -553,7 +602,9 @@ library Positions {
             return (
                 cache.tickSecondsAccumLower - cache.tickSecondsAccumUpper,
                 cache.secondsPerLiquidityAccumLower - cache.secondsPerLiquidityAccumUpper,
-                cache.secondsOutsideLower - cache.secondsOutsideUpper
+                cache.secondsOutsideLower - cache.secondsOutsideUpper,
+                cache.position.amount0,
+                cache.position.amount1
             );
         } else if (upper >= cache.tick) {
             cache.blockTimestamp = uint32(block.timestamp);
@@ -581,7 +632,9 @@ library Positions {
                   - cache.secondsPerLiquidityAccumUpper,
                 cache.blockTimestamp
                   - cache.secondsOutsideLower
-                  - cache.secondsOutsideUpper
+                  - cache.secondsOutsideUpper,
+                cache.position.amount0,
+                cache.position.amount1
             );
         }
     }

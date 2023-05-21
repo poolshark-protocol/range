@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers'
-import { BN_ZERO, validateMint } from '../../../test/utils/contracts/rangepool'
+import { BN_ZERO, validateMint, validateSwap } from '../../../test/utils/contracts/rangepool'
 import { InitialSetup } from '../../../test/utils/setup/initialSetup'
 import { mintSigners20 } from '../../../test/utils/token'
 import { getNonce } from '../../utils'
@@ -25,30 +25,85 @@ export class MintPosition {
       hre.carol = signers[2]
     }
     hre.nonce = await getNonce(hre, hre.props.alice.address)
-    console.log(this.nonce)
     await this.initialSetup.readRangePoolSetup(this.nonce)
     const token0Amount = ethers.utils.parseUnits('100', await hre.props.token0.decimals())
     const token1Amount = ethers.utils.parseUnits('100', await hre.props.token1.decimals())
-    await mintSigners20(hre.props.token0, token0Amount.mul(10), [hre.props.alice])
-    await mintSigners20(hre.props.token1, token1Amount.mul(10), [hre.props.alice])
+    await mintSigners20(hre.props.token0, token0Amount.mul(10000), [hre.props.alice])
+    await mintSigners20(hre.props.token1, token1Amount.mul(10000), [hre.props.alice])
 
-    const liquidityAmount = BigNumber.from('19851540375107355238395')
+    const liquidityAmount = BigNumber.from('44721359549995793929')
+
+    // 0x34e800D1456d87A5F62B774AD98cea54a3A40048
+    // 0x1DcF623EDf118E4B21b4C5Dc263bb735E170F9B8
+    //0xaE312276Ea1B35C68617441beddc0d0Fd13c1aF2
+    // await validateSwap({
+    //   signer: hre.props.alice,
+    //   recipient: '0xaE312276Ea1B35C68617441beddc0d0Fd13c1aF2',
+    //   zeroForOne: true,
+    //   amountIn: token1Amount.mul(10000),
+    //   sqrtPriceLimitX96: BigNumber.from('3543191142285914205922034323214'),
+    //   balanceInDecrease: token1Amount.mul(30),
+    //   balanceOutIncrease: token1Amount.mul(30),
+    //   revertMessage:''
+    // })
+    // await validateMint({
+    //   signer: hre.props.alice,
+    //   recipient: hre.props.alice.address,
+    //   lower: '-887270',
+    //   upper: '887270',
+    //   amount0: token0Amount,
+    //   amount1: token1Amount,
+    //   fungible: true,
+    //   balance0Decrease: BigNumber.from('0'),
+    //   balance1Decrease: token1Amount,
+    //   liquidityIncrease: liquidityAmount,
+    //   revertMessage: '',
+    //   balanceCheck: false
+    // })
+
+    // await validateMint({
+    //   signer: hre.props.alice,
+    //   recipient: '0x34e800D1456d87A5F62B774AD98cea54a3A40048',
+    //   lower: '-887270',
+    //   upper: '887270',
+    //   amount0: token0Amount,
+    //   amount1: token1Amount,
+    //   fungible: true,
+    //   balance0Decrease: BigNumber.from('0'),
+    //   balance1Decrease: token1Amount,
+    //   liquidityIncrease: liquidityAmount,
+    //   revertMessage: '',
+    // })
 
     await validateMint({
       signer: hre.props.alice,
-      recipient: '0x73a18F0E04A4c7E49C6B25c8f6Bc17674C806b67',
+      recipient: '0x1DcF623EDf118E4B21b4C5Dc263bb735E170F9B8',
       lower: '-887270',
       upper: '887270',
       amount0: token0Amount,
       amount1: token1Amount,
-      fungible: false,
+      fungible: true,
       balance0Decrease: BigNumber.from('0'),
       balance1Decrease: token1Amount,
       liquidityIncrease: liquidityAmount,
       revertMessage: '',
     })
 
-    console.log('position minted')
+    //   await validateMint({
+    //   signer: hre.props.alice,
+    //   recipient: '0xaE312276Ea1B35C68617441beddc0d0Fd13c1aF2',
+    //   lower: '-887270',
+    //   upper: '887270',
+    //   amount0: token0Amount,
+    //   amount1: token1Amount,
+    //   fungible: true,
+    //   balance0Decrease: BigNumber.from('0'),
+    //   balance1Decrease: token1Amount,
+    //   liquidityIncrease: liquidityAmount,
+    //   revertMessage: '',
+    // })
+
+    console.log('position minted', (await hre.props.rangePool.poolState()).price.toString())
   }
 
   public async postDeployment() {}

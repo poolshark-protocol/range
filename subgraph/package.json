@@ -17,6 +17,7 @@
         "codegen": "graph codegen",
         "build": "graph build",
         "deploy": "graph deploy --product hosted-service alphak3y/poolshark-range",
+        "deploy-op-test": "graph deploy --product hosted-service alphak3y/poolshark-range-op-goerli",
         "deploy-studio": "graph deploy --studio poolsharks-exchange",
         "deploy-local": "graph deploy example --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
         "test": "graph codegen; graph test -v 0.2.0",
