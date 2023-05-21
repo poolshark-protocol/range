@@ -79,8 +79,7 @@ contract RangePool is
                     address(this),
                     params.lower,
                     params.upper,
-                    0,
-                    true
+                    0
                 )
         );
         uint256 liquidityMinted;
@@ -97,8 +96,7 @@ contract RangePool is
                 CompoundParams(
                     address(this), 
                     params.lower,
-                    params.upper,
-                    true
+                    params.upper
                 )
             );
         }
@@ -138,8 +136,7 @@ contract RangePool is
                     address(this),
                     params.lower,
                     params.upper,
-                    uint128(params.amount),
-                    true
+                    uint128(params.amount)
                 )
         );
         (pool, position, amount0, amount1) = Positions.remove(
@@ -156,8 +153,6 @@ contract RangePool is
         );
         position.amount0 -= amount0;
         position.amount1 -= amount1;
-        /// @dev - always compound for fungible
-        /// @dev - only comound for nonfungible is collect is false
         if (position.amount0 > 0 || position.amount1 > 0) {
             (position, pool) = Positions.compound(
                 position,
@@ -168,8 +163,7 @@ contract RangePool is
                 CompoundParams(
                     address(this),
                     params.lower,
-                    params.upper,
-                    true
+                    params.upper
                 )
             );
         }

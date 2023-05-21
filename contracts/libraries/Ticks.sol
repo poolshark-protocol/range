@@ -11,7 +11,6 @@ import './PrecisionMath.sol';
 import './TickMath.sol';
 import './TickMap.sol';
 import './Samples.sol';
-import 'hardhat/console.sol';
 
 /// @notice Tick management library
 library Ticks {

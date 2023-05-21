@@ -14,5 +14,5 @@ abstract contract RangePoolStorage is IRangePoolStructs, IRangePool {
     Sample[65535] public samples;
     mapping(int24 => Tick) public ticks; /// @dev - liquidity and fee data
     //TODO: no address needed if all are owned by the pool
-    mapping(address => mapping(int24 => mapping(int24 => Position))) public positions; /// @dev - nonfungible positions
+    mapping(address => mapping(int24 => mapping(int24 => Position))) public positions; /// @dev - positions owner by the pool
 }

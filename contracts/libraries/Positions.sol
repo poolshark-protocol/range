@@ -43,8 +43,7 @@ library Positions {
         int24 indexed upper,
         uint128 liquidityBurned,
         uint128 amount0,
-        uint128 amount1,
-        bool collect
+        uint128 amount1
     );
 
     event Compound(
@@ -217,8 +216,7 @@ library Positions {
                 params.upper,
                 params.amount,
                 removeParams.amount0,
-                removeParams.amount1,
-                params.collect
+                removeParams.amount1
             );
             return (state, position, removeParams.amount0, removeParams.amount1);
         } 

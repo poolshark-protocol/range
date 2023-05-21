@@ -3,7 +3,6 @@ pragma solidity 0.8.13;
 
 import "./PrecisionMath.sol";
 import "../interfaces/IRangePoolStructs.sol";
-import 'hardhat/console.sol';
 
 /// @notice Math library that facilitates fee handling.
 library FeeMath {
@@ -14,7 +13,7 @@ library FeeMath {
         IRangePoolStructs.SwapCache memory cache,
         uint256 amountOut,
         bool zeroForOne
-    ) internal view returns (
+    ) internal pure returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
         )

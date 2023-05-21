@@ -3,7 +3,6 @@ pragma solidity 0.8.13;
 
 import '../interfaces/IRangePool.sol';
 import '../interfaces/IRangePoolStructs.sol';
-import 'hardhat/console.sol';
 
 library Samples {
 
@@ -230,15 +229,10 @@ library Samples {
         uint32  blockTimestamp,
         int24   tick,
         uint128 liquidity
-    ) internal view returns (
+    ) internal pure returns (
          IRangePoolStructs.Sample memory
     ) {
         int56 timeDelta = int56(uint56(blockTimestamp - newSample.blockTimestamp));
-        // console.log('accum values');
-        // console.logInt(timeDelta);
-        // console.log(newSample.secondsPerLiquidityAccum);
-        // console.log(liquidity);
-        // console.log(uint160(uint56(timeDelta)) << 128);
         return
             IRangePoolStructs.Sample({
                 blockTimestamp: blockTimestamp,

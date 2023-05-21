@@ -74,7 +74,6 @@ interface IRangePoolStructs {
         int24 upper;
         uint128 amount0;
         uint128 amount1;
-        bool fungible;
     }
 
     struct BurnParams {
@@ -82,8 +81,6 @@ interface IRangePoolStructs {
         int24 lower;
         int24 upper;
         uint128 amount;
-        bool fungible;
-        bool collect;
     }
 
     struct SnapshotParams {
@@ -96,7 +93,6 @@ interface IRangePoolStructs {
         address owner;
         int24 lower;
         int24 upper;
-        bool fungible;
     }
 
     struct SwapParams {
@@ -132,7 +128,6 @@ interface IRangePoolStructs {
         int24 lower;
         int24 upper;
         uint128 amount;
-        bool fungible;
     }
 
     struct MintCache {
