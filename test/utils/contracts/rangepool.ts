@@ -246,7 +246,6 @@ export async function validateMint(params: ValidateMintParams) {
   upperTickBefore = await hre.props.rangePool.ticks(upper)
 
   positionBefore = await hre.props.rangePool.positions(
-    hre.props.rangePool.address,
     lower,
     upper
   )
@@ -299,7 +298,6 @@ export async function validateMint(params: ValidateMintParams) {
   upperTickAfter = await hre.props.rangePool.ticks(upper)
 
   positionAfter = await hre.props.rangePool.positions(
-    hre.props.rangePool.address,
     lower,
     upper
   )
@@ -343,7 +341,7 @@ export async function validateBurn(params: ValidateBurnParams) {
   positionTokenId  = await hre.props.positionsLib.id(lower, upper);
   positionToken = await hre.ethers.getContractAt('RangePoolERC1155', hre.props.rangePool.address);
   positionTokenBalanceBefore = await positionToken.balanceOf(signer.address, positionTokenId);
-  positionBefore = await hre.props.rangePool.positions(hre.props.rangePool.address, lower, upper)
+  positionBefore = await hre.props.rangePool.positions(lower, upper)
 
   if (revertMessage == '') {
     const burnTxn = await hre.props.rangePool
@@ -383,7 +381,7 @@ export async function validateBurn(params: ValidateBurnParams) {
   upperTickAfter = await hre.props.rangePool.ticks(upper)
   // check position token balance after
   positionTokenBalanceAfter = await positionToken.balanceOf(signer.address, positionTokenId);
-  positionAfter = await hre.props.rangePool.positions(hre.props.rangePool.address, lower, upper)
+  positionAfter = await hre.props.rangePool.positions(lower, upper)
   if (params.tokenAmount)
     expect(positionTokenBalanceAfter.sub(positionTokenBalanceBefore)).to.be.equal(BN_ZERO.sub(params.tokenAmount))
   expect(lowerTickAfter.liquidityDelta.sub(lowerTickBefore.liquidityDelta)).to.be.equal(

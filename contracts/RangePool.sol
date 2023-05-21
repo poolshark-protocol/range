@@ -70,7 +70,7 @@ contract RangePool is
 
     function mint(MintParams memory params) external lock {
         PoolState memory pool = poolState;
-        Position memory position = positions[address(this)][params.lower][params.upper];
+        Position memory position = positions[params.lower][params.upper];
         (position, , ) = Positions.update(
                 ticks,
                 position,
@@ -113,7 +113,7 @@ contract RangePool is
                 uint128(liquidityMinted)
             )
         );
-        positions[address(this)][params.lower][params.upper] = position;
+        positions[params.lower][params.upper] = position;
         poolState = pool; 
     }
 
@@ -121,7 +121,7 @@ contract RangePool is
         BurnParams memory params
     ) external lock {
         PoolState memory pool = poolState;
-        Position memory position = positions[address(this)][params.lower][params.upper];
+        Position memory position = positions[params.lower][params.upper];
         uint128 amount0;
         uint128 amount1;
         (
@@ -170,7 +170,7 @@ contract RangePool is
         if (amount0 > 0) _transferOut(params.to, token0, amount0);
         if (amount1 > 0) _transferOut(params.to, token1, amount1);
         poolState = pool;
-        positions[address(this)][params.lower][params.upper] = position;
+        positions[params.lower][params.upper] = position;
     }
 
     function swap(

@@ -522,7 +522,7 @@ library Positions {
             cache.position.feeGrowthInside0Last,
             cache.position.feeGrowthInside1Last
         )
-            = IRangePool(pool).positions(owner, lower, upper);
+            = IRangePool(pool).positions(lower, upper);
         
         cache.userBalance = Tokens.balanceOf(pool, owner, lower, upper);
         cache.totalSupply = Tokens.totalSupply(pool, lower, upper);

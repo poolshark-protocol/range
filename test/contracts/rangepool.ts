@@ -377,7 +377,7 @@ describe('RangePool Tests', function () {
     }
   })
 
-  it('token1 - Should mint, swap, and burn custom position while in range', async function () {
+  it('token1 - Should mint, swap, and burn position while in range', async function () {
     if (debugMode) await getTickAtPrice()
     const aliceLiquidity = BigNumber.from('1577889144107833733009')
     const aliceLiquidity2 = BigNumber.from('1590926220637829792707')
