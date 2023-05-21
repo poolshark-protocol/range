@@ -1,3 +1,5 @@
+import { BigNumber } from "ethers"
+
 export const ERC20_ABI: string[] = [
   'function name() view returns (string)',
   'function symbol() view returns (string)',
@@ -9,6 +11,8 @@ export const ERC20_ABI: string[] = [
   'function transferFrom(address sender, address recipient, uint256 amount)',
   'event Transfer(address indexed from, address indexed to, uint amount)',
 ]
+
+export const BN_ZERO = BigNumber.from('0')
 
 export const TOKENS = {
   weth: {

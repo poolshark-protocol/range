@@ -4,7 +4,7 @@ const { expect } = require('chai')
 import { gBefore } from '../utils/hooks.test'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { BigNumber } from 'ethers'
-import { BIGINT_ZERO } from '../../subgraph/src/mappings/utils/helpers'
+import { BN_ZERO } from '../utils/constants'
 
 alice: SignerWithAddress
 describe('RangePoolAdmin Tests', function () {
@@ -124,7 +124,7 @@ describe('RangePoolAdmin Tests', function () {
     expect(await
       hre.props.rangePoolManager
         .protocolFees(hre.props.rangePool.address)
-    ).to.be.equal(BIGINT_ZERO)
+    ).to.be.equal(BN_ZERO)
 
     // should revert when non-admin calls
     await expect(
@@ -166,7 +166,7 @@ describe('RangePoolAdmin Tests', function () {
     expect(await
       hre.props.rangePoolManager
         .protocolFees(hre.props.rangePool.address)
-    ).to.be.equal(BIGINT_ZERO)
+    ).to.be.equal(BN_ZERO)
 
     // should revert when non-admin calls
     await expect(
@@ -226,7 +226,7 @@ describe('RangePoolAdmin Tests', function () {
     expect(await
       hre.props.rangePoolManager
         .feeTiers("100")
-    ).to.be.equal(BIGINT_ZERO)
+    ).to.be.equal(BN_ZERO)
 
     await hre.props.rangePoolManager
         .connect(hre.props.admin)
