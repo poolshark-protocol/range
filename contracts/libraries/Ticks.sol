@@ -11,6 +11,7 @@ import './PrecisionMath.sol';
 import './TickMath.sol';
 import './TickMap.sol';
 import './Samples.sol';
+import 'hardhat/console.sol';
 
 /// @notice Tick management library
 library Ticks {
@@ -85,8 +86,9 @@ library Ticks {
         )
     {
         IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
+            price: pool.price,
+            liquidity: pool.liquidity,
             cross: true,
-            tick: pool.tickAtPrice,
             crossTick: zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
                                   : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
@@ -109,7 +111,7 @@ library Ticks {
                     pool.samples.length,
                     uint32(block.timestamp),
                     new uint32[](2),
-                    cache.tick,
+                    pool.tickAtPrice,
                     pool.liquidity
                 ),
                 0
@@ -127,11 +129,6 @@ library Ticks {
                 );
             }
         }
-        if (pool.price != cache.crossPrice) {
-            pool.tickAtPrice = TickMath.getTickAtSqrtRatio(pool.price);
-        } else {
-            pool.tickAtPrice = cache.crossTick;
-        }
         /// @dev - write oracle entry after start of block
         (
             pool.samples.index,
@@ -141,6 +138,13 @@ library Ticks {
             pool,
             pool.tickAtPrice
         );
+        pool.price = cache.price;
+        pool.liquidity = cache.liquidity;
+        if (cache.price != cache.crossPrice) {
+            pool.tickAtPrice = TickMath.getTickAtSqrtRatio(cache.price);
+        } else {
+            pool.tickAtPrice = cache.crossTick;
+        }
         emit Swap(
             recipient,
             zeroForOne,
@@ -161,15 +165,15 @@ library Ticks {
         uint16 swapFee,
         uint256 amountIn,
         IRangePoolStructs.PoolState memory pool
-    )
-        external view returns (
+    ) external view returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
         )
     {
         IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
+            price: pool.price,
+            liquidity: pool.liquidity,
             cross: true,
-            tick: 0,
             crossTick: zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
                                   : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
@@ -194,6 +198,7 @@ library Ticks {
                 );
             }
         }
+        pool.price = cache.price;
         return (pool, cache);
     }
 
@@ -202,12 +207,12 @@ library Ticks {
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache
-    ) internal pure returns (
-            IRangePoolStructs.PoolState memory,
-            IRangePoolStructs.SwapCache memory
+    ) internal view returns (
+        IRangePoolStructs.PoolState memory,
+        IRangePoolStructs.SwapCache memory
     ) {
-        if (zeroForOne ? priceLimit >= pool.price
-                       : priceLimit <= pool.price)
+        if (zeroForOne ? priceLimit >= cache.price
+                       : priceLimit <= cache.price)
         {
             cache.cross = false;
             return (pool, cache);
@@ -220,52 +225,52 @@ library Ticks {
             if (nextPrice < priceLimit) {
                 nextPrice = priceLimit;
             }
-            uint256 maxDx = DyDxMath.getDx(pool.liquidity, nextPrice, pool.price, true);
+            uint256 maxDx = DyDxMath.getDx(cache.liquidity, nextPrice, cache.price, true);
             if (cache.input <= maxDx) {
                 // We can swap within the current range.
-                uint256 liquidityPadded = uint256(pool.liquidity) << 96;
+                uint256 liquidityPadded = uint256(cache.liquidity) << 96;
                 // calculate price after swap
                 uint256 newPrice = PrecisionMath.mulDivRoundingUp(
                     liquidityPadded,
-                    pool.price,
-                    liquidityPadded + uint256(pool.price) * uint256(cache.input)
+                    cache.price,
+                    liquidityPadded + uint256(cache.price) * uint256(cache.input)
                 );
-                amountOut = DyDxMath.getDy(pool.liquidity, newPrice, uint256(pool.price), false);
+                amountOut = DyDxMath.getDy(cache.liquidity, newPrice, uint256(cache.price), false);
                 cache.input = 0;
                 cache.cross = false;
-                pool.price = uint160(newPrice);
+                cache.price = uint160(newPrice);
             } else { 
-                amountOut = DyDxMath.getDy(pool.liquidity, nextPrice, pool.price, false);
+                amountOut = DyDxMath.getDy(cache.liquidity, nextPrice, cache.price, false);
                 cache.input -= maxDx;
                 if (nextPrice == cache.crossPrice
-                        && nextPrice != pool.price) { cache.cross = true; }
+                        && nextPrice != cache.price) { cache.cross = true; }
                 else cache.cross = false;
-                pool.price = uint160(nextPrice);
+                cache.price = uint160(nextPrice);
             }
         } else {
             // Price is increasing.
             if (nextPrice > priceLimit) {
                 nextPrice = priceLimit;
             }
-            uint256 maxDy = DyDxMath.getDy(pool.liquidity, uint256(pool.price), nextPrice, true);
+            uint256 maxDy = DyDxMath.getDy(cache.liquidity, uint256(cache.price), nextPrice, true);
             if (cache.input <= maxDy) {
                 // We can swap within the current range.
                 // Calculate new price after swap: ΔP = Δy/L.
-                uint256 newPrice = pool.price +
-                    PrecisionMath.mulDiv(cache.input, Q96, pool.liquidity);
+                uint256 newPrice = cache.price +
+                    PrecisionMath.mulDiv(cache.input, Q96, cache.liquidity);
                 // Calculate output of swap
-                amountOut = DyDxMath.getDx(pool.liquidity, pool.price, newPrice, false);
+                amountOut = DyDxMath.getDx(cache.liquidity, cache.price, newPrice, false);
                 cache.input = 0;
                 cache.cross = false;
-                pool.price = uint160(newPrice);
+                cache.price = uint160(newPrice);
             } else {
                 // Swap & cross the tick.
-                amountOut = DyDxMath.getDx(pool.liquidity, pool.price, nextPrice, false);
+                amountOut = DyDxMath.getDx(cache.liquidity, cache.price, nextPrice, false);
                 cache.input -= maxDy;
                 if (nextPrice == cache.crossPrice 
-                    && nextPrice != pool.price) { cache.cross = true; }
+                    && nextPrice != cache.price) { cache.cross = true; }
                 else cache.cross = false;
-                pool.price = uint160(nextPrice);
+                cache.price = uint160(nextPrice);
             }
         }
         (pool, cache) = FeeMath.calculate(pool, cache, amountOut, zeroForOne);
@@ -292,13 +297,13 @@ library Ticks {
         // observe most recent oracle update
         if (zeroForOne) {
             unchecked {
-                pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
+                cache.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
             }
             pool.tickAtPrice = cache.crossTick;
             cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
         } else {
             unchecked {
-                pool.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
+                cache.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
             }
             pool.tickAtPrice = cache.crossTick;
             cache.crossTick = TickMap.next(tickMap, cache.crossTick);
@@ -318,13 +323,13 @@ library Ticks {
     ) {
         if (zeroForOne) {
             unchecked {
-                pool.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
+                cache.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
             }
             cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
             pool.tickAtPrice = cache.crossTick;
         } else {
             unchecked {
-                pool.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
+                cache.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
             }
             pool.tickAtPrice = cache.crossTick;
             cache.crossTick = TickMap.next(tickMap, cache.crossTick);

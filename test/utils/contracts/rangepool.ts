@@ -102,6 +102,15 @@ export async function getTickAtPrice() {
   console.log('tick at price:', tick)
 }
 
+export async function getRangeBalanceOf(owner: SignerWithAddress, lower: number, upper: number) {
+  const positionTokenId  = await hre.props.positionsLib.id(lower, upper);
+  const balance = await hre.props.rangePool.balanceOf(owner.address, positionTokenId)
+  console.log('position token balance')
+  console.log('----------------------')
+  console.log('owner:', owner.address)
+  console.log('balance:', balance.toString())
+}
+
 export async function getFeeGrowthGlobal(isToken0: boolean = true) {
   const price = isToken0 ? (await hre.props.rangePool.poolState()).feeGrowthGlobal0
                          : (await hre.props.rangePool.poolState()).feeGrowthGlobal1

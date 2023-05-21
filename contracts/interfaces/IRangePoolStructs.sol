@@ -142,14 +142,15 @@ interface IRangePoolStructs {
     }
 
     struct SwapCache {
+        uint160 price;
+        uint128 liquidity;
         bool    cross;
-        int24   tick;
         int24   crossTick;
+        uint160 crossPrice;
         uint16  swapFee;
         uint16  protocolFee;
         int56   tickSecondsAccum;
         uint160 secondsPerLiquidityAccum;
-        uint160 crossPrice;
         uint256 input;
         uint256 output;
         uint256 amountIn;
