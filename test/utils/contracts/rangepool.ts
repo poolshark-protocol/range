@@ -63,7 +63,6 @@ export interface ValidateMintParams {
   upper: string
   amount0: BigNumber
   amount1: BigNumber
-  fungible: boolean
   balance0Decrease: BigNumber
   balance1Decrease: BigNumber
   tokenAmount?: BigNumber
@@ -90,7 +89,6 @@ export interface ValidateBurnParams {
   upper: string
   tokenAmount?: BigNumber
   liquidityAmount: BigNumber
-  fungible: boolean
   balance0Increase: BigNumber
   balance1Increase: BigNumber
   revertMessage: string
@@ -198,7 +196,6 @@ export async function validateMint(params: ValidateMintParams) {
   const upper = BigNumber.from(params.upper)
   const amount0 = params.amount0
   const amount1 = params.amount1
-  const fungible = params.fungible
   const balance0Decrease = params.balance0Decrease
   const balance1Decrease = params.balance1Decrease
   const liquidityIncrease = params.liquidityIncrease
@@ -247,22 +244,16 @@ export async function validateMint(params: ValidateMintParams) {
   let positionTokenBalanceBefore: BigNumber
   lowerTickBefore = await hre.props.rangePool.ticks(lower)
   upperTickBefore = await hre.props.rangePool.ticks(upper)
-  if (fungible) {
-    positionBefore = await hre.props.rangePool.positions(
-      hre.props.rangePool.address,
-      lower,
-      upper
-    )
-    positionTokenId  = await hre.props.positionsLib.id(lower, upper);
-    positionTokens = await hre.ethers.getContractAt('RangePoolERC1155', hre.props.rangePool.address);
-    positionTokenBalanceBefore = await positionTokens.balanceOf(signer.address, positionTokenId);
-  } else {
-    positionBefore = await hre.props.rangePool.positions(
-      recipient,
-      lower,
-      upper
-    )
-  }
+
+  positionBefore = await hre.props.rangePool.positions(
+    hre.props.rangePool.address,
+    lower,
+    upper
+  )
+  positionTokenId  = await hre.props.positionsLib.id(lower, upper);
+  positionTokens = await hre.ethers.getContractAt('RangePoolERC1155', hre.props.rangePool.address);
+  positionTokenBalanceBefore = await positionTokens.balanceOf(signer.address, positionTokenId);
+
   if (revertMessage == '') {
     const txn = await hre.props.rangePool
       .connect(params.signer)
@@ -306,23 +297,17 @@ export async function validateMint(params: ValidateMintParams) {
   let positionTokenBalanceAfter: BigNumber
   lowerTickAfter = await hre.props.rangePool.ticks(lower)
   upperTickAfter = await hre.props.rangePool.ticks(upper)
-  if (fungible) {
-    positionAfter = await hre.props.rangePool.positions(
-      hre.props.rangePool.address,
-      lower,
-      upper
-    )
-    positionTokens = await hre.ethers.getContractAt('RangePoolERC1155', hre.props.rangePool.address);
-    positionTokenBalanceAfter = await positionTokens.balanceOf(signer.address, positionTokenId);
-    if (params.tokenAmount)
-      expect(positionTokenBalanceAfter.sub(positionTokenBalanceBefore)).to.be.equal(params.tokenAmount)
-  } else {
-    positionAfter = await hre.props.rangePool.positions(
-      params.signer.address,
-      lower,
-      upper
-    )
-  }
+
+  positionAfter = await hre.props.rangePool.positions(
+    hre.props.rangePool.address,
+    lower,
+    upper
+  )
+  positionTokens = await hre.ethers.getContractAt('RangePoolERC1155', hre.props.rangePool.address);
+  positionTokenBalanceAfter = await positionTokens.balanceOf(signer.address, positionTokenId);
+  if (params.tokenAmount)
+    expect(positionTokenBalanceAfter.sub(positionTokenBalanceBefore)).to.be.equal(params.tokenAmount)
+  
   expect(lowerTickAfter.liquidityDelta.sub(lowerTickBefore.liquidityDelta)).to.be.equal(
     liquidityIncrease
   )
@@ -337,7 +322,6 @@ export async function validateBurn(params: ValidateBurnParams) {
   const lower = BigNumber.from(params.lower)
   const upper = BigNumber.from(params.upper)
   const liquidityAmount = params.liquidityAmount
-  const fungible = params.fungible
   const balance0Increase = params.balance0Increase
   const balance1Increase = params.balance1Increase
   const revertMessage = params.revertMessage
