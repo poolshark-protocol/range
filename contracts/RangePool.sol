@@ -68,7 +68,9 @@ contract RangePool is
         poolState = pool;
     }
 
-    function mint(MintParams memory params) external lock {
+    function mint(
+        MintParams memory params
+    ) external lock {
         PoolState memory pool = poolState;
         Position memory position = positions[params.lower][params.upper];
         (position, , ) = Positions.update(
@@ -76,7 +78,6 @@ contract RangePool is
                 position,
                 pool,
                 UpdateParams(
-                    address(this),
                     params.lower,
                     params.upper,
                     0
@@ -93,8 +94,7 @@ contract RangePool is
                 samples,
                 tickMap,
                 pool,
-                CompoundParams(
-                    address(this), 
+                CompoundParams( 
                     params.lower,
                     params.upper
                 )
@@ -133,7 +133,6 @@ contract RangePool is
                 position,
                 pool,
                 UpdateParams(
-                    address(this),
                     params.lower,
                     params.upper,
                     uint128(params.amount)
@@ -161,7 +160,6 @@ contract RangePool is
                 tickMap,
                 pool,
                 CompoundParams(
-                    address(this),
                     params.lower,
                     params.upper
                 )
@@ -270,7 +268,7 @@ contract RangePool is
         );
     }
 
-    function protocolFees(
+    function fees(
         uint16 protocolFee,
         bool setFee
     ) external lock onlyManager returns (

@@ -151,7 +151,7 @@ contract RangePoolManager is
         uint128[] memory token0Fees = new uint128[](removePools.length);
         uint128[] memory token1Fees = new uint128[](removePools.length);
         for (uint i; i < removePools.length; i++) {
-            (token0Fees[i], token1Fees[i]) = IRangePool(removePools[i]).protocolFees(0, true); 
+            (token0Fees[i], token1Fees[i]) = IRangePool(removePools[i]).fees(0, true); 
         }
         if (removePools.length > 0) {
             emit ProtocolFeeUpdated(removePools, protocolFee);
@@ -160,7 +160,7 @@ contract RangePoolManager is
         token0Fees = new uint128[](addPools.length);
         token1Fees = new uint128[](addPools.length);
         for (uint i; i < addPools.length; i++) {
-            (token0Fees[i], token1Fees[i]) = IRangePool(addPools[i]).protocolFees(protocolFee, true);
+            (token0Fees[i], token1Fees[i]) = IRangePool(addPools[i]).fees(protocolFee, true);
         }
         if (addPools.length > 0) {
             emit ProtocolFeeUpdated(removePools, protocolFee);
@@ -174,7 +174,7 @@ contract RangePoolManager is
         uint128[] memory token0Fees = new uint128[](collectPools.length);
         uint128[] memory token1Fees = new uint128[](collectPools.length);
         for (uint i; i < collectPools.length; i++) {
-            (token0Fees[i], token1Fees[i]) = IRangePool(collectPools[i]).protocolFees(0, false);
+            (token0Fees[i], token1Fees[i]) = IRangePool(collectPools[i]).fees(0, false);
             emit ProtocolFeeCollected(collectPools, token0Fees, token1Fees);
         }
     }

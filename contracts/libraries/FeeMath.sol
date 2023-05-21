@@ -14,9 +14,9 @@ library FeeMath {
         uint256 amountOut,
         bool zeroForOne
     ) internal pure returns (
-            IRangePoolStructs.PoolState memory,
-            IRangePoolStructs.SwapCache memory
-        )
+        IRangePoolStructs.PoolState memory,
+        IRangePoolStructs.SwapCache memory
+    )
     {
         if (cache.liquidity == 0 ) return (pool, cache);
         uint256 feeAmount = PrecisionMath.mulDivRoundingUp(amountOut, cache.swapFee, 1e6); 

@@ -90,7 +90,6 @@ interface IRangePoolStructs {
     }
 
     struct CompoundParams {
-        address owner;
         int24 lower;
         int24 upper;
     }
@@ -124,7 +123,6 @@ interface IRangePoolStructs {
     }
 
     struct UpdateParams {
-        address owner;
         int24 lower;
         int24 upper;
         uint128 amount;

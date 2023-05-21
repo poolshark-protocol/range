@@ -4,35 +4,6 @@ pragma solidity 0.8.13;
 abstract contract RangePoolEvents {
     event Mint(
         address indexed recipient,
-        int24 indexed lower,
-        int24 indexed upper,
-        uint128 liquidityMinted,
-        uint128 amount0,
-        uint128 amount1
-    );
-
-    event Burn(
-        address owner,
-        address indexed recipient,
-        int24 indexed lower,
-        int24 indexed upper,
-        uint128 liquidityBurned,
-        uint128 amount0,
-        uint128 amount1,
-        bool collect
-    );
-
-    event Compound(
-        address indexed owner,
-        int24 indexed lower,
-        int24 indexed upper,
-        uint128 liquidityCompounded,
-        uint128 positionAmount0,
-        uint128 positionAmount1
-    );
-
-    event MintFungible(
-        address indexed recipient,
         int24 lower,
         int24 upper,
         uint256 indexed tokenId,
@@ -42,7 +13,7 @@ abstract contract RangePoolEvents {
         uint128 amount1
     );
 
-    event BurnFungible(
+    event Burn(
         address indexed recipient,
         int24 lower,
         int24 upper,
@@ -51,6 +22,14 @@ abstract contract RangePoolEvents {
         uint128 liquidityBurned,
         uint128 amount0,
         uint128 amount1
+    );
+
+    event Compound(
+        int24 indexed lower,
+        int24 indexed upper,
+        uint128 liquidityCompounded,
+        uint128 positionAmount0,
+        uint128 positionAmount1
     );
 
     event Swap(

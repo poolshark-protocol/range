@@ -24,38 +24,9 @@ library Positions {
     error InvalidPositionBoundsOrder();
     error NotImplementedYet();
 
-    uint256 internal constant Q96 = 0x1000000000000000000000000;
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 
     event Mint(
-        address indexed recipient,
-        int24 lower,
-        int24 upper,
-        uint128 liquidityMinted,
-        uint128 amount0,
-        uint128 amount1
-    );
-
-    event Burn(
-        address owner,
-        address indexed recipient,
-        int24 indexed lower,
-        int24 indexed upper,
-        uint128 liquidityBurned,
-        uint128 amount0,
-        uint128 amount1
-    );
-
-    event Compound(
-        address indexed owner,
-        int24 indexed lower,
-        int24 indexed upper,
-        uint128 liquidityCompounded,
-        uint128 positionAmount0,
-        uint128 positionAmount1
-    );
-
-    event MintFungible(
         address indexed recipient,
         int24 lower,
         int24 upper,
@@ -66,7 +37,7 @@ library Positions {
         uint128 amount1
     );
 
-    event BurnFungible(
+    event Burn(
         address indexed recipient,
         int24 lower,
         int24 upper,
@@ -75,6 +46,14 @@ library Positions {
         uint128 liquidityBurned,
         uint128 amount0,
         uint128 amount1
+    );
+
+    event Compound(
+        int24 indexed lower,
+        int24 indexed upper,
+        uint128 liquidityCompounded,
+        uint128 positionAmount0,
+        uint128 positionAmount1
     );
 
     function validate(
@@ -169,7 +148,7 @@ library Positions {
             } /// @dev - if there are fees on the position we mint less positionToken
         }
         IRangePoolERC1155(address(this)).mintFungible(params.mint.to, cache.tokenId, params.amount);
-        emit MintFungible(
+        emit Mint(
             params.mint.to,
             params.mint.lower,
             params.mint.upper,
@@ -209,15 +188,6 @@ library Positions {
                                                                        / (cache.totalSupply + params.amount)
                                                                      : params.amount;
         if (params.amount == 0) {
-            emit Burn(
-                address(this),
-                msg.sender,
-                params.lower,
-                params.upper,
-                params.amount,
-                removeParams.amount0,
-                removeParams.amount1
-            );
             return (state, position, removeParams.amount0, removeParams.amount1);
         } 
         if (params.amount > position.liquidity) require(false, 'NotEnoughPositionLiquidity()');
@@ -250,7 +220,7 @@ library Positions {
             params.upper,
             uint128(cache.liquidityAmount)
         );
-        emit BurnFungible(
+        emit Burn(
             params.to,
             params.lower,
             params.upper,
@@ -311,7 +281,6 @@ library Positions {
             position.liquidity += uint128(cache.liquidityAmount);
         }
         emit Compound(
-            params.owner,
             params.lower,
             params.upper,
             uint128(cache.liquidityAmount),

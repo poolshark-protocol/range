@@ -34,7 +34,7 @@ interface IRangePool is IRangePoolStructs {
         uint16 sampleLengthNext
     ) external;
 
-    function protocolFees(
+    function fees(
         uint16 protocolFee,
         bool setFee
     ) external returns (
