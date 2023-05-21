@@ -35,16 +35,17 @@ export class MintPosition {
 
     // 0x34e800D1456d87A5F62B774AD98cea54a3A40048
     // 0x1DcF623EDf118E4B21b4C5Dc263bb735E170F9B8
-    await validateSwap({
-      signer: hre.props.alice,
-      recipient: hre.props.alice.address,
-      zeroForOne: true,
-      amountIn: token1Amount.mul(10000),
-      sqrtPriceLimitX96: BigNumber.from('3543191142285914205922034323214'),
-      balanceInDecrease: token1Amount.mul(30),
-      balanceOutIncrease: token1Amount.mul(30),
-      revertMessage:''
-    })
+    //0xaE312276Ea1B35C68617441beddc0d0Fd13c1aF2
+    // await validateSwap({
+    //   signer: hre.props.alice,
+    //   recipient: '0xaE312276Ea1B35C68617441beddc0d0Fd13c1aF2',
+    //   zeroForOne: true,
+    //   amountIn: token1Amount.mul(10000),
+    //   sqrtPriceLimitX96: BigNumber.from('3543191142285914205922034323214'),
+    //   balanceInDecrease: token1Amount.mul(30),
+    //   balanceOutIncrease: token1Amount.mul(30),
+    //   revertMessage:''
+    // })
     // await validateMint({
     //   signer: hre.props.alice,
     //   recipient: hre.props.alice.address,
@@ -74,9 +75,23 @@ export class MintPosition {
     //   revertMessage: '',
     // })
 
-    // await validateMint({
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: '0x1DcF623EDf118E4B21b4C5Dc263bb735E170F9B8',
+      lower: '-887270',
+      upper: '887270',
+      amount0: token0Amount,
+      amount1: token1Amount,
+      fungible: true,
+      balance0Decrease: BigNumber.from('0'),
+      balance1Decrease: token1Amount,
+      liquidityIncrease: liquidityAmount,
+      revertMessage: '',
+    })
+
+    //   await validateMint({
     //   signer: hre.props.alice,
-    //   recipient: '0x1DcF623EDf118E4B21b4C5Dc263bb735E170F9B8',
+    //   recipient: '0xaE312276Ea1B35C68617441beddc0d0Fd13c1aF2',
     //   lower: '-887270',
     //   upper: '887270',
     //   amount0: token0Amount,
