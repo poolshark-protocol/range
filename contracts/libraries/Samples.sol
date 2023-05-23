@@ -84,7 +84,7 @@ library Samples {
     ) {
         if (state.samples.length == 0) require(false, 'SampleArrayUninitialized()');
         if (sampleLengthNext <= state.samples.lengthNext) return state;
-        if (sampleLengthNext >= 65535)
+        if (sampleLengthNext >= 65535) return state;
         for (uint16 i = state.samples.lengthNext; i < sampleLengthNext; i++) {
             samples[i].blockTimestamp = 1;
         }
