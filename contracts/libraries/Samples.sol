@@ -55,8 +55,8 @@ library Samples {
         // grab the latest sample
         IRangePoolStructs.Sample memory newSample = samples[state.samples.index];
 
-        // early return if newest sample within 5 seconds
-        if (newSample.blockTimestamp + 5 >= uint32(block.timestamp))
+        // early return if timestamp has not advanced 2 seconds
+        if (newSample.blockTimestamp + 2 > uint32(block.timestamp))
             return (state.samples.index, state.samples.length);
 
         if (state.samples.lengthNext > state.samples.length
@@ -82,9 +82,9 @@ library Samples {
     ) external returns (
         IRangePoolStructs.PoolState memory
     ) {
-        if (state.samples.length == 0) require(false, 'SampleArrayUninitialized()');
+        if (sampleLengthNext <= state.samples.lengthNext) return state;
         for (uint16 i = state.samples.lengthNext; i < sampleLengthNext; i++) {
-            samples[i].tickSecondsAccum = 1;
+            samples[i].blockTimestamp = 1;
         }
         state.samples.lengthNext = sampleLengthNext;
         emit SampleLengthIncreased(sampleLengthNext);
