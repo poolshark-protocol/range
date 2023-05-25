@@ -101,4 +101,28 @@ library DyDxMath {
         if (dy > uint128(type(int128).max)) require(false, 'AmountsOutOfBounds()');
         return (uint128(dx), uint128(dy));
     }
+
+    function getNewPrice(
+        uint256 price,
+        uint256 liquidity,
+        uint256 amount,
+        bool zeroForOne,
+        bool exactIn
+    ) internal pure returns (
+        uint256 newPrice
+    ) {
+        if (exactIn) {
+            if (zeroForOne) {
+                uint256 liquidityPadded = liquidity << 96;
+                newPrice = PrecisionMath.mulDivRoundingUp(
+                                liquidityPadded,
+                                price,
+                                liquidityPadded + price * amount
+                        );
+            } else {
+                newPrice = price + PrecisionMath.mulDiv(amount, Q96, liquidity);
+            }
+        }
+
+    }
 }
