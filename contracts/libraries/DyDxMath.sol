@@ -15,24 +15,6 @@ library DyDxMath {
         uint256 priceLower,
         uint256 priceUpper,
         bool roundUp
-    ) external pure returns (uint256 dy) {
-        return _getDy(liquidity, priceLower, priceUpper, roundUp);
-    }
-
-    function getDx(
-        uint256 liquidity,
-        uint256 priceLower,
-        uint256 priceUpper,
-        bool roundUp
-    ) external pure returns (uint256 dx) {
-        return _getDx(liquidity, priceLower, priceUpper, roundUp);
-    }
-
-    function _getDy(
-        uint256 liquidity,
-        uint256 priceLower,
-        uint256 priceUpper,
-        bool roundUp
     ) internal pure returns (uint256 dy) {
         unchecked {
             if (roundUp) {
@@ -43,7 +25,7 @@ library DyDxMath {
         }
     }
 
-    function _getDx(
+    function getDx(
         uint256 liquidity,
         uint256 priceLower,
         uint256 priceUpper,
@@ -71,7 +53,7 @@ library DyDxMath {
         uint256 currentPrice,
         uint256 dy,
         uint256 dx
-    ) external pure returns (uint256 liquidity) {
+    ) internal pure returns (uint256 liquidity) {
         unchecked {
             if (priceUpper <= currentPrice) {
                 liquidity = PrecisionMath.mulDiv(dy, Q96, priceUpper - priceLower);
@@ -99,21 +81,21 @@ library DyDxMath {
         uint256 currentPrice,
         uint256 liquidityAmount,
         bool roundUp
-    ) external pure returns (
+    ) internal pure returns (
         uint128,
         uint128
     ) {
         uint256 dx; uint256 dy;
         if (currentPrice <= priceLower) {
             // token0 (X) is supplied
-            dx = _getDx(liquidityAmount, priceLower, priceUpper, roundUp);
+            dx = getDx(liquidityAmount, priceLower, priceUpper, roundUp);
         } else if (priceUpper <= currentPrice) {
             // token1 (y) is supplied
-            dy = _getDy(liquidityAmount, priceLower, priceUpper, roundUp);
+            dy = getDy(liquidityAmount, priceLower, priceUpper, roundUp);
         } else {
             // Both token0 (x) and token1 (y) are supplied
-            dx = _getDx(liquidityAmount, currentPrice, priceUpper, roundUp);
-            dy = _getDy(liquidityAmount, priceLower, currentPrice, roundUp);
+            dx = getDx(liquidityAmount, currentPrice, priceUpper, roundUp);
+            dy = getDy(liquidityAmount, priceLower, currentPrice, roundUp);
         }
         if (dx > uint128(type(int128).max)) require(false, 'AmountsOutOfBounds()');
         if (dy > uint128(type(int128).max)) require(false, 'AmountsOutOfBounds()');

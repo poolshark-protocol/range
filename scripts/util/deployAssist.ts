@@ -37,7 +37,7 @@ export class DeployAssist {
     linkedLibraries?: any
   ): Promise<Contract> {
     let contract: Contract
-
+    console.log(objectName)
     contract = await this.deployContract(
       network,
       contractFactory,

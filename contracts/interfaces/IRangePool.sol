@@ -5,25 +5,23 @@ import './IRangePoolStructs.sol';
 import './IRangePoolManager.sol';
 
 interface IRangePool is IRangePoolStructs {
-    function mint(MintParams calldata mintParams) external;
+    function mint(
+        MintParams memory mintParams
+    ) external;
 
-    function burn(BurnParams calldata burnParams) external;
+    function burn(
+        BurnParams memory burnParams
+    ) external;
 
     function swap(
-        address recipient,
-        address refundRecipient,
-        bool zeroForOne,
-        uint256 amountIn,
-        uint160 priceLimit
+        SwapParams memory params
     ) external returns (
         int256 amount0,
         int256 amount1
     );
 
     function quote(
-        bool zeroForOne,
-        uint256 amountIn,
-        uint160 priceLimit
+        QuoteParams memory params
     ) external view returns (
         uint256 inAmount,
         uint256 outAmount,

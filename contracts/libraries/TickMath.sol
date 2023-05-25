@@ -16,20 +16,12 @@ library TickMath {
     error TickOutOfBounds();
     error PriceOutOfBounds();
 
-    function getSqrtRatioAtTick(int24 tick) external pure returns (uint160 getSqrtPriceX96) {
-        return _getSqrtRatioAtTick(tick);
-    }
-
-    function getTickAtSqrtRatio(uint160 sqrtPriceX96) external pure returns (int24 tick) {
-        return _getTickAtSqrtRatio(sqrtPriceX96);
-    }
-
     /// @notice Calculates sqrt(1.0001^tick) * 2^96.
     /// @dev Throws if |tick| > max tick.
     /// @param tick The input tick for the above formula.
     /// @return sqrtPriceX96 Fixed point Q64.96 number representing the sqrt of the ratio of the two assets (token1/token0)
     /// at the given tick.
-    function _getSqrtRatioAtTick(int24 tick) internal pure returns (uint160 sqrtPriceX96) {
+    function getSqrtRatioAtTick(int24 tick) internal pure returns (uint160 sqrtPriceX96) {
         uint256 absTick = tick < 0 ? uint256(-int256(tick)) : uint256(int256(tick));
         if (absTick > uint256(uint24(MAX_TICK))) require(false, 'TickOutOfBounds()');
         
@@ -65,7 +57,7 @@ library TickMath {
         }
     }
 
-    function validatePrice(uint160 price) external pure {
+    function validatePrice(uint160 price) internal pure {
         if (price < MIN_SQRT_RATIO || price >= MAX_SQRT_RATIO) {
             require(false, 'PriceOutOfBounds()');
         }
@@ -76,7 +68,7 @@ library TickMath {
     /// ever return.
     /// @param sqrtPriceX96 The sqrt ratio for which to compute the tick as a Q64.96.
     /// @return tick The greatest tick for which the ratio is less than or equal to the input ratio.
-    function _getTickAtSqrtRatio(uint160 sqrtPriceX96) internal pure returns (int24 tick) {
+    function getTickAtSqrtRatio(uint160 sqrtPriceX96) internal pure returns (int24 tick) {
         // Second inequality must be < because the price can never reach the price at the max tick.
         if (sqrtPriceX96 < MIN_SQRT_RATIO || sqrtPriceX96 >= MAX_SQRT_RATIO)
             require(false, 'PriceOutOfBounds()');
@@ -219,7 +211,7 @@ library TickMath {
         int24 tickLow = int24((log_sqrt10001 - 3402992956809132418596140100660247210) >> 128);
         int24 tickHi = int24((log_sqrt10001 + 291339464771989622907027621153398088495) >> 128);
 
-        tick = tickLow == tickHi ? tickLow : _getSqrtRatioAtTick(tickHi) <= sqrtPriceX96
+        tick = tickLow == tickHi ? tickLow : getSqrtRatioAtTick(tickHi) <= sqrtPriceX96
             ? tickHi
             : tickLow;
     }

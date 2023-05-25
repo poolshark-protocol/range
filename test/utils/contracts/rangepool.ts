@@ -94,11 +94,11 @@ export interface ValidateBurnParams {
   revertMessage: string
 }
 
-export async function getTickAtPrice() {
-  const price = (await hre.props.rangePool.poolState()).price
-  const tick = await hre.props.tickMathLib.getTickAtSqrtRatio(price)
-  console.log('tick at price:', tick)
-}
+// export async function getTickAtPrice() {
+//   const price = (await hre.props.rangePool.poolState()).price
+//   const tick = await hre.props.tickMathLib.getTickAtSqrtRatio(price)
+//   console.log('tick at price:', tick)
+// }
 
 export async function getRangeBalanceOf(owner: SignerWithAddress, lower: number, upper: number) {
   const positionTokenId  = await hre.props.positionsLib.id(lower, upper);
@@ -109,12 +109,12 @@ export async function getRangeBalanceOf(owner: SignerWithAddress, lower: number,
   console.log('balance:', balance.toString())
 }
 
-export async function getFeeGrowthGlobal(isToken0: boolean = true) {
-  const price = isToken0 ? (await hre.props.rangePool.poolState()).feeGrowthGlobal0
-                         : (await hre.props.rangePool.poolState()).feeGrowthGlobal1
-  const tick = await hre.props.tickMathLib.getTickAtSqrtRatio(price)
-  console.log('fee growth', isToken0 ? '0:' : '1:', tick)
-}
+// export async function getFeeGrowthGlobal(isToken0: boolean = true) {
+//   const price = isToken0 ? (await hre.props.rangePool.poolState()).feeGrowthGlobal0
+//                          : (await hre.props.rangePool.poolState()).feeGrowthGlobal1
+//   const tick = await hre.props.tickMathLib.getTickAtSqrtRatio(price)
+//   console.log('fee growth', isToken0 ? '0:' : '1:', tick)
+// }
 
 export async function validateSwap(params: ValidateSwapParams) {
   const signer = params.signer
@@ -144,7 +144,11 @@ export async function validateSwap(params: ValidateSwapParams) {
   const nearestTickBefore = poolBefore.tickAtPrice
 
   // quote pre-swap and validate balance changes match post-swap
-  const quote = await hre.props.rangePool.quote(zeroForOne, amountIn, sqrtPriceLimitX96)
+  const quote = await hre.props.rangePool.quote({
+    zeroForOne: zeroForOne,
+    amountIn: amountIn,
+    priceLimit: sqrtPriceLimitX96
+  })
   const inAmount = quote[0]
   const outAmount = quote[1]
   const priceAfterQuote = quote[2]
@@ -152,13 +156,25 @@ export async function validateSwap(params: ValidateSwapParams) {
   if (revertMessage == '') {
     let txn = await hre.props.rangePool
       .connect(signer)
-      .swap(signer.address, signer.address, zeroForOne, amountIn, sqrtPriceLimitX96)
+      .swap({
+        to: signer.address,
+        refundTo: signer.address,
+        zeroForOne: zeroForOne,
+        amountIn: amountIn,
+        priceLimit: sqrtPriceLimitX96
+      })
     await txn.wait()
   } else {
     await expect(
       hre.props.rangePool
         .connect(signer)
-        .swap(signer.address, signer.address, zeroForOne, amountIn, sqrtPriceLimitX96)
+        .swap({
+          to: signer.address,
+          refundTo: signer.address,
+          zeroForOne: zeroForOne,
+          amountIn: amountIn,
+          priceLimit: sqrtPriceLimitX96
+        })
     ).to.be.revertedWith(revertMessage)
     return
   }

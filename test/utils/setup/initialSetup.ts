@@ -13,6 +13,9 @@ import {
   RangePoolManager__factory,
   TickMap__factory,
   Samples__factory,
+  MintCall__factory,
+  BurnCall__factory,
+  SwapCall__factory,
 } from '../../../typechain'
 
 export class InitialSetup {
@@ -161,53 +164,9 @@ export class InitialSetup {
     await this.deployAssist.deployContractWithRetry(
       network,
       // @ts-ignore
-      PrecisionMath__factory,
-      'precisionMathLib',
-      []
-    )
-
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
-      DyDxMath__factory,
-      'dydxMathLib',
-      [],
-      {
-        'contracts/libraries/PrecisionMath.sol:PrecisionMath':
-          hre.props.precisionMathLib.address,
-      }
-    )
-
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
-      TickMap__factory,
-      'tickMapLib',
-      []
-    )
-
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
-      Samples__factory,
-      'samplesLib',
-      []
-    )
-
-    await this.deployAssist.deployContractWithRetry(
-      network,
-      // @ts-ignore
       Ticks__factory,
       'ticksLib',
       [],
-      {
-        'contracts/libraries/DyDxMath.sol:DyDxMath': hre.props.dydxMathLib.address,
-        'contracts/libraries/PrecisionMath.sol:PrecisionMath':
-          hre.props.precisionMathLib.address,
-        'contracts/libraries/TickMath.sol:TickMath': hre.props.tickMathLib.address,
-        'contracts/libraries/TickMap.sol:TickMap': hre.props.tickMapLib.address,
-        'contracts/libraries/Samples.sol:Samples': hre.props.samplesLib.address
-      }
     )
 
     await this.deployAssist.deployContractWithRetry(
@@ -215,15 +174,31 @@ export class InitialSetup {
       // @ts-ignore
       Positions__factory,
       'positionsLib',
-      [],
-      {
-        'contracts/libraries/DyDxMath.sol:DyDxMath': hre.props.dydxMathLib.address,
-        'contracts/libraries/PrecisionMath.sol:PrecisionMath':
-          hre.props.precisionMathLib.address,
-        'contracts/libraries/TickMath.sol:TickMath': hre.props.tickMathLib.address,
-        'contracts/libraries/Ticks.sol:Ticks': hre.props.ticksLib.address,
-        'contracts/libraries/Samples.sol:Samples': hre.props.samplesLib.address
-      }
+      []
+    )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
+      MintCall__factory,
+      'mintCall',
+      []
+    )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
+      BurnCall__factory,
+      'burnCall',
+      []
+    )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
+      SwapCall__factory,
+      'swapCall',
+      []
     )
 
     await this.deployAssist.deployContractWithRetry(
@@ -245,11 +220,9 @@ export class InitialSetup {
       {
         'contracts/libraries/Positions.sol:Positions': hre.props.positionsLib.address,
         'contracts/libraries/Ticks.sol:Ticks': hre.props.ticksLib.address,
-        'contracts/libraries/PrecisionMath.sol:PrecisionMath':
-          hre.props.precisionMathLib.address,
-        'contracts/libraries/TickMath.sol:TickMath': hre.props.tickMathLib.address,
-        'contracts/libraries/DyDxMath.sol:DyDxMath': hre.props.dydxMathLib.address,
-        'contracts/libraries/Samples.sol:Samples': hre.props.samplesLib.address
+        'contracts/libraries/pool/MintCall.sol:MintCall': hre.props.mintCall.address,
+        'contracts/libraries/pool/BurnCall.sol:BurnCall': hre.props.burnCall.address,
+        'contracts/libraries/pool/SwapCall.sol:SwapCall': hre.props.swapCall.address
       }
     )
     const setFactoryTxn = await hre.props.rangePoolManager

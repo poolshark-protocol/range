@@ -60,7 +60,7 @@ library Positions {
         IRangePoolStructs.MintParams memory params,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.Immutables memory constants
-    ) external pure returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
+    ) internal pure returns (IRangePoolStructs.MintParams memory, uint256 liquidityMinted) {
         Ticks.validate(params.lower, params.upper, constants.tickSpacing);
         
         uint256 priceLower = uint256(TickMath.getSqrtRatioAtTick(params.lower));
@@ -92,7 +92,7 @@ library Positions {
         IRangePoolStructs.Sample[65535] storage samples,
         IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.AddParams memory params
-    ) external returns (
+    ) internal returns (
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.Position memory,
         uint128
@@ -169,7 +169,7 @@ library Positions {
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.BurnParams memory params,
         IRangePoolStructs.RemoveParams memory removeParams
-    ) external returns (
+    ) internal returns (
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.Position memory,
         uint128,
@@ -240,7 +240,7 @@ library Positions {
         IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.CompoundParams memory params
-    ) external returns (IRangePoolStructs.Position memory, IRangePoolStructs.PoolState memory) {
+    ) internal returns (IRangePoolStructs.Position memory, IRangePoolStructs.PoolState memory) {
         IRangePoolStructs.PositionCache memory cache = IRangePoolStructs.PositionCache({
             priceLower: TickMath.getSqrtRatioAtTick(params.lower),
             priceUpper: TickMath.getSqrtRatioAtTick(params.upper),
@@ -295,7 +295,7 @@ library Positions {
         IRangePoolStructs.Position memory position,
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.UpdateParams memory params
-    ) external returns (
+    ) internal returns (
         IRangePoolStructs.Position memory, 
         uint128, 
         uint128

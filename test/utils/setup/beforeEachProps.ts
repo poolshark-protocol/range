@@ -12,8 +12,10 @@ import {
   RangePoolManager,
   TickMap,
   Samples,
+  MintCall,
+  BurnCall,
+  SwapCall,
 } from '../../../typechain'
-import { TwapOracle } from '../../../typechain/TwapOracle'
 import { InitialSetup } from './initialSetup'
 
 export interface BeforeEachProps {
@@ -26,8 +28,10 @@ export interface BeforeEachProps {
   precisionMathLib: PrecisionMath
   samplesLib: Samples
   ticksLib: Ticks
-  twapOracleLib: TwapOracle
   positionsLib: Positions
+  mintCall: MintCall
+  burnCall: BurnCall
+  swapCall: SwapCall
   tokenA: Token20
   tokenB: Token20
   token0: Token20
@@ -70,8 +74,10 @@ export class GetBeforeEach {
     let precisionMathLib: PrecisionMath
     let samplesLib: Samples
     let ticksLib: Ticks
-    let twapOracleLib: TwapOracle
     let positionsLib: Positions
+    let mintCall: MintCall
+    let burnCall: BurnCall
+    let swapCall: SwapCall
     let tokenA: Token20
     let tokenB: Token20
     let token0: Token20
@@ -92,8 +98,10 @@ export class GetBeforeEach {
       precisionMathLib,
       samplesLib,
       ticksLib,
-      twapOracleLib,
       positionsLib,
+      mintCall,
+      burnCall,
+      swapCall,
       tokenA,
       tokenB,
       token0,

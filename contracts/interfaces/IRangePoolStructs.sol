@@ -64,6 +64,8 @@ interface IRangePoolStructs {
     }
 
     struct Immutables {
+        address token0;
+        address token1;
         uint16 swapFee;
         int24  tickSpacing;
     }
@@ -95,10 +97,17 @@ interface IRangePoolStructs {
     }
 
     struct SwapParams {
-        address recipient;
-        bool zeroForOne;
+        address to;
+        address refundTo;
         uint160 priceLimit;
-        uint256 amountIn;
+        uint128 amountIn;
+        bool zeroForOne;
+    }
+
+    struct QuoteParams {
+        uint160 priceLimit;
+        uint128 amountIn;
+        bool zeroForOne;
     }
 
     struct SampleParams {
@@ -130,17 +139,27 @@ interface IRangePoolStructs {
 
     struct MintCache {
         PoolState pool;
-        MintParams params;
         Position position;
+        Immutables constants;
+        uint256 liquidityMinted;
+    }
+
+    struct BurnCache {
+        PoolState pool;
+        Position position;
+        Immutables constants;
+        uint128 amount0;
+        uint128 amount1;
     }
 
     struct SwapCache {
+        Immutables constants;
+        PoolState pool;
         uint160 price;
         uint128 liquidity;
         bool    cross;
         int24   crossTick;
         uint160 crossPrice;
-        uint16  swapFee;
         uint16  protocolFee;
         int56   tickSecondsAccum;
         uint160 secondsPerLiquidityAccum;
