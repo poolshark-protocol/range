@@ -100,13 +100,14 @@ export interface ValidateBurnParams {
 //   console.log('tick at price:', tick)
 // }
 
-export async function getRangeBalanceOf(owner: SignerWithAddress, lower: number, upper: number) {
+export async function getRangeBalanceOf(owner: SignerWithAddress, lower: number, upper: number): Promise<BigNumber> {
   const positionTokenId  = await hre.props.positionsLib.id(lower, upper);
   const balance = await hre.props.rangePool.balanceOf(owner.address, positionTokenId)
   console.log('position token balance')
   console.log('----------------------')
   console.log('owner:', owner.address)
   console.log('balance:', balance.toString())
+  return balance
 }
 
 // export async function getFeeGrowthGlobal(isToken0: boolean = true) {
