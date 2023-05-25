@@ -68,21 +68,19 @@ contract RangePool is
         poolState = pool;
     }
 
-    function mint(MintParams memory params) external lock {
+    function mint(
+        MintParams memory params
+    ) external lock {
         PoolState memory pool = poolState;
-        Position memory position = positions[params.fungible ? address(this) 
-                                                             : params.to]
-                                            [params.lower][params.upper];
+        Position memory position = positions[params.lower][params.upper];
         (position, , ) = Positions.update(
                 ticks,
                 position,
                 pool,
                 UpdateParams(
-                    params.fungible ? address(this) : params.to,
                     params.lower,
                     params.upper,
-                    0,
-                    params.fungible
+                    0
                 )
         );
         uint256 liquidityMinted;
@@ -96,11 +94,9 @@ contract RangePool is
                 samples,
                 tickMap,
                 pool,
-                CompoundParams(
-                    params.fungible ? address(this) : params.to, 
+                CompoundParams( 
                     params.lower,
-                    params.upper,
-                    params.fungible
+                    params.upper
                 )
             );
         }
@@ -117,19 +113,15 @@ contract RangePool is
                 uint128(liquidityMinted)
             )
         );
-        positions[params.fungible ? address(this) : params.to][params.lower][
-            params.upper
-        ] = position;
-        poolState = pool;   
+        positions[params.lower][params.upper] = position;
+        poolState = pool; 
     }
 
     function burn(
         BurnParams memory params
     ) external lock {
         PoolState memory pool = poolState;
-        Position memory position = positions[params.fungible ? address(this) 
-                                                             : msg.sender]
-                                            [params.lower][params.upper];
+        Position memory position = positions[params.lower][params.upper];
         uint128 amount0;
         uint128 amount1;
         (
@@ -141,11 +133,9 @@ contract RangePool is
                 position,
                 pool,
                 UpdateParams(
-                    params.fungible ? address(this) : msg.sender,
                     params.lower,
                     params.upper,
-                    uint128(params.amount),
-                    params.fungible
+                    uint128(params.amount)
                 )
         );
         (pool, position, amount0, amount1) = Positions.remove(
@@ -160,18 +150,8 @@ contract RangePool is
                 amount1
             )
         );
-        if (params.fungible) {
-            position.amount0 -= amount0;
-            position.amount1 -= amount1;
-        } else if (params.collect) {
-            amount0 = position.amount0;
-            amount1 = position.amount1;
-            // zero out balances
-            position.amount0 = 0;
-            position.amount1 = 0;
-        }
-        /// @dev - always compound for fungible
-        /// @dev - only comound for nonfungible is collect is false
+        position.amount0 -= amount0;
+        position.amount1 -= amount1;
         if (position.amount0 > 0 || position.amount1 > 0) {
             (position, pool) = Positions.compound(
                 position,
@@ -180,19 +160,15 @@ contract RangePool is
                 tickMap,
                 pool,
                 CompoundParams(
-                    params.fungible ? address(this) : msg.sender,
                     params.lower,
-                    params.upper,
-                    params.fungible
+                    params.upper
                 )
             );
         }
         if (amount0 > 0) _transferOut(params.to, token0, amount0);
         if (amount1 > 0) _transferOut(params.to, token1, amount1);
         poolState = pool;
-        positions[params.fungible ? address(this) : msg.sender][
-            params.lower
-        ][params.upper] = position;
+        positions[params.lower][params.upper] = position;
     }
 
     function swap(
@@ -292,7 +268,7 @@ contract RangePool is
         );
     }
 
-    function protocolFees(
+    function fees(
         uint16 protocolFee,
         bool setFee
     ) external lock onlyManager returns (

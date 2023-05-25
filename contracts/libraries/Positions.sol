@@ -24,39 +24,9 @@ library Positions {
     error InvalidPositionBoundsOrder();
     error NotImplementedYet();
 
-    uint256 internal constant Q96 = 0x1000000000000000000000000;
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 
     event Mint(
-        address indexed recipient,
-        int24 lower,
-        int24 upper,
-        uint128 liquidityMinted,
-        uint128 amount0,
-        uint128 amount1
-    );
-
-    event Burn(
-        address owner,
-        address indexed recipient,
-        int24 indexed lower,
-        int24 indexed upper,
-        uint128 liquidityBurned,
-        uint128 amount0,
-        uint128 amount1,
-        bool collect
-    );
-
-    event Compound(
-        address indexed owner,
-        int24 indexed lower,
-        int24 indexed upper,
-        uint128 liquidityCompounded,
-        uint128 positionAmount0,
-        uint128 positionAmount1
-    );
-
-    event MintFungible(
         address indexed recipient,
         int24 lower,
         int24 upper,
@@ -67,7 +37,7 @@ library Positions {
         uint128 amount1
     );
 
-    event BurnFungible(
+    event Burn(
         address indexed recipient,
         int24 lower,
         int24 upper,
@@ -76,6 +46,14 @@ library Positions {
         uint128 liquidityBurned,
         uint128 amount0,
         uint128 amount1
+    );
+
+    event Compound(
+        int24 indexed lower,
+        int24 indexed upper,
+        uint128 liquidityCompounded,
+        uint128 positionAmount0,
+        uint128 positionAmount1
     );
 
     function validate(
@@ -154,43 +132,32 @@ library Positions {
         position.liquidity += uint128(params.amount);
         
         // modify liquidity minted to account for fees accrued
-        if (params.mint.fungible) {
-            if (position.amount0 > 0 || position.amount1 > 0
-                || (position.liquidity - params.amount) > cache.totalSupply) {
-                // modify amount based on autocompounded fees
-                if (cache.totalSupply > 0) {
-                    cache.liquidityOnPosition = DyDxMath.getLiquidityForAmounts(
-                                                    cache.priceLower,
-                                                    cache.priceUpper,
-                                                    position.amount0 > 0 ? cache.priceLower : cache.priceUpper,
-                                                    position.amount1,
-                                                    position.amount0
-                                                );
-                    params.amount = uint128(uint256(params.amount) * cache.totalSupply /
-                         (uint256(position.liquidity - params.amount) + cache.liquidityOnPosition));
-                } /// @dev - if there are fees on the position we mint less positionToken
-            }
-            IRangePoolERC1155(address(this)).mintFungible(params.mint.to, cache.tokenId, params.amount);
-            emit MintFungible(
-                params.mint.to,
-                params.mint.lower,
-                params.mint.upper,
-                cache.tokenId,
-                params.amount,
-                params.liquidity,
-                params.mint.amount0,
-                params.mint.amount1
-            );
-        } else {
-            emit Mint(
-                params.mint.to, 
-                params.mint.lower,
-                params.mint.upper,
-                params.amount,
-                params.mint.amount0,
-                params.mint.amount1
-            );
+        if (position.amount0 > 0 || position.amount1 > 0
+            || (position.liquidity - params.amount) > cache.totalSupply) {
+            // modify amount based on autocompounded fees
+            if (cache.totalSupply > 0) {
+                cache.liquidityOnPosition = DyDxMath.getLiquidityForAmounts(
+                                                cache.priceLower,
+                                                cache.priceUpper,
+                                                position.amount0 > 0 ? cache.priceLower : cache.priceUpper,
+                                                position.amount1,
+                                                position.amount0
+                                            );
+                params.amount = uint128(uint256(params.amount) * cache.totalSupply /
+                        (uint256(position.liquidity - params.amount) + cache.liquidityOnPosition));
+            } /// @dev - if there are fees on the position we mint less positionToken
         }
+        IRangePoolERC1155(address(this)).mintFungible(params.mint.to, cache.tokenId, params.amount);
+        emit Mint(
+            params.mint.to,
+            params.mint.lower,
+            params.mint.upper,
+            cache.tokenId,
+            params.amount,
+            params.liquidity,
+            params.mint.amount0,
+            params.mint.amount1
+        );
         return (params.state, position, params.amount);
     }
 
@@ -216,24 +183,11 @@ library Positions {
             totalSupply: 0,
             tokenId: Tokens.id(params.lower, params.upper)
         }); 
-        if (params.fungible){
-            
-            cache.totalSupply = Tokens.totalSupplyById(address(this), cache.tokenId);
-        }
-        cache.liquidityAmount = params.fungible && params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
+        cache.totalSupply = Tokens.totalSupplyById(address(this), cache.tokenId);
+        cache.liquidityAmount = params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
                                                                        / (cache.totalSupply + params.amount)
                                                                      : params.amount;
         if (params.amount == 0) {
-            emit Burn(
-                params.fungible ? address(this) : msg.sender,
-                msg.sender,
-                params.lower,
-                params.upper,
-                params.amount,
-                removeParams.amount0,
-                removeParams.amount1,
-                params.collect
-            );
             return (state, position, removeParams.amount0, removeParams.amount1);
         } 
         if (params.amount > position.liquidity) require(false, 'NotEnoughPositionLiquidity()');
@@ -246,9 +200,6 @@ library Positions {
                 cache.liquidityAmount,
                 false
             );
-            if (params.fungible && params.amount > 0) {
-                params.collect = true;
-            }
             removeParams.amount0 += amount0Removed;
             removeParams.amount1 += amount1Removed;
 
@@ -269,30 +220,16 @@ library Positions {
             params.upper,
             uint128(cache.liquidityAmount)
         );
-
-        if (params.fungible) {
-            emit BurnFungible(
-                params.to,
-                params.lower,
-                params.upper,
-                cache.tokenId,
-                params.amount,
-                uint128(cache.liquidityAmount),
-                removeParams.amount0,
-                removeParams.amount1
-            );
-        } else {
-            emit Burn(
-                params.fungible ? address(this) : msg.sender,
-                msg.sender,
-                params.lower,
-                params.upper,
-                uint128(cache.liquidityAmount),
-                removeParams.amount0,
-                removeParams.amount1,
-                params.collect
-            );
-        }
+        emit Burn(
+            params.to,
+            params.lower,
+            params.upper,
+            cache.tokenId,
+            params.amount,
+            uint128(cache.liquidityAmount),
+            removeParams.amount0,
+            removeParams.amount1
+        );
         return (state, position, removeParams.amount0, removeParams.amount1);
     }
 
@@ -344,7 +281,6 @@ library Positions {
             position.liquidity += uint128(cache.liquidityAmount);
         }
         emit Compound(
-            params.owner,
             params.lower,
             params.upper,
             uint128(cache.liquidityAmount),
@@ -365,12 +301,10 @@ library Positions {
         uint128
     ) {
         uint256 totalSupply;
-        if (params.fungible) {
-            totalSupply = Tokens.totalSupply(address(this), params.lower, params.upper);
-            if (params.amount > 0) {
-                uint256 tokenId = Tokens.id(params.lower, params.upper);
-                IRangePoolERC1155(address(this)).burnFungible(msg.sender, tokenId, params.amount);
-            }
+        totalSupply = Tokens.totalSupply(address(this), params.lower, params.upper);
+        if (params.amount > 0) {
+            uint256 tokenId = Tokens.id(params.lower, params.upper);
+            IRangePoolERC1155(address(this)).burnFungible(msg.sender, tokenId, params.amount);
         }
         
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
@@ -403,19 +337,16 @@ library Positions {
         position.amount0 += uint128(amount0Fees);
         position.amount1 += uint128(amount1Fees);
 
-        if (params.fungible) {
-            uint128 feesBurned0; uint128 feesBurned1;
-            if (params.amount > 0) {
-                feesBurned0 = uint128(
-                    (uint256(position.amount0) * uint256(uint128(params.amount))) / (totalSupply)
-                );
-                feesBurned1 = uint128(
-                    (uint256(position.amount1) * uint256(uint128(params.amount))) / (totalSupply)
-                );
-            }
-            return (position, feesBurned0, feesBurned1);
+        uint128 feesBurned0; uint128 feesBurned1;
+        if (params.amount > 0) {
+            feesBurned0 = uint128(
+                (uint256(position.amount0) * uint256(uint128(params.amount))) / (totalSupply)
+            );
+            feesBurned1 = uint128(
+                (uint256(position.amount1) * uint256(uint128(params.amount))) / (totalSupply)
+            );
         }
-        return (position, amount0Fees, amount1Fees);
+        return (position, feesBurned0, feesBurned1);
     }
 
     function rangeFeeGrowth(
@@ -560,7 +491,7 @@ library Positions {
             cache.position.feeGrowthInside0Last,
             cache.position.feeGrowthInside1Last
         )
-            = IRangePool(pool).positions(owner, lower, upper);
+            = IRangePool(pool).positions(lower, upper);
         
         cache.userBalance = Tokens.balanceOf(pool, owner, lower, upper);
         cache.totalSupply = Tokens.totalSupply(pool, lower, upper);

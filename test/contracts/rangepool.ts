@@ -13,6 +13,7 @@ import {
   PoolState,
   getTickAtPrice,
   getFeeGrowthGlobal,
+  getRangeBalanceOf,
 } from '../utils/contracts/rangepool'
 
 alice: SignerWithAddress
@@ -74,7 +75,6 @@ describe('RangePool Tests', function () {
       upper: '60',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: false,
       balance0Decrease: BN_ZERO,
       balance1Decrease: tokenAmount,
       liquidityIncrease: liquidityAmount,
@@ -97,10 +97,9 @@ describe('RangePool Tests', function () {
       lower: '20',
       upper: '40',
       liquidityAmount: liquidityAmount,
-      fungible: false,
       balance0Increase: BN_ZERO,
       balance1Increase: tokenAmount.sub(1),
-      revertMessage: 'NotEnoughPositionLiquidity()',
+      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 52004084279811976585680024683007596365403983090071424474336696696308291582740, 49902591570441687020675)',
     })
 
     await validateBurn({
@@ -108,22 +107,27 @@ describe('RangePool Tests', function () {
       lower: '20',
       upper: '60',
       liquidityAmount: liquidityAmount.add(1),
-      fungible: false,
       balance0Increase: BN_ZERO,
       balance1Increase: tokenAmount.sub(1),
-      revertMessage: 'NotEnoughPositionLiquidity()',
+      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 84175109820460744055339126001827919702192640648716177173677299224470599300732, 49902591570441687020676)',
     })
+
+    if (debugMode) await getRangeBalanceOf(hre.props.alice, 20, 60)
 
     await validateBurn({
       signer: hre.props.alice,
       lower: '20',
       upper: '60',
       liquidityAmount: liquidityAmount,
-      fungible: false,
       balance0Increase: tokenAmount.div(10).sub(1),
       balance1Increase: BigNumber.from('89946873348418057510'),
       revertMessage: '',
     })
+    
+    if (debugMode){
+      console.log('after burn')
+      await getRangeBalanceOf(hre.props.alice, 20, 60)
+    }
 
     if (balanceCheck) {
       console.log('balance after token0:', (await hre.props.token0.balanceOf(hre.props.rangePool.address)).toString())
@@ -144,7 +148,6 @@ describe('RangePool Tests', function () {
       upper: '60',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: false,
       balance0Decrease: BigNumber.from('11118295473149384055'),
       balance1Decrease: BigNumber.from('100000000000000000000'),
       liquidityIncrease: aliceLiquidity,
@@ -167,16 +170,22 @@ describe('RangePool Tests', function () {
 
     if (debugMode) await getTickAtPrice()
 
+    if (debugMode) await getRangeBalanceOf(hre.props.alice, 20, 60)
+
     await validateBurn({
       signer: hre.props.alice,
       lower: '20',
       upper: '60',
       liquidityAmount: aliceLiquidity,
-      fungible: false,
       balance0Increase: BigNumber.from('110739133337787245411'),
       balance1Increase: BigNumber.from('49999999999999999'),
       revertMessage: '',
     })
+
+    if (debugMode){
+      console.log('after burn')
+      await getRangeBalanceOf(hre.props.alice, 20, 60)
+    }
 
     if (balanceCheck) {
       console.log('balance after token0:', (await hre.props.token0.balanceOf(hre.props.rangePool.address)).toString())
@@ -186,6 +195,7 @@ describe('RangePool Tests', function () {
 
   it('token0 - Should mint and burn fungible position', async function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
+    const aliceLiquidity = BigNumber.from('419027207938949970576')
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -193,11 +203,10 @@ describe('RangePool Tests', function () {
       upper: '20000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('0'),
-      tokenAmount: BigNumber.from('419027207938949970576'),
-      liquidityIncrease: BigNumber.from('419027207938949970576'),
+      tokenAmount: aliceLiquidity,
+      liquidityIncrease: aliceLiquidity,
       revertMessage: '',
       collectRevertMessage: ''
     })
@@ -238,33 +247,22 @@ describe('RangePool Tests', function () {
     // reverts because fungible passed as false
     await validateBurn({
       signer: hre.props.alice,
-      lower: '10000',
+      lower: '10020',
       upper: '20000',
-      liquidityAmount: BigNumber.from('170245243948753558591'),
-      fungible: false,
+      liquidityAmount: aliceLiquidity.add(1),
       balance0Increase: BN_ZERO,
       balance1Increase: BN_ZERO,
-      revertMessage: 'NotEnoughPositionLiquidity()',
+      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 6218138040528368831964571869767811158861841082162340705251949460170393461339, 419027207938949970577)',
     })
+
+    if (debugMode) await getRangeBalanceOf(hre.props.alice, 10000, 20000)
 
     await validateBurn({
       signer: hre.props.alice,
       lower: '10000',
       upper: '20000',
-      liquidityAmount: BigNumber.from('419027207938949970577'),
-      fungible: true,
-      balance0Increase: BN_ZERO,
-      balance1Increase: BN_ZERO,
-      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2236771031221735906744102008774832778161797975119947154210717982934819779160, 419027207938949970577)',
-    })
-
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '10000',
-      upper: '20000',
-      tokenAmount: BigNumber.from('419027207938949970576'),
-      liquidityAmount: BigNumber.from('419027207938949970576'),
-      fungible: true,
+      tokenAmount: aliceLiquidity,
+      liquidityAmount: aliceLiquidity,
       balance0Increase: tokenAmount.sub(1),
       balance1Increase: BN_ZERO,
       revertMessage: '',
@@ -285,7 +283,6 @@ describe('RangePool Tests', function () {
       upper: '20000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('0'),
       tokenAmount: BigNumber.from('419027207938949970576'),
@@ -305,24 +302,11 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
 
-    // reverts because fungible passed as false
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '10000',
-      upper: '20000',
-      liquidityAmount: BigNumber.from('170245243948753558591'),
-      fungible: false,
-      balance0Increase: BN_ZERO,
-      balance1Increase: BN_ZERO,
-      revertMessage: 'NotEnoughPositionLiquidity()',
-    })
-
     await validateBurn({
       signer: hre.props.alice,
       lower: '10000',
       upper: '20000',
       liquidityAmount: BigNumber.from('419027207938949970577'),
-      fungible: true,
       balance0Increase: BN_ZERO,
       balance1Increase: BN_ZERO,
       revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2236771031221735906744102008774832778161797975119947154210717982934819779160, 419027207938949970577)',
@@ -336,7 +320,6 @@ describe('RangePool Tests', function () {
       upper: '20000',
       tokenAmount: BigNumber.from('419027207938949970576'),
       liquidityAmount: BigNumber.from('419027207938949970576'),
-      fungible: true,
       balance0Increase: BigNumber.from('67878263067906662282'),
       balance1Increase: BigNumber.from('100000000000000000000').sub(1),
       revertMessage: '',
@@ -358,9 +341,9 @@ describe('RangePool Tests', function () {
       upper: '30000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: false,
       balance0Decrease: tokenAmount,
       balance1Decrease: BN_ZERO,
+      tokenAmount: liquidityAmount2,
       liquidityIncrease: liquidityAmount2,
       revertMessage: '',
     })
@@ -376,23 +359,13 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
 
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '20000',
-      upper: '30000',
-      liquidityAmount: liquidityAmount2,
-      fungible: true,
-      balance0Increase: BN_ZERO,
-      balance1Increase: tokenAmount.sub(1),
-      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 46917584274566950978499300549752982364206881961648429939058743511297364061881, 690841800621472456980)',
-    })
+    if (debugMode) await getRangeBalanceOf(hre.props.alice, 25000, 30000)
 
     await validateBurn({
       signer: hre.props.alice,
       lower: '20000',
       upper: '30000',
       liquidityAmount: liquidityAmount2,
-      fungible: false,
       balance0Increase: BigNumber.from('98654354619033495329'),
       balance1Increase: tokenAmount.div(10).sub(1),
       revertMessage: '',
@@ -404,10 +377,11 @@ describe('RangePool Tests', function () {
     }
   })
 
-  it('token1 - Should mint, swap, and burn custom position while in range', async function () {
+  it('token1 - Should mint, swap, and burn position while in range', async function () {
     if (debugMode) await getTickAtPrice()
     const aliceLiquidity = BigNumber.from('1577889144107833733009')
     const aliceLiquidity2 = BigNumber.from('1590926220637829792707')
+    const aliceTokenAmount = BigNumber.from('3168808846234106973665')
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -415,7 +389,6 @@ describe('RangePool Tests', function () {
       upper: '30000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: false,
       balance0Decrease: tokenAmount,
       balance1Decrease: BN_ZERO,
       liquidityIncrease: aliceLiquidity,
@@ -440,7 +413,6 @@ describe('RangePool Tests', function () {
       upper: '30000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: false,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('10082623526365456124'),
       liquidityIncrease: aliceLiquidity2,
@@ -451,9 +423,22 @@ describe('RangePool Tests', function () {
       signer: hre.props.alice,
       lower: '25000',
       upper: '30000',
+      tokenAmount: aliceTokenAmount.add(1),
       liquidityAmount: aliceLiquidity.add(aliceLiquidity2),
-      fungible: false,
       balance0Increase: BigNumber.from('199180535441500909413'),
+      balance1Increase: BigNumber.from('20082623526365456123'),
+      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 57647542114002963046563858950471683132924844866766617044886400134835958049633, 3168808846234106973666)',
+    })
+
+    if (debugMode) await getRangeBalanceOf(hre.props.alice, 25000, 30000)
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '25000',
+      upper: '30000',
+      tokenAmount: aliceTokenAmount,
+      liquidityAmount: aliceLiquidity.add(aliceLiquidity2),
+      balance0Increase: BigNumber.from('199180945173780158958'),
       balance1Increase: BigNumber.from('20082623526365456123'),
       revertMessage: '',
     })
@@ -476,7 +461,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BN_ZERO,
       balance1Decrease: tokenAmount,
       tokenAmount: aliceLiquidity,
@@ -502,7 +486,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('90970905615086187051'),
       tokenAmount: aliceToken2,
@@ -517,7 +500,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       tokenAmount: BigNumber.from('11988250493261524638130'),
       liquidityAmount: BigNumber.from('11986657697951620560434'),
-      fungible: true,
       balance0Increase: BigNumber.from('150000000000000000000').sub(1),
       balance1Increase: BigNumber.from('144243177493286617044'),
       revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2381093050879867228278279701469820094323623974324911225843268442440969283554, 11988250493261524638130)',
@@ -529,7 +511,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       tokenAmount: aliceLiquidity.add(aliceToken2),
       liquidityAmount: aliceLiquidity.add(aliceLiquidity2),
-      fungible: true,
       balance0Increase: BigNumber.from('150000000000000000000').sub(1),
       balance1Increase: BigNumber.from('136483615696225509029'),
       revertMessage: '',
@@ -553,7 +534,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('90970905615086187051'),
       tokenAmount: aliceLiquidity,
@@ -602,7 +582,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BigNumber.from('0'),
       balance1Decrease: BigNumber.from('100000000000000000000'),
       tokenAmount: aliceToken2,
@@ -617,7 +596,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       tokenAmount: aliceLiquidity.add(aliceToken2).add(1),
       liquidityAmount: BigNumber.from('11986657697951620560434'),
-      fungible: true,
       balance0Increase: BigNumber.from('153013648220322291925'),
       balance1Increase: BigNumber.from('144243177493286617045'),
       revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2381093050879867228278279701469820094323623974324911225843268442440969283554, 11557073070124432353430)'
@@ -629,7 +607,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       tokenAmount: aliceLiquidity.add(aliceToken2),
       liquidityAmount: BigNumber.from('11559154372605880114611'), //TODO: investigate
-      fungible: true,
       balance0Increase: BigNumber.from('62500000000000000'),
       balance1Increase: BigNumber.from('300013568033977842760'),
       revertMessage: '',
@@ -651,7 +628,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BigNumber.from('0'),
       balance1Decrease: BigNumber.from('100000000000000000000'),
       tokenAmount: BigNumber.from('3852877204305891777654'),
@@ -680,7 +656,6 @@ describe('RangePool Tests', function () {
       upper: '600',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BigNumber.from('0'),
       balance1Decrease: BigNumber.from('100000000000000000000'),
       tokenAmount: BigNumber.from('4901161634764542438934'),
@@ -694,7 +669,6 @@ describe('RangePool Tests', function () {
       upper: '600',
       tokenAmount: BigNumber.from('4901161634764542438934'),
       liquidityAmount: BigNumber.from('4901161634764542438934'),
-      fungible: true,
       balance0Increase: BigNumber.from('0'),
       balance1Increase: tokenAmount.sub(1),
       revertMessage: '',
@@ -706,7 +680,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       tokenAmount: BigNumber.from('3852877204305891777654'),
       liquidityAmount: BigNumber.from('3852877204305891777654'),
-      fungible: true,
       balance0Increase: BigNumber.from('50000000000000000000').sub(1),
       balance1Increase: BigNumber.from('45512710081139321979').sub(1),
       revertMessage: '',
@@ -731,7 +704,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BigNumber.from('100000000000000000000'),
       balance1Decrease: BigNumber.from('90970905615086187051'),
       tokenAmount: aliceLiquidity,
@@ -758,7 +730,6 @@ describe('RangePool Tests', function () {
       upper: '800',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BigNumber.from('31002239349424966834'),
       balance1Decrease: BigNumber.from('100000000000000000000'),
       tokenAmount: bobLiquidity,
@@ -772,7 +743,6 @@ describe('RangePool Tests', function () {
       upper: '800',
       tokenAmount: bobLiquidity2,
       liquidityAmount: bobLiquidity2,
-      fungible: true,
       balance0Increase: BigNumber.from('11786622206938309591'),
       balance1Increase: BigNumber.from('38018615604156121196'),
       revertMessage: '',
@@ -784,7 +754,6 @@ describe('RangePool Tests', function () {
       upper: '800',
       tokenAmount: bobLiquidity.sub(bobLiquidity2),
       liquidityAmount: bobLiquidity.sub(bobLiquidity2),
-      fungible: true,
       balance0Increase: BigNumber.from('19215617142486657241'),
       balance1Increase: BigNumber.from('61981384395843878803'),
       revertMessage: '',
@@ -796,7 +765,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       tokenAmount: aliceLiquidity,
       liquidityAmount: aliceLiquidity,
-      fungible: true,
       balance0Increase: BigNumber.from('92198793754243677819'),
       balance1Increase: BigNumber.from('99375039384589972730'),
       revertMessage: '',
@@ -832,7 +800,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: BigNumber.from('0'),
       balance1Decrease: tokenAmount,
       tokenAmount: aliceLiquidity,
@@ -859,7 +826,6 @@ describe('RangePool Tests', function () {
       upper: '800',
       amount0: tokenAmount,
       amount1: tokenAmount,
-      fungible: true,
       balance0Decrease: tokenAmount,
       balance1Decrease: BN_ZERO,
       tokenAmount: bobLiquidity,
@@ -873,7 +839,6 @@ describe('RangePool Tests', function () {
       upper: '800',
       tokenAmount: bobLiquidity.div(2),
       liquidityAmount: bobLiquidity.div(2),
-      fungible: true,
       balance0Increase: BigNumber.from('50000000000000000000').sub(1),
       balance1Increase: BN_ZERO,
       revertMessage: '',
@@ -885,7 +850,6 @@ describe('RangePool Tests', function () {
       upper: '800',
       tokenAmount: bobLiquidity.div(2),
       liquidityAmount: bobLiquidity.div(2),
-      fungible: true,
       balance0Increase: BigNumber.from('50000000000000000000').sub(1),
       balance1Increase: BN_ZERO,
       revertMessage: '',
@@ -897,7 +861,6 @@ describe('RangePool Tests', function () {
       upper: '1000',
       tokenAmount: aliceLiquidity,
       liquidityAmount: aliceLiquidity,
-      fungible: true,
       balance0Increase: BigNumber.from('92774696514123048138'),
       balance1Increase: BigNumber.from('49999999999999999'),
       revertMessage: '',
