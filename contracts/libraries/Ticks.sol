@@ -34,8 +34,6 @@ library Ticks {
     uint256 internal constant Q96 = 0x1000000000000000000000000;
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 
-    using Ticks for mapping(int24 => IRangePoolStructs.Tick);
-
     function initialize(
         IRangePoolStructs.TickMap storage tickMap,
         IRangePoolStructs.Sample[65535] storage samples,
@@ -60,7 +58,7 @@ library Ticks {
         int24 lower,
         int24 upper,
         int24 tickSpacing
-    ) public pure {
+    ) internal pure {
         if (lower % tickSpacing != 0) require(false, 'InvalidLowerTick()');
         if (lower <= TickMath.MIN_TICK) require(false, 'InvalidLowerTick()');
         if (upper % tickSpacing != 0) require(false, 'InvalidUpperTick()');
@@ -72,30 +70,27 @@ library Ticks {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.Sample[65535] storage samples,
         IRangePoolStructs.TickMap storage tickMap,
-        address recipient,
-        bool zeroForOne,
-        uint160 priceLimit,
-        uint16 swapFee,
-        uint256 amountIn,
+        IRangePoolStructs.SwapParams memory params,
+        IRangePoolStructs.SwapCache memory cache,
         IRangePoolStructs.PoolState memory pool
-    )
-        external returns (
+    ) internal returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
         )
     {
-        IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
+        cache = IRangePoolStructs.SwapCache({
+            constants: cache.constants,
+            pool: cache.pool,
             price: pool.price,
             liquidity: pool.liquidity,
             cross: true,
-            crossTick: zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
-                                  : TickMap.next(tickMap, pool.tickAtPrice),
+            crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
+                                         : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
-            swapFee: swapFee,
             protocolFee: pool.protocolFee,
-            input: amountIn,
+            input: params.amountIn,
             output: 0,
-            amountIn: amountIn,
+            amountIn: params.amountIn,
             tickSecondsAccum: 0,
             secondsPerLiquidityAccum: 0
         });
@@ -117,14 +112,14 @@ library Ticks {
         );
         while (cache.cross) {
             cache.crossPrice = TickMath.getSqrtRatioAtTick(cache.crossTick);
-            (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
+            (pool, cache) = _quoteSingle(params.zeroForOne, params.priceLimit, pool, cache);
             if (cache.cross) {
                 (pool, cache) = _cross(
                     ticks,
                     tickMap,
                     pool,
                     cache,
-                    zeroForOne
+                    params.zeroForOne
                 );
             }
         }
@@ -145,9 +140,9 @@ library Ticks {
             pool.tickAtPrice = cache.crossTick;
         }
         emit Swap(
-            recipient,
-            zeroForOne,
-            amountIn - cache.input,
+            params.to,
+            params.zeroForOne,
+            params.amountIn - cache.input,
             cache.output, /// @dev - subgraph will do math to compute fee amount
             pool.price,
             pool.liquidity,
@@ -159,41 +154,40 @@ library Ticks {
     function quote(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.TickMap storage tickMap,
-        bool zeroForOne,
-        uint160 priceLimit,
-        uint16 swapFee,
-        uint256 amountIn,
+        IRangePoolStructs.QuoteParams memory params,
+        IRangePoolStructs.SwapCache memory cache,
         IRangePoolStructs.PoolState memory pool
-    ) external view returns (
+    ) internal view returns (
             IRangePoolStructs.PoolState memory,
             IRangePoolStructs.SwapCache memory
         )
     {
-        IRangePoolStructs.SwapCache memory cache = IRangePoolStructs.SwapCache({
+        cache = IRangePoolStructs.SwapCache({
+            constants: cache.constants,
+            pool: cache.pool,
             price: pool.price,
             liquidity: pool.liquidity,
             cross: true,
-            crossTick: zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
-                                  : TickMap.next(tickMap, pool.tickAtPrice),
+            crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
+                                         : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
-            swapFee: swapFee,
             protocolFee: pool.protocolFee,
-            input: amountIn,
+            input: params.amountIn,
             output: 0,
-            amountIn: amountIn,
+            amountIn: params.amountIn,
             tickSecondsAccum: 0,
             secondsPerLiquidityAccum: 0
         });
         while (cache.cross) {
             cache.crossPrice = TickMath.getSqrtRatioAtTick(cache.crossTick);
-            (pool, cache) = _quoteSingle(zeroForOne, priceLimit, pool, cache);
+            (pool, cache) = _quoteSingle(params.zeroForOne, params.priceLimit, pool, cache);
             if (cache.cross) {
                 (pool, cache) = _pass(
                     ticks,
                     tickMap,
                     pool,
                     cache,
-                    zeroForOne
+                    params.zeroForOne
                 );
             }
         }
@@ -324,8 +318,8 @@ library Ticks {
             unchecked {
                 cache.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
             }
-            cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
             pool.tickAtPrice = cache.crossTick;
+            cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
         } else {
             unchecked {
                 cache.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
@@ -344,7 +338,7 @@ library Ticks {
         int24 lower,
         int24 upper,
         uint128 amount
-    ) external returns (IRangePoolStructs.PoolState memory) {
+    ) internal returns (IRangePoolStructs.PoolState memory) {
         validate(lower, upper, IRangePool(address(this)).tickSpacing());
         // check for amount to overflow liquidity delta & global
         if (amount == 0) return state;
@@ -439,7 +433,7 @@ library Ticks {
         int24 lower,
         int24 upper,
         uint128 amount
-    ) external returns (IRangePoolStructs.PoolState memory) {
+    ) internal returns (IRangePoolStructs.PoolState memory) {
         validate(lower, upper, IRangePool(address(this)).tickSpacing());
         //check for amount to overflow liquidity delta & global
         if (amount == 0) return state;

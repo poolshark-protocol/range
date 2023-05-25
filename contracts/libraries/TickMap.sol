@@ -16,7 +16,7 @@ library TickMap {
         IRangePoolStructs.TickMap storage tickMap,
         int24 tick,
         int24 tickSpacing
-    ) external returns (
+    ) internal returns (
         bool exists
     )    
     {
@@ -26,7 +26,7 @@ library TickMap {
     function set(
         IRangePoolStructs.TickMap storage tickMap,
         int24 tick
-    ) external returns (
+    ) internal returns (
         bool exists
     )    
     {
@@ -37,7 +37,7 @@ library TickMap {
     function unset(
         IRangePoolStructs.TickMap storage tickMap,
         int24 tick
-    ) external {
+    ) internal {
         int24 tickSpacing = IRangePool(address(this)).tickSpacing();
         (
             uint256 tickIndex,
@@ -57,7 +57,7 @@ library TickMap {
     function previous(
         IRangePoolStructs.TickMap storage tickMap,
         int24 tick
-    ) external view returns (
+    ) internal view returns (
         int24 previousTick
     ) {
         unchecked {
@@ -90,7 +90,7 @@ library TickMap {
     function next(
         IRangePoolStructs.TickMap storage tickMap,
         int24 tick
-    ) external view returns (
+    ) internal view returns (
         int24 nextTick
     ) {
         unchecked {

@@ -9,6 +9,9 @@ import './libraries/Ticks.sol';
 import './libraries/Tokens.sol';
 import './utils/RangePoolErrors.sol';
 import './utils/SafeTransfers.sol';
+import './libraries/pool/MintCall.sol';
+import './libraries/pool/BurnCall.sol';
+import './libraries/pool/SwapCall.sol';
 
 contract RangePool is 
     RangePoolERC1155,
@@ -49,7 +52,6 @@ contract RangePool is
         // set global state
         PoolState memory pool;
         pool.price = _startPrice;
-        pool.tickAtPrice = TickMath.getTickAtSqrtRatio(pool.price);
         pool.unlocked = 1;
 
         // set immutables
@@ -63,7 +65,6 @@ contract RangePool is
             pool,
             tickSpacing
         );
-
         // save pool state
         poolState = pool;
     }
@@ -71,144 +72,44 @@ contract RangePool is
     function mint(
         MintParams memory params
     ) external lock {
-        PoolState memory pool = poolState;
-        Position memory position = positions[params.lower][params.upper];
-        (position, , ) = Positions.update(
-                ticks,
-                position,
-                pool,
-                UpdateParams(
-                    params.lower,
-                    params.upper,
-                    0
-                )
-        );
-        uint256 liquidityMinted;
-        (params, liquidityMinted) = Positions.validate(params, pool, _immutables());
-        if (params.amount0 > 0) _transferIn(token0, params.amount0);
-        if (params.amount1 > 0) _transferIn(token1, params.amount1);
-        if (position.amount0 > 0 || position.amount1 > 0) {
-            (position, pool) = Positions.compound(
-                position,
-                ticks,
-                samples,
-                tickMap,
-                pool,
-                CompoundParams( 
-                    params.lower,
-                    params.upper
-                )
-            );
-        }
-        // update position with latest fees accrued
-        (pool, position, liquidityMinted) = Positions.add(
-            position,
-            ticks,
-            samples,
-            tickMap,
-            AddParams(
-                pool, 
-                params,
-                uint128(liquidityMinted),
-                uint128(liquidityMinted)
-            )
-        );
-        positions[params.lower][params.upper] = position;
-        poolState = pool; 
+        MintCache memory cache = MintCache({
+            pool: poolState,
+            position: positions[params.lower][params.upper],
+            constants: _immutables(),
+            liquidityMinted: 0
+        });
+        cache = MintCall.perform(params, cache, tickMap, ticks, samples);
+        positions[params.lower][params.upper] = cache.position;
+        poolState = cache.pool; 
     }
 
     function burn(
         BurnParams memory params
     ) external lock {
-        PoolState memory pool = poolState;
-        Position memory position = positions[params.lower][params.upper];
-        uint128 amount0;
-        uint128 amount1;
-        (
-            position,
-            amount0,
-            amount1
-        ) = Positions.update(
-                ticks,
-                position,
-                pool,
-                UpdateParams(
-                    params.lower,
-                    params.upper,
-                    uint128(params.amount)
-                )
-        );
-        (pool, position, amount0, amount1) = Positions.remove(
-            position,
-            ticks,
-            samples,
-            tickMap,
-            pool,
-            params,
-            RemoveParams(
-                amount0,
-                amount1
-            )
-        );
-        position.amount0 -= amount0;
-        position.amount1 -= amount1;
-        if (position.amount0 > 0 || position.amount1 > 0) {
-            (position, pool) = Positions.compound(
-                position,
-                ticks,
-                samples,
-                tickMap,
-                pool,
-                CompoundParams(
-                    params.lower,
-                    params.upper
-                )
-            );
-        }
-        if (amount0 > 0) _transferOut(params.to, token0, amount0);
-        if (amount1 > 0) _transferOut(params.to, token1, amount1);
-        poolState = pool;
-        positions[params.lower][params.upper] = position;
+        BurnCache memory cache = BurnCache({
+            pool: poolState,
+            position: positions[params.lower][params.upper],
+            constants: _immutables(),
+            amount0: 0,
+            amount1: 0
+        });
+        cache = BurnCall.perform(params, cache, tickMap, ticks, samples);
+        poolState = cache.pool;
+        positions[params.lower][params.upper] = cache.position;
     }
 
     function swap(
-        address recipient,
-        address refundRecipient,
-        bool zeroForOne,
-        uint256 amountIn,
-        uint160 priceLimit
+        SwapParams memory params
     ) external override lock returns(
         int256,
         int256
     )
     {
-        if (amountIn == 0) return (0,0);
-        _transferIn(zeroForOne ? token0 : token1, amountIn);
-        PoolState memory pool = poolState;
+        if (params.amountIn == 0) return (0,0);
         SwapCache memory cache;
-        (pool, cache) = Ticks.swap(
-            ticks,
-            samples,
-            tickMap,
-            recipient,
-            zeroForOne,
-            priceLimit,
-            swapFee,
-            amountIn,
-            pool
-        );
-        if (zeroForOne) {
-            if (cache.input > 0) {
-                _transferOut(refundRecipient, token0, cache.input);
-            }
-            _transferOut(recipient, token1, cache.output);
-        } else {
-            if (cache.input > 0) {
-                _transferOut(refundRecipient, token1, cache.input);
-            }
-            _transferOut(recipient, token0, cache.output);
-        }
-        poolState = pool;
+        cache.pool = poolState;
+        cache.constants = _immutables();
+        poolState = SwapCall.perform(params, cache, tickMap, ticks, samples);
     }
 
     function increaseSampleLength(
@@ -222,9 +123,7 @@ contract RangePool is
     }
 
     function quote(
-        bool zeroForOne,
-        uint256 amountIn,
-        uint160 priceLimit
+        QuoteParams memory params
     ) external view override returns (
         uint256,
         uint256,
@@ -233,19 +132,18 @@ contract RangePool is
         // quote with low price limit
         PoolState memory pool = poolState;
         SwapCache memory cache;
+        cache.pool = poolState;
+        cache.constants = _immutables();
         // take fee from inputAmount
-        
         (pool, cache) = Ticks.quote(
             ticks,
             tickMap,
-            zeroForOne,
-            priceLimit,
-            swapFee,
-            amountIn,
+            params,
+            cache,
             pool
         );
         return (
-            amountIn - cache.input,
+            params.amountIn - cache.input,
             cache.output,
             pool.price
         );
@@ -287,6 +185,8 @@ contract RangePool is
 
     function _immutables() private view returns (Immutables memory) {
         return Immutables(
+            token0,
+            token1,
             swapFee,
             tickSpacing
         );

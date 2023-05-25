@@ -5,16 +5,8 @@ pragma solidity 0.8.13;
 library PrecisionMath {
     error MaxUintExceeded();
 
-    function mulDiv(
-        uint256 a,
-        uint256 b,
-        uint256 denominator
-    ) external pure returns (uint256 result) {
-        return _mulDiv(a, b, denominator);
-    }
-
     // @dev no underflow or overflow checks
-    function divRoundingUp(uint256 x, uint256 y) external pure returns (uint256 z) {
+    function divRoundingUp(uint256 x, uint256 y) internal pure returns (uint256 z) {
         assembly {
             z := add(div(x, y), gt(mod(x, y), 0))
         }
@@ -24,7 +16,7 @@ library PrecisionMath {
         uint256 a,
         uint256 b,
         uint256 denominator
-    ) external pure returns (uint256 result) {
+    ) internal pure returns (uint256 result) {
         return _mulDivRoundingUp(a, b, denominator);
     }
 
@@ -34,7 +26,7 @@ library PrecisionMath {
     /// @param denominator The divisor.
     /// @return result The 256-bit result.
     /// @dev Credit to Remco Bloemen under MIT license https://xn--2-umb.com/21/muldiv.
-    function _mulDiv(
+    function mulDiv(
         uint256 a,
         uint256 b,
         uint256 denominator
@@ -132,7 +124,7 @@ library PrecisionMath {
         uint256 b,
         uint256 denominator
     ) internal pure returns (uint256 result) {
-        result = _mulDiv(a, b, denominator);
+        result = mulDiv(a, b, denominator);
         unchecked {
             if (mulmod(a, b, denominator) != 0) {
                 if (result >= type(uint256).max) revert MaxUintExceeded();
