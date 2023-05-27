@@ -198,5 +198,90 @@
             "constructorArguments": [],
             "created": "2023-05-25T03:12:04.675Z"
         }
+    },
+    "scroll_alpha": {
+        "token0": {
+            "contractName": "Token20",
+            "contractAddress": "0x58d8235108E12E6B725A53B57CD0b00C5eDeE0da",
+            "constructorArguments": [
+                "Token20A",
+                "TOKEN20A",
+                18
+            ],
+            "created": "2023-05-27T23:48:32.579Z"
+        },
+        "token1": {
+            "contractName": "Token20",
+            "contractAddress": "0x895e1c476130cE9e1b19E01be8801f19122a958C",
+            "constructorArguments": [
+                "Token20B",
+                "TOKEN20B",
+                18
+            ],
+            "created": "2023-05-27T23:48:32.588Z"
+        },
+        "tickMathLib": {
+            "contractName": "TickMath",
+            "contractAddress": "0xebF57CB31Ed38e6ccB53FB71bA246eA549c42E51",
+            "constructorArguments": [],
+            "created": "2023-05-27T23:48:39.429Z"
+        },
+        "ticksLib": {
+            "contractName": "Ticks",
+            "contractAddress": "0x66864e3954daC74b9377Ef25E4B47Ca47423688E",
+            "constructorArguments": [],
+            "created": "2023-05-27T23:48:45.627Z"
+        },
+        "positionsLib": {
+            "contractName": "Positions",
+            "contractAddress": "0x7183FfeEfc0883D499c52c1a1DFf1aF716467a46",
+            "constructorArguments": [],
+            "created": "2023-05-27T23:48:52.976Z"
+        },
+        "mintCall": {
+            "contractName": "MintCall",
+            "contractAddress": "0xDe95e92Dd151C39eb51CFAe80fDFf4d6C32C1fAD",
+            "constructorArguments": [],
+            "created": "2023-05-27T23:49:00.782Z"
+        },
+        "burnCall": {
+            "contractName": "BurnCall",
+            "contractAddress": "0xAEbb759D7504568D9ECDc2122F0d848bBeceeAfC",
+            "constructorArguments": [],
+            "created": "2023-05-27T23:49:07.691Z"
+        },
+        "swapCall": {
+            "contractName": "SwapCall",
+            "contractAddress": "0xFA807ce77b103129597CcE4a7Bf7F504F9e7BD9e",
+            "constructorArguments": [],
+            "created": "2023-05-27T23:49:18.526Z"
+        },
+        "rangePoolManager": {
+            "contractName": "RangePoolManager",
+            "contractAddress": "0x96c2815F7c750eb15d8d85c522dfF85EadAA1cD5",
+            "constructorArguments": [],
+            "created": "2023-05-27T23:49:24.764Z"
+        },
+        "rangePoolFactory": {
+            "contractName": "RangePoolFactory",
+            "contractAddress": "0xD190cf03EC10DEc87F51A18285af3851815505E8",
+            "constructorArguments": [
+                "0x96c2815F7c750eb15d8d85c522dfF85EadAA1cD5"
+            ],
+            "created": "2023-05-27T23:49:32.160Z"
+        },
+        "rangePool": {
+            "contractName": "RangePool",
+            "contractAddress": "0xe4FCFFC96143b0B4b4c771432A85B969a9267D45",
+            "constructorArguments": [
+                "0x58d8235108E12E6B725A53B57CD0b00C5eDeE0da",
+                "0x895e1c476130cE9e1b19E01be8801f19122a958C",
+                "0x96c2815F7c750eb15d8d85c522dfF85EadAA1cD5",
+                "177159557114295710296101716160",
+                "10",
+                "500"
+            ],
+            "created": "2023-05-27T23:49:50.620Z"
+        }
     }
 }

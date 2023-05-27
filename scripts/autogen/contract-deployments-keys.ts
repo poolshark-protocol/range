@@ -2,55 +2,47 @@ import { ContractDeploymentsKey } from '../util/files/contractDeploymentsJson'
 
 export const CONTRACT_DEPLOYMENT_KEYS: ContractDeploymentsKey[] = [
     {
-        networkName: 'arb_goerli',
-        objectName: 'tokenA'
+        networkName: 'undefined',
+        objectName: 'token0'
     },
     {
-        networkName: 'arb_goerli',
-        objectName: 'tokenB'
-    },
-    {
-        networkName: 'arb_goerli',
+        networkName: 'undefined',
         objectName: 'token1'
     },
     {
-        networkName: 'arb_goerli',
-        objectName: 'tokenB'
-    },
-    {
-        networkName: 'arb_goerli',
+        networkName: 'undefined',
         objectName: 'tickMathLib'
     },
     {
-        networkName: 'arb_goerli',
+        networkName: 'undefined',
         objectName: 'ticksLib'
     },
     {
-        networkName: 'arb_goerli',
+        networkName: 'undefined',
         objectName: 'positionsLib'
     },
     {
-        networkName: 'arb_goerli',
+        networkName: 'undefined',
         objectName: 'mintCall'
     },
     {
-        networkName: 'arb_goerli',
+        networkName: 'undefined',
         objectName: 'burnCall'
     },
     {
-        networkName: 'arb_goerli',
+        networkName: 'undefined',
         objectName: 'swapCall'
     },
     {
-        networkName: 'arb_goerli',
+        networkName: 'undefined',
         objectName: 'rangePoolManager'
     },
     {
-        networkName: 'arb_goerli',
+        networkName: 'undefined',
         objectName: 'rangePoolFactory'
     },
     {
-        networkName: 'arb_goerli',
+        networkName: 'undefined',
         objectName: 'rangePool'
     },
 ];

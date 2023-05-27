@@ -48,6 +48,14 @@ const config: HardhatUserConfig = {
             timeout: 60000,
             allowUnlimitedContractSize: true,
         },
+        scroll_alpha: {
+            chainId: 534353,
+            gasPrice: 4000000,
+            url: process.env.SCROLL_ALPHA_URL || '',
+            accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+            timeout: 60000,
+            allowUnlimitedContractSize: true,
+        },
         op_goerli: {
             chainId: 420,
             gasPrice: 5,
