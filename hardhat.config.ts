@@ -65,10 +65,21 @@ const config: HardhatUserConfig = {
             allowUnlimitedContractSize: true,
         },
     },
-    etherscan: {
+    etherscan: { 
         apiKey: {
-            arbitrumGoerli: process.env.ARBITRUM_GOERLI_API_KEY
+            arbitrumGoerli: process.env.ARBITRUM_GOERLI_API_KEY,
+            scroll_alpha: 'abc',
         },
+        customChains: [
+            {
+              network: 'scroll_alpha',
+              chainId: 534353,
+              urls: {
+                apiURL: 'https://blockscout.scroll.io/api',
+                browserURL: 'https://blockscout.scroll.io/',
+              },
+            },
+        ],
     },
 }
 
