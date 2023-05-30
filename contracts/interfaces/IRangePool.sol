@@ -5,13 +5,13 @@ import './IRangePoolStructs.sol';
 import './IRangePoolManager.sol';
 
 interface IRangePool is IRangePoolStructs {
-    function mint(
-        MintParams memory mintParams
-    ) external;
+    // function mint(
+    //     MintParams memory mintParams
+    // ) external;
 
-    function burn(
-        BurnParams memory burnParams
-    ) external;
+    // function burn(
+    //     BurnParams memory burnParams
+    // ) external;
 
     function swap(
         SwapParams memory params
@@ -26,6 +26,23 @@ interface IRangePool is IRangePoolStructs {
         uint256 inAmount,
         uint256 outAmount,
         uint160 priceAfter
+    );
+
+    function sample(
+        uint32[] memory secondsAgo
+    ) external view returns (
+        int56[]   memory tickSecondsAccum,
+        uint160[] memory secondsPerLiquidityAccum 
+    );
+
+    function snapshot(
+        SnapshotParams memory params
+    ) external view returns(
+        int56   tickSecondsAccum,
+        uint160 secondsPerLiquidityAccum,
+        uint32  secondsGrowth,
+        uint128 feesOwed0,
+        uint128 feesOwed1
     );
 
     function increaseSampleLength(

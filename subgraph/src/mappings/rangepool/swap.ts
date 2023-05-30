@@ -54,6 +54,7 @@ export function handleSwap(event: Swap): void {
     token1.usdPrice = token1.ethPrice.times(basePrice.USD)
 
     let oldPoolTVLEth = pool.totalValueLockedEth
+    //TODO: adjust value locked correctly
     pool.totalValueLocked0 = pool.totalValueLocked0.plus(amount0)
     pool.totalValueLocked1 = pool.totalValueLocked1.plus(amount1)
     token0.totalValueLocked = token0.totalValueLocked.plus(amount0)

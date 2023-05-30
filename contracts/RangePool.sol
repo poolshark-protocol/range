@@ -12,6 +12,8 @@ import './utils/SafeTransfers.sol';
 import './libraries/pool/MintCall.sol';
 import './libraries/pool/BurnCall.sol';
 import './libraries/pool/SwapCall.sol';
+import './libraries/pool/QuoteCall.sol';
+import './libraries/pool/SampleCall.sol';
 
 contract RangePool is 
     RangePoolERC1155,
@@ -135,18 +137,26 @@ contract RangePool is
         cache.pool = poolState;
         cache.constants = _immutables();
         // take fee from inputAmount
-        (pool, cache) = Ticks.quote(
-            ticks,
-            tickMap,
+        (pool, cache) = QuoteCall.perform(
             params,
             cache,
-            pool
+            tickMap,
+            ticks
         );
         return (
             params.amountIn - cache.input,
             cache.output,
             pool.price
         );
+    }
+
+    function sample(
+        uint32[] memory secondsAgo
+    ) external view override returns(
+        int56[]   memory tickSecondsAccum,
+        uint160[] memory secondsPerLiquidityAccum
+    ) {
+        return SampleCall.perform(poolState, secondsAgo);
     }
 
     function snapshot(

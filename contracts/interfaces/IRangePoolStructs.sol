@@ -114,7 +114,7 @@ interface IRangePoolStructs {
         uint16 sampleIndex;
         uint16 sampleLength;
         uint32 time;
-        uint32[] secondsAgos;
+        uint32[] secondsAgo;
         int24 tick;
         uint128 liquidity;
     }

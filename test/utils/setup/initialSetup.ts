@@ -16,6 +16,9 @@ import {
   MintCall__factory,
   BurnCall__factory,
   SwapCall__factory,
+  QuoteCall__factory,
+  SampleCall,
+  SampleCall__factory,
 } from '../../../typechain'
 
 export class InitialSetup {
@@ -204,6 +207,22 @@ export class InitialSetup {
     await this.deployAssist.deployContractWithRetry(
       network,
       // @ts-ignore
+      QuoteCall__factory,
+      'quoteCall',
+      []
+    )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
+      SampleCall__factory,
+      'sampleCall',
+      []
+    )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
       RangePoolManager__factory,
       'rangePoolManager',
       []
@@ -222,7 +241,9 @@ export class InitialSetup {
         'contracts/libraries/Ticks.sol:Ticks': hre.props.ticksLib.address,
         'contracts/libraries/pool/MintCall.sol:MintCall': hre.props.mintCall.address,
         'contracts/libraries/pool/BurnCall.sol:BurnCall': hre.props.burnCall.address,
-        'contracts/libraries/pool/SwapCall.sol:SwapCall': hre.props.swapCall.address
+        'contracts/libraries/pool/SwapCall.sol:SwapCall': hre.props.swapCall.address,
+        'contracts/libraries/pool/QuoteCall.sol:QuoteCall': hre.props.quoteCall.address,
+        'contracts/libraries/pool/SampleCall.sol:SampleCall': hre.props.sampleCall.address
       }
     )
     const setFactoryTxn = await hre.props.rangePoolManager
