@@ -73,7 +73,7 @@ contract RangePool is
 
     function mint(
         MintParams memory params
-    ) external lock {
+    ) external override lock {
         MintCache memory cache = MintCache({
             pool: poolState,
             position: positions[params.lower][params.upper],
@@ -87,7 +87,7 @@ contract RangePool is
 
     function burn(
         BurnParams memory params
-    ) external lock {
+    ) external override lock {
         BurnCache memory cache = BurnCache({
             pool: poolState,
             position: positions[params.lower][params.upper],
@@ -161,7 +161,7 @@ contract RangePool is
 
     function snapshot(
        SnapshotParams memory params 
-    ) external view returns (
+    ) external view override returns (
         int56   tickSecondsAccum,
         uint160 secondsPerLiquidityAccum,
         uint32  secondsGrowth,
@@ -179,7 +179,7 @@ contract RangePool is
     function fees(
         uint16 protocolFee,
         bool setFee
-    ) external lock onlyManager returns (
+    ) external override lock onlyManager returns (
         uint128 token0Fees,
         uint128 token1Fees
     ) {

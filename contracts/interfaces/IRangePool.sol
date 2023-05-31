@@ -5,13 +5,13 @@ import './IRangePoolStructs.sol';
 import './IRangePoolManager.sol';
 
 interface IRangePool is IRangePoolStructs {
-    // function mint(
-    //     MintParams memory mintParams
-    // ) external;
+    function mint(
+        MintParams memory mintParams
+    ) external;
 
-    // function burn(
-    //     BurnParams memory burnParams
-    // ) external;
+    function burn(
+        BurnParams memory burnParams
+    ) external;
 
     function swap(
         SwapParams memory params
