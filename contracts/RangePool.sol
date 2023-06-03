@@ -12,6 +12,8 @@ import './utils/SafeTransfers.sol';
 import './libraries/pool/MintCall.sol';
 import './libraries/pool/BurnCall.sol';
 import './libraries/pool/SwapCall.sol';
+import './libraries/pool/QuoteCall.sol';
+import './libraries/pool/SampleCall.sol';
 
 contract RangePool is 
     RangePoolERC1155,
@@ -71,7 +73,7 @@ contract RangePool is
 
     function mint(
         MintParams memory params
-    ) external lock {
+    ) external override lock {
         MintCache memory cache = MintCache({
             pool: poolState,
             position: positions[params.lower][params.upper],
@@ -85,7 +87,7 @@ contract RangePool is
 
     function burn(
         BurnParams memory params
-    ) external lock {
+    ) external override lock {
         BurnCache memory cache = BurnCache({
             pool: poolState,
             position: positions[params.lower][params.upper],
@@ -135,12 +137,11 @@ contract RangePool is
         cache.pool = poolState;
         cache.constants = _immutables();
         // take fee from inputAmount
-        (pool, cache) = Ticks.quote(
-            ticks,
-            tickMap,
+        (pool, cache) = QuoteCall.perform(
             params,
             cache,
-            pool
+            tickMap,
+            ticks
         );
         return (
             params.amountIn - cache.input,
@@ -149,9 +150,18 @@ contract RangePool is
         );
     }
 
+    function sample(
+        uint32[] memory secondsAgo
+    ) external view override returns(
+        int56[]   memory tickSecondsAccum,
+        uint160[] memory secondsPerLiquidityAccum
+    ) {
+        return SampleCall.perform(poolState, secondsAgo);
+    }
+
     function snapshot(
        SnapshotParams memory params 
-    ) external view returns (
+    ) external view override returns (
         int56   tickSecondsAccum,
         uint160 secondsPerLiquidityAccum,
         uint32  secondsGrowth,
@@ -169,7 +179,7 @@ contract RangePool is
     function fees(
         uint16 protocolFee,
         bool setFee
-    ) external lock onlyManager returns (
+    ) external override lock onlyManager returns (
         uint128 token0Fees,
         uint128 token1Fees
     ) {

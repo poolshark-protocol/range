@@ -42,8 +42,16 @@ const config: HardhatUserConfig = {
         },
         arb_goerli: {
             chainId: 421613,
-            gasPrice: 120000000,
+            gasPrice: 200000000,
             url: process.env.ARBITRUM_GOERLI_URL || '',
+            accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+            timeout: 60000,
+            allowUnlimitedContractSize: true,
+        },
+        scroll_alpha: {
+            chainId: 534353,
+            gasPrice: 4000000,
+            url: process.env.SCROLL_ALPHA_URL || '',
             accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
             timeout: 60000,
             allowUnlimitedContractSize: true,
@@ -57,10 +65,21 @@ const config: HardhatUserConfig = {
             allowUnlimitedContractSize: true,
         },
     },
-    etherscan: {
+    etherscan: { 
         apiKey: {
-            arbitrumGoerli: process.env.ARBITRUM_GOERLI_API_KEY
+            arbitrumGoerli: process.env.ARBITRUM_GOERLI_API_KEY,
+            scroll_alpha: 'abc',
         },
+        customChains: [
+            {
+              network: 'scroll_alpha',
+              chainId: 534353,
+              urls: {
+                apiURL: 'https://blockscout.scroll.io/api',
+                browserURL: 'https://blockscout.scroll.io/',
+              },
+            },
+        ],
     },
 }
 

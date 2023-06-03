@@ -100,17 +100,17 @@ library Samples {
     ) {
         if (params.sampleLength == 0) require(false, 'InvalidSampleLength()');
 
-        tickSecondsAccum = new int56[](params.secondsAgos.length);
-        secondsPerLiquidityAccum = new uint160[](params.secondsAgos.length);
+        tickSecondsAccum = new int56[](params.secondsAgo.length);
+        secondsPerLiquidityAccum = new uint160[](params.secondsAgo.length);
 
-        for (uint256 i = 0; i < params.secondsAgos.length; i++) {
+        for (uint256 i = 0; i < params.secondsAgo.length; i++) {
             (
                 tickSecondsAccum[i],
                 secondsPerLiquidityAccum[i]
             ) = getSingle(
                 IRangePool(pool),
                 params,
-                params.secondsAgos[i]
+                params.secondsAgo[i]
             );
         }
     }

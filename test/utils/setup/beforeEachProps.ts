@@ -15,6 +15,8 @@ import {
   MintCall,
   BurnCall,
   SwapCall,
+  QuoteCall,
+  SampleCall,
 } from '../../../typechain'
 import { InitialSetup } from './initialSetup'
 
@@ -32,6 +34,8 @@ export interface BeforeEachProps {
   mintCall: MintCall
   burnCall: BurnCall
   swapCall: SwapCall
+  quoteCall: QuoteCall
+  sampleCall: SampleCall
   tokenA: Token20
   tokenB: Token20
   token0: Token20
@@ -78,6 +82,8 @@ export class GetBeforeEach {
     let mintCall: MintCall
     let burnCall: BurnCall
     let swapCall: SwapCall
+    let quoteCall: QuoteCall
+    let sampleCall: SampleCall
     let tokenA: Token20
     let tokenB: Token20
     let token0: Token20
@@ -102,6 +108,8 @@ export class GetBeforeEach {
       mintCall,
       burnCall,
       swapCall,
+      quoteCall,
+      sampleCall,
       tokenA,
       tokenB,
       token0,
