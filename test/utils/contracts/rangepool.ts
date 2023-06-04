@@ -72,6 +72,14 @@ export interface ValidateMintParams {
   balanceCheck?: boolean
 }
 
+export interface ValidateSampleParams {
+  secondsPerLiquidityAccum: string
+  tickSecondsAccum: string
+  averagePrice: string
+  averageLiquidity: string
+  averageTick: number
+}
+
 export interface ValidateSwapParams {
   signer: SignerWithAddress
   recipient: string
@@ -121,12 +129,31 @@ export async function getSnapshot(owner: string, lower: number, upper: number) {
   console.log()
 }
 
-export async function getSample() {
+export async function getSample(print = false) {
   const sample = await hre.props.rangePool.sample([0])
-  console.log('sample for [0]:')
-  console.log('average liquidity:', sample.averageLiquidity.toString())
-  console.log('average price:', sample.averagePrice.toString())
-  console.log('average tick:', sample.averageTick.toString())
+  if(print) {
+    console.log('sample for [0]:')
+    console.log('average liquidity:', sample.averageLiquidity.toString())
+    console.log('average price:', sample.averagePrice.toString())
+    console.log('average tick:', sample.averageTick.toString())
+  }
+  return sample
+}
+
+export async function validateSample(params: ValidateSampleParams) {
+  const secondsPerLiquidityAccum = params.secondsPerLiquidityAccum
+  const tickSecondsAccum = BigNumber.from(params.tickSecondsAccum)
+  const averagePrice = BigNumber.from(params.averagePrice)
+  const averageTick = BigNumber.from(params.averageTick)
+  const averageLiquidity = BigNumber.from(params.averageLiquidity)
+
+  const sample = await getSample()
+
+  expect(sample.secondsPerLiquidityAccum[0]).to.be.equal(secondsPerLiquidityAccum)
+  expect(sample.tickSecondsAccum[0]).to.be.equal(tickSecondsAccum)
+  expect(sample.averagePrice).to.be.equal(averagePrice)
+  expect(sample.averageTick).to.be.equal(averageTick)
+  expect(sample.averageLiquidity).to.be.equal(averageLiquidity)
 }
 
 export async function validateSwap(params: ValidateSwapParams) {
