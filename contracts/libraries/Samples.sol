@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity 0.8.13;
 
+import './TickMath.sol';
 import '../interfaces/IRangePool.sol';
 import '../interfaces/IRangePoolStructs.sol';
 
@@ -31,11 +32,6 @@ library Samples {
             tickSecondsAccum: 0,
             secondsPerLiquidityAccum: 0
         });
-
-        emit SampleRecorded(
-            0,
-            0
-        );
 
         state.samples.length = 1;
         state.samples.lengthNext = 5;
@@ -96,25 +92,43 @@ library Samples {
         IRangePoolStructs.SampleParams memory params
     ) internal view returns (
         int56[]   memory tickSecondsAccum,
-        uint160[] memory secondsPerLiquidityAccum
+        uint160[] memory secondsPerLiquidityAccum,
+        uint160 averagePrice,
+        uint128 averageLiquidity,
+        int24 averageTick
     ) {
         if (params.sampleLength == 0) require(false, 'InvalidSampleLength()');
+        if (params.secondsAgo.length == 0) require(false, 'SecondsAgoArrayEmpty()');
 
-        tickSecondsAccum = new int56[](params.secondsAgo.length);
-        secondsPerLiquidityAccum = new uint160[](params.secondsAgo.length);
+        uint256 size = params.secondsAgo.length > 1 ? params.secondsAgo.length : 2;
+        uint32[] memory secondsAgo = new uint32[](size);
+        if (params.secondsAgo.length == 1) {
+            secondsAgo = new uint32[](2);
+            secondsAgo[0] = params.secondsAgo[0];
+            secondsAgo[1] = params.secondsAgo[0] + 2;
+        }
+        else secondsAgo = params.secondsAgo;
 
-        for (uint256 i = 0; i < params.secondsAgo.length; i++) {
+        tickSecondsAccum = new int56[](secondsAgo.length);
+        secondsPerLiquidityAccum = new uint160[](secondsAgo.length);
+
+        for (uint256 i = 0; i < secondsAgo.length; i++) {
+            if (i > 0 && secondsAgo[i] <= secondsAgo[i-1]) require(false, 'SecondsAgoArrayOutOfOrder()');
             (
                 tickSecondsAccum[i],
                 secondsPerLiquidityAccum[i]
             ) = getSingle(
                 IRangePool(pool),
                 params,
-                params.secondsAgo[i]
+                secondsAgo[i]
             );
         }
+        averageTick = int24((tickSecondsAccum[0] - tickSecondsAccum[secondsAgo.length - 1]) 
+                                / int32(secondsAgo[secondsAgo.length - 1] - secondsAgo[0]));
+        averagePrice = TickMath.getSqrtRatioAtTick(averageTick);
+        averageLiquidity = uint128((secondsPerLiquidityAccum[0] - secondsPerLiquidityAccum[secondsAgo.length - 1]) 
+                                   * (secondsAgo[secondsAgo.length - 1] - secondsAgo[0]));
     }
-
     function _poolSample(
         IRangePool pool,
         uint256 sampleIndex

@@ -72,6 +72,14 @@ export interface ValidateMintParams {
   balanceCheck?: boolean
 }
 
+export interface ValidateSampleParams {
+  secondsPerLiquidityAccum: string
+  tickSecondsAccum: string
+  averagePrice: string
+  averageLiquidity: string
+  averageTick: number
+}
+
 export interface ValidateSwapParams {
   signer: SignerWithAddress
   recipient: string
@@ -94,28 +102,59 @@ export interface ValidateBurnParams {
   revertMessage: string
 }
 
-// export async function getTickAtPrice() {
-//   const price = (await hre.props.rangePool.poolState()).price
-//   const tick = await hre.props.tickMathLib.getTickAtSqrtRatio(price)
-//   console.log('tick at price:', tick)
-// }
+export async function getTickAtPrice() {
+  const tickAtPrice = (await hre.props.rangePool.poolState()).tickAtPrice
+  console.log('tick at price:', tickAtPrice)
+}
 
-export async function getRangeBalanceOf(owner: SignerWithAddress, lower: number, upper: number): Promise<BigNumber> {
+export async function getRangeBalanceOf(owner: string, lower: number, upper: number): Promise<BigNumber> {
   const positionTokenId  = await hre.props.positionsLib.id(lower, upper);
-  const balance = await hre.props.rangePool.balanceOf(owner.address, positionTokenId)
+  const balance = await hre.props.rangePool.balanceOf(owner, positionTokenId)
   console.log('position token balance')
   console.log('----------------------')
-  console.log('owner:', owner.address)
+  console.log('owner:', owner)
   console.log('balance:', balance.toString())
   return balance
 }
 
-// export async function getFeeGrowthGlobal(isToken0: boolean = true) {
-//   const price = isToken0 ? (await hre.props.rangePool.poolState()).feeGrowthGlobal0
-//                          : (await hre.props.rangePool.poolState()).feeGrowthGlobal1
-//   const tick = await hre.props.tickMathLib.getTickAtSqrtRatio(price)
-//   console.log('fee growth', isToken0 ? '0:' : '1:', tick)
-// }
+export async function getSnapshot(owner: string, lower: number, upper: number) {
+  const snapshot = await hre.props.rangePool.snapshot({
+    owner: owner,
+    lower: lower,
+    upper: upper
+  })
+  console.log('snapshot for ', owner, lower, upper, ':')
+  console.log('feesOwed0:', snapshot.feesOwed0.toString())
+  console.log('feesOwed1:', snapshot.feesOwed1.toString())
+  console.log()
+}
+
+export async function getSample(print = false) {
+  const sample = await hre.props.rangePool.sample([0])
+  if(print) {
+    console.log('sample for [0]:')
+    console.log('average liquidity:', sample.averageLiquidity.toString())
+    console.log('average price:', sample.averagePrice.toString())
+    console.log('average tick:', sample.averageTick.toString())
+  }
+  return sample
+}
+
+export async function validateSample(params: ValidateSampleParams) {
+  const secondsPerLiquidityAccum = params.secondsPerLiquidityAccum
+  const tickSecondsAccum = BigNumber.from(params.tickSecondsAccum)
+  const averagePrice = BigNumber.from(params.averagePrice)
+  const averageTick = BigNumber.from(params.averageTick)
+  const averageLiquidity = BigNumber.from(params.averageLiquidity)
+
+  const sample = await getSample()
+
+  expect(sample.secondsPerLiquidityAccum[0]).to.be.equal(secondsPerLiquidityAccum)
+  expect(sample.tickSecondsAccum[0]).to.be.equal(tickSecondsAccum)
+  expect(sample.averagePrice).to.be.equal(averagePrice)
+  expect(sample.averageTick).to.be.equal(averageTick)
+  expect(sample.averageLiquidity).to.be.equal(averageLiquidity)
+}
 
 export async function validateSwap(params: ValidateSwapParams) {
   const signer = params.signer
