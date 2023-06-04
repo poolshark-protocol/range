@@ -12,8 +12,9 @@ import {
   validateBurn,
   PoolState,
   getTickAtPrice,
-  getFeeGrowthGlobal,
   getRangeBalanceOf,
+  getSnapshot,
+  getSample,
 } from '../utils/contracts/rangepool'
 
 alice: SignerWithAddress
@@ -66,7 +67,7 @@ describe('RangePool Tests', function () {
     await mintSigners20(hre.props.token1, tokenAmount.mul(10), [hre.props.alice, hre.props.bob])
   })
 
-  it('token1 - Should mint, swap, and burn', async function () {
+  it('token1 - Should mint, swap, and burn 21', async function () {
 
     await validateMint({
       signer: hre.props.alice,
@@ -92,6 +93,9 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
 
+    if (debugMode) await getSnapshot(hre.props.alice.address, 20, 60)
+    if (debugMode) await getSample()
+
     await validateBurn({
       signer: hre.props.alice,
       lower: '20',
@@ -112,8 +116,8 @@ describe('RangePool Tests', function () {
       revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 84175109820460744055339126001827919702192640648716177173677299224470599300732, 49902591570441687020676)',
     })
 
-    if (debugMode) await getRangeBalanceOf(hre.props.alice, 20, 60)
-
+    if (debugMode) await getRangeBalanceOf(hre.props.alice.address, 20, 60)
+    if (debugMode) await getSnapshot(hre.props.alice.address, 20, 60)
     await validateBurn({
       signer: hre.props.alice,
       lower: '20',
@@ -123,10 +127,11 @@ describe('RangePool Tests', function () {
       balance1Increase: BigNumber.from('89946873348418057510'),
       revertMessage: '',
     })
-    
+    if (debugMode) await getSample()
+    if (debugMode) await getSnapshot(hre.props.alice.address, 20, 60)
     if (debugMode){
       console.log('after burn')
-      await getRangeBalanceOf(hre.props.alice, 20, 60)
+      await getRangeBalanceOf(hre.props.alice.address, 20, 60)
     }
 
     if (balanceCheck) {
@@ -170,8 +175,9 @@ describe('RangePool Tests', function () {
 
     if (debugMode) await getTickAtPrice()
 
-    if (debugMode) await getRangeBalanceOf(hre.props.alice, 20, 60)
-
+    if (debugMode) await getRangeBalanceOf(hre.props.alice.address, 20, 60)
+    if (debugMode) await getSnapshot(hre.props.alice.address, 20, 60)
+    if (debugMode) await getSample()
     await validateBurn({
       signer: hre.props.alice,
       lower: '20',
@@ -184,7 +190,7 @@ describe('RangePool Tests', function () {
 
     if (debugMode){
       console.log('after burn')
-      await getRangeBalanceOf(hre.props.alice, 20, 60)
+      await getRangeBalanceOf(hre.props.alice.address, 20, 60)
     }
 
     if (balanceCheck) {
@@ -254,9 +260,9 @@ describe('RangePool Tests', function () {
       balance1Increase: BN_ZERO,
       revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 6218138040528368831964571869767811158861841082162340705251949460170393461339, 419027207938949970577)',
     })
-
-    if (debugMode) await getRangeBalanceOf(hre.props.alice, 10000, 20000)
-
+    if (debugMode) await getSample()
+    if (debugMode) await getRangeBalanceOf(hre.props.alice.address, 10000, 20000)
+    if (debugMode) await getSnapshot(hre.props.alice.address, 10000, 20000)
     await validateBurn({
       signer: hre.props.alice,
       lower: '10000',
@@ -311,9 +317,9 @@ describe('RangePool Tests', function () {
       balance1Increase: BN_ZERO,
       revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2236771031221735906744102008774832778161797975119947154210717982934819779160, 419027207938949970577)',
     })
-
+    if (debugMode) await getSample()
     if (debugMode) await getTickAtPrice()
-
+    if (debugMode) await getSnapshot(hre.props.alice.address, 10000, 20000)
     await validateBurn({
       signer: hre.props.alice,
       lower: '10000',
@@ -358,9 +364,9 @@ describe('RangePool Tests', function () {
       balanceOutIncrease: BigNumber.from('1345645380966504669'),
       revertMessage: '',
     })
-
-    if (debugMode) await getRangeBalanceOf(hre.props.alice, 25000, 30000)
-
+    if (debugMode) await getSample()
+    if (debugMode) await getRangeBalanceOf(hre.props.alice.address, 25000, 30000)
+    if (debugMode) await getSnapshot(hre.props.alice.address, 20000, 30000)
     await validateBurn({
       signer: hre.props.alice,
       lower: '20000',
@@ -406,6 +412,8 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
 
+    if (debugMode) await getSnapshot(hre.props.alice.address, 25000, 30000)
+
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -429,9 +437,9 @@ describe('RangePool Tests', function () {
       balance1Increase: BigNumber.from('20082623526365456123'),
       revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 57647542114002963046563858950471683132924844866766617044886400134835958049633, 3168808846234106973666)',
     })
-
-    if (debugMode) await getRangeBalanceOf(hre.props.alice, 25000, 30000)
-
+    if (debugMode) await getSample()
+    if (debugMode) await getRangeBalanceOf(hre.props.alice.address, 25000, 30000)
+    if (debugMode) await getSnapshot(hre.props.alice.address, 25000, 30000)
     await validateBurn({
       signer: hre.props.alice,
       lower: '25000',
@@ -504,7 +512,8 @@ describe('RangePool Tests', function () {
       balance1Increase: BigNumber.from('144243177493286617044'),
       revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2381093050879867228278279701469820094323623974324911225843268442440969283554, 11988250493261524638130)',
     })
-
+    if (debugMode) await getSnapshot(hre.props.alice.address, 500, 1000)
+    if (debugMode) await getSample()
     await validateBurn({
       signer: hre.props.alice,
       lower: '500',
@@ -563,7 +572,7 @@ describe('RangePool Tests', function () {
       balanceOutIncrease: BigNumber.from('27122499921707680271'),
       revertMessage: '',
     })
-
+    if (debugMode) await getSample()
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -574,7 +583,7 @@ describe('RangePool Tests', function () {
       balanceOutIncrease: BigNumber.from('78764658213120928119'),
       revertMessage: '',
     })
-
+    if (debugMode) await getSnapshot(hre.props.alice.address, 500, 1000)
     await validateMint({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -600,7 +609,7 @@ describe('RangePool Tests', function () {
       balance1Increase: BigNumber.from('144243177493286617045'),
       revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2381093050879867228278279701469820094323623974324911225843268442440969283554, 11557073070124432353430)'
     })
-
+    if (debugMode) await getSnapshot(hre.props.alice.address, 500, 1000)
     await validateBurn({
       signer: hre.props.alice,
       lower: '500',
@@ -611,7 +620,7 @@ describe('RangePool Tests', function () {
       balance1Increase: BigNumber.from('300013568033977842760'),
       revertMessage: '',
     })
-
+    if (debugMode) await getSample()
     if (balanceCheck) {
       console.log('balance after token0:', (await hre.props.token0.balanceOf(hre.props.rangePool.address)).toString())
       console.log('balance after token1:', (await hre.props.token1.balanceOf(hre.props.rangePool.address)).toString())
@@ -662,7 +671,7 @@ describe('RangePool Tests', function () {
       liquidityIncrease: BigNumber.from('4901161634764542438934'),
       revertMessage: '',
     })
-
+    if (debugMode) await getSnapshot(hre.props.alice.address, 200, 600)
     await validateBurn({
       signer: hre.props.bob,
       lower: '200',
@@ -673,7 +682,7 @@ describe('RangePool Tests', function () {
       balance1Increase: tokenAmount.sub(1),
       revertMessage: '',
     })
-
+    if (debugMode) await getSnapshot(hre.props.alice.address, 500, 1000)
     await validateBurn({
       signer: hre.props.alice,
       lower: '500',
@@ -736,7 +745,7 @@ describe('RangePool Tests', function () {
       liquidityIncrease: bobLiquidity,
       revertMessage: '',
     })
-
+    if (debugMode) await getSnapshot(hre.props.bob.address, 600, 800)
     await validateBurn({
       signer: hre.props.bob,
       lower: '600',
@@ -747,7 +756,7 @@ describe('RangePool Tests', function () {
       balance1Increase: BigNumber.from('38018615604156121196'),
       revertMessage: '',
     })
-
+    if (debugMode) await getSnapshot(hre.props.bob.address, 600, 800)
     await validateBurn({
       signer: hre.props.bob,
       lower: '600',
@@ -758,7 +767,7 @@ describe('RangePool Tests', function () {
       balance1Increase: BigNumber.from('61981384395843878803'),
       revertMessage: '',
     })
-
+    if (debugMode) await getSnapshot(hre.props.alice.address, 500, 1000)
     await validateBurn({
       signer: hre.props.alice,
       lower: '500',
@@ -832,7 +841,7 @@ describe('RangePool Tests', function () {
       liquidityIncrease: bobLiquidity,
       revertMessage: '',
     })
-
+    if (debugMode) await getSnapshot(hre.props.bob.address, 600, 800)
     await validateBurn({
       signer: hre.props.bob,
       lower: '600',
@@ -843,7 +852,7 @@ describe('RangePool Tests', function () {
       balance1Increase: BN_ZERO,
       revertMessage: '',
     })
-
+    if (debugMode) await getSnapshot(hre.props.bob.address, 600, 800)
     await validateBurn({
       signer: hre.props.bob,
       lower: '600',
@@ -854,7 +863,7 @@ describe('RangePool Tests', function () {
       balance1Increase: BN_ZERO,
       revertMessage: '',
     })
-
+    if (debugMode) await getSnapshot(hre.props.alice.address, 500, 1000)
     await validateBurn({
       signer: hre.props.alice,
       lower: '500',

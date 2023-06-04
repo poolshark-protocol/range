@@ -43,7 +43,6 @@ interface IRangePool is IRangePoolStructs {
     ) external view returns(
         int56   tickSecondsAccum,
         uint160 secondsPerLiquidityAccum,
-        uint32  secondsGrowth,
         uint128 feesOwed0,
         uint128 feesOwed1
     );
