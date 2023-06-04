@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers'
-import { BN_ZERO, getRangeBalanceOf, validateBurn, validateMint, validateSwap } from '../../../test/utils/contracts/rangepool'
+import { BN_ZERO, getRangeBalanceOf, getSample, getSnapshot, validateBurn, validateMint, validateSwap } from '../../../test/utils/contracts/rangepool'
 import { InitialSetup } from '../../../test/utils/setup/initialSetup'
 import { mintSigners20 } from '../../../test/utils/token'
 import { getNonce } from '../../utils'
@@ -46,6 +46,7 @@ export class MintPosition {
     //   balanceOutIncrease: token1Amount.mul(30),
     //   revertMessage:''
     // })
+    await getSample(true)
     // await validateMint({
     //   signer: hre.props.alice,
     //   recipient: hre.props.alice.address,
@@ -101,18 +102,18 @@ export class MintPosition {
     //   revertMessage: '',
     // })
 
-    let balance = await getRangeBalanceOf(hre.props.alice, -887270, 887270)
+    // let balance = await getRangeBalanceOf(hre.props.alice, -887270, 887270)
 
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '-887270',
-      upper: '887270',
-      tokenAmount: balance.div(2),
-      liquidityAmount: balance.div(2),
-      balance0Increase: BigNumber.from('110739133337787245411'),
-      balance1Increase: BigNumber.from('49999999999999999'),
-      revertMessage: '',
-    })
+    // await validateBurn({
+    //   signer: hre.props.alice,
+    //   lower: '-887270',
+    //   upper: '887270',
+    //   tokenAmount: balance.div(2),
+    //   liquidityAmount: balance.div(2),
+    //   balance0Increase: BigNumber.from('110739133337787245411'),
+    //   balance1Increase: BigNumber.from('49999999999999999'),
+    //   revertMessage: '',
+    // })
 
     console.log('position minted', (await hre.props.rangePool.poolState()).price.toString())
   }

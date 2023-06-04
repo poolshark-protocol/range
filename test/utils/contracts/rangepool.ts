@@ -171,11 +171,13 @@ export async function validateSwap(params: ValidateSwapParams) {
   if (zeroForOne) {
     balanceInBefore = await hre.props.token0.balanceOf(signer.address)
     balanceOutBefore = await hre.props.token1.balanceOf(signer.address)
-    await hre.props.token0.approve(hre.props.rangePool.address, amountIn)
+    const approve0Txn = await hre.props.token0.approve(hre.props.rangePool.address, amountIn)
+    await approve0Txn.wait()
   } else {
     balanceInBefore = await hre.props.token1.balanceOf(signer.address)
     balanceOutBefore = await hre.props.token0.balanceOf(signer.address)
-    await hre.props.token1.approve(hre.props.rangePool.address, amountIn)
+    const approve1Txn = await hre.props.token1.approve(hre.props.rangePool.address, amountIn)
+    await approve1Txn.wait()
   }
 
   const poolBefore: PoolState = await hre.props.rangePool.poolState()
@@ -262,13 +264,13 @@ export async function validateMint(params: ValidateMintParams) {
   //collect first to recreate positions if necessary
   if (!collectRevertMessage) {
     const txn = await hre.props.rangePool
-      .connect(params.signer)
+      .connect(signer)
       .burn({
         to: signer.address, 
         lower: lower, 
         upper: upper,
         amount: '0',
-      })
+      }, {gasLimit: 3000000})
     await txn.wait()
   } else {
     await expect(
@@ -285,12 +287,14 @@ export async function validateMint(params: ValidateMintParams) {
   let balance1Before
   balance0Before = await hre.props.token0.balanceOf(params.signer.address)
   balance1Before = await hre.props.token1.balanceOf(params.signer.address)
-  await hre.props.token0
+  const approve0Txn = await hre.props.token0
     .connect(params.signer)
     .approve(hre.props.rangePool.address, amount0)
-  await hre.props.token1
+  await approve0Txn.wait()
+  const approve1Txn = await hre.props.token1
     .connect(params.signer)
     .approve(hre.props.rangePool.address, amount1)
+  await approve1Txn.wait()
 
   let lowerTickBefore: Tick
   let upperTickBefore: Tick
