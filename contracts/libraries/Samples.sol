@@ -33,11 +33,6 @@ library Samples {
             secondsPerLiquidityAccum: 0
         });
 
-        emit SampleRecorded(
-            0,
-            0
-        );
-
         state.samples.length = 1;
         state.samples.lengthNext = 5;
 
