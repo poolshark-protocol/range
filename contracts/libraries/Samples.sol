@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity 0.8.13;
 
+import './TickMath.sol';
 import '../interfaces/IRangePool.sol';
 import '../interfaces/IRangePoolStructs.sol';
 
@@ -96,14 +97,22 @@ library Samples {
         IRangePoolStructs.SampleParams memory params
     ) internal view returns (
         int56[]   memory tickSecondsAccum,
-        uint160[] memory secondsPerLiquidityAccum
+        uint160[] memory secondsPerLiquidityAccum,
+        uint160 averagePrice,
+        uint128 averageLiquidity,
+        int24 averageTick
     ) {
         if (params.sampleLength == 0) require(false, 'InvalidSampleLength()');
+        uint256 secondsAgoLength = params.secondsAgo.length;
+        if (secondsAgoLength == 0) require(false, 'SecondsAgoArrayEmpty()');
 
         tickSecondsAccum = new int56[](params.secondsAgo.length);
         secondsPerLiquidityAccum = new uint160[](params.secondsAgo.length);
 
-        for (uint256 i = 0; i < params.secondsAgo.length; i++) {
+        if (params.secondsAgo.length == 1) params.secondsAgo[1] = params.secondsAgo[0] + 2;
+
+        for (uint256 i = 0; i < secondsAgoLength; i++) {
+            if (i > 0 && params.secondsAgo[i] <= params.secondsAgo[i-1]) require(false, 'SecondsAgoArrayOutOfOrder()');
             (
                 tickSecondsAccum[i],
                 secondsPerLiquidityAccum[i]
@@ -113,6 +122,11 @@ library Samples {
                 params.secondsAgo[i]
             );
         }
+        averageTick = int24((tickSecondsAccum[secondsAgoLength - 1] - tickSecondsAccum[0]) 
+                                / int32(params.secondsAgo[secondsAgoLength - 1] - params.secondsAgo[0]));
+        averagePrice = TickMath.getSqrtRatioAtTick(averageTick);
+        averageLiquidity = uint128((secondsPerLiquidityAccum[secondsAgoLength - 1] - secondsPerLiquidityAccum[0]) 
+                                   / (params.secondsAgo[secondsAgoLength - 1] - params.secondsAgo[0]));
     }
 
     function _poolSample(
