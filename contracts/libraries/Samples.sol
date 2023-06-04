@@ -99,7 +99,6 @@ library Samples {
     ) {
         if (params.sampleLength == 0) require(false, 'InvalidSampleLength()');
         if (params.secondsAgo.length == 0) require(false, 'SecondsAgoArrayEmpty()');
-
         uint256 size = params.secondsAgo.length > 1 ? params.secondsAgo.length : 2;
         uint32[] memory secondsAgo = new uint32[](size);
         if (params.secondsAgo.length == 1) {
@@ -109,11 +108,12 @@ library Samples {
         }
         else secondsAgo = params.secondsAgo;
 
+        if (secondsAgo[0] == secondsAgo[secondsAgo.length - 1]) require(false, 'SecondsAgoArrayValuesEqual()');
+
         tickSecondsAccum = new int56[](secondsAgo.length);
         secondsPerLiquidityAccum = new uint160[](secondsAgo.length);
 
         for (uint256 i = 0; i < secondsAgo.length; i++) {
-            if (i > 0 && secondsAgo[i] <= secondsAgo[i-1]) require(false, 'SecondsAgoArrayOutOfOrder()');
             (
                 tickSecondsAccum[i],
                 secondsPerLiquidityAccum[i]
@@ -123,11 +123,19 @@ library Samples {
                 secondsAgo[i]
             );
         }
-        averageTick = int24((tickSecondsAccum[0] - tickSecondsAccum[secondsAgo.length - 1]) 
+        if (secondsAgo[secondsAgo.length - 1] > secondsAgo[0]) {
+            averageTick = int24((tickSecondsAccum[0] - tickSecondsAccum[secondsAgo.length - 1]) 
                                 / int32(secondsAgo[secondsAgo.length - 1] - secondsAgo[0]));
-        averagePrice = TickMath.getSqrtRatioAtTick(averageTick);
-        averageLiquidity = uint128((secondsPerLiquidityAccum[0] - secondsPerLiquidityAccum[secondsAgo.length - 1]) 
-                                   * (secondsAgo[secondsAgo.length - 1] - secondsAgo[0]));
+            averagePrice = TickMath.getSqrtRatioAtTick(averageTick);
+            averageLiquidity = uint128((secondsPerLiquidityAccum[0] - secondsPerLiquidityAccum[secondsAgo.length - 1]) 
+                                    * (secondsAgo[secondsAgo.length - 1] - secondsAgo[0]));
+        } else {
+            averageTick = int24((tickSecondsAccum[secondsAgo.length - 1] - tickSecondsAccum[0]) 
+                                / int32(secondsAgo[0] - secondsAgo[secondsAgo.length - 1]));
+            averagePrice = TickMath.getSqrtRatioAtTick(averageTick);
+            averageLiquidity = uint128((secondsPerLiquidityAccum[secondsAgo.length - 1] - secondsPerLiquidityAccum[0]) 
+                                    * (secondsAgo[0] - secondsAgo[secondsAgo.length - 1]));
+        }
     }
     function _poolSample(
         IRangePool pool,
