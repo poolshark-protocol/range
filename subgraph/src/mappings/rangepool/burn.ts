@@ -73,7 +73,7 @@ export function handleBurn(event: Burn): void {
         let fractionIndex = positionTokenFractions.indexOf(positionFraction.id)
         positionTokenFractions.splice(fractionIndex, 1)
         positionToken.fractions = positionTokenFractions
-        store.remove('PositionFraction', poolAddress.concat(tokenIdParam.toHex()).concat(msgSender))
+        store.remove('PositionFraction', positionFraction.id)
     } else {
         positionFraction.amount = positionFraction.amount.minus(tokenBurnedParam)
         positionFraction.updatedAtBlockNumber = event.block.number
@@ -82,10 +82,7 @@ export function handleBurn(event: Burn): void {
     }
 
     if (position.liquidity.equals(liquidityBurnedParam)) {
-        store.remove('Position', poolAddress
-                                    .concat(poolAddress)
-                                    .concat(lower.toString())
-                                    .concat(upper.toString()))
+        store.remove('Position', position.id)
     } else {
         position.liquidity = position.liquidity.minus(liquidityBurnedParam)
         position.updatedAtBlockNumber = event.block.number
@@ -93,7 +90,7 @@ export function handleBurn(event: Burn): void {
         position.save()
     }
     if (positionToken.totalSupply.equals(tokenBurnedParam)) {
-        store.remove('PositionToken', poolAddress.concat(tokenIdParam.toHex()))
+        store.remove('PositionToken', positionToken.id)
     } else {
         positionToken.totalSupply = positionToken.totalSupply.minus(tokenBurnedParam)
         positionToken.save()
@@ -104,12 +101,12 @@ export function handleBurn(event: Burn): void {
     
     // remove from store to sync up with pool
     if(lowerTick.liquidityDelta.equals(BIGINT_ZERO) && lowerTick.liquidityDeltaMinus.equals(BIGINT_ZERO)) {
-        store.remove('Tick', poolAddress.concat(lower.toString()))
+        store.remove('Tick', lowerTick.id)
     } else {
         lowerTick.save()
     }
     if(upperTick.liquidityDelta.equals(BIGINT_ZERO) && upperTick.liquidityDeltaMinus.equals(BIGINT_ZERO)) {
-        store.remove('Tick', poolAddress.concat(upper.toString()))
+        store.remove('Tick', upperTick.id)
     } else {
         upperTick.save()
     }
