@@ -2,15 +2,11 @@
 
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
 import "./utils/RangePoolErrors.sol";
 import "./interfaces/IRangePoolERC1155.sol";
 import "./libraries/Tokens.sol";
 
 contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
-    using EnumerableSet for EnumerableSet.UintSet;
-
     error OwnerOnly();
 
     modifier onlyOwner() {
@@ -95,7 +91,11 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         address _to,
         uint256 _id,
         uint256 _amount
-    ) public virtual override checkAddresses(_from, _to) checkApproval(_from, msg.sender) {
+    ) public virtual override
+        checkAddresses(_from, _to)
+        checkApproval(_from, msg.sender)
+        checkERC1155Support(_to)
+    {
         address _spender = msg.sender;
         _transfer(_from, _to, _id, _amount);
         emit TransferSingle(_spender, _from, _to, _id, _amount);
@@ -120,8 +120,9 @@ contract RangePoolERC1155 is IRangePoolERC1155, RangePoolERC1155Errors {
         emit TransferBatch(msg.sender, _from, _to, _ids, _amounts);
     }
 
-    function supportsInterface(bytes4 _interfaceId) public view virtual override returns (bool) {
-        return _interfaceId == type(IRangePoolERC1155).interfaceId || _interfaceId == type(IERC165).interfaceId;
+    function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
+      return  interfaceID == 0x01ffc9a7 ||    // ERC-165 support
+              interfaceID == 0xd9b67a26;      // ERC-1155 support
     }
 
     function _transfer(

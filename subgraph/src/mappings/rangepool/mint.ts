@@ -27,7 +27,7 @@ export function handleMint(event: Mint): void {
     let liquidityMintedParam = event.params.liquidityMinted
     //TODO: emit tokenId
     let tokenIdParam = event.params.tokenId
-    let tokenMintedParam = event.params.liquidityMinted
+    let tokenMintedParam = event.params.tokenMinted
     let amount0Param = event.params.amount0
     let amoun1Param = event.params.amount1
     let poolAddress = event.address.toHex()
