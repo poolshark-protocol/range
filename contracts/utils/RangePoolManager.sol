@@ -65,7 +65,7 @@ contract RangePoolManager is
     }
 
     /**
-     * @dev Returns the address of the current owner.
+     * @dev Returns the address of the current feeTo.
      */
     function feeTo() public view virtual returns (address) {
         return _feeTo;
