@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt, ethereum, log } from '@graphprotocol/graph-ts'
-import { RangePool, Position, Tick, Token, FeeTier, RangePoolManager, RangePoolFactory, BasePrice, Transaction, Swap, PositionToken, PositionFraction } from '../../../generated/schema'
+import { Address, BigDecimal, BigInt, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
+import { RangePool, Position, Tick, Token, FeeTier, RangePoolManager, RangePoolFactory, BasePrice, Transaction, Swap, PositionToken, PositionFraction, MintLog, BurnLog } from '../../../generated/schema'
 import { ONE_BD } from '../../constants/constants'
 import {
     fetchTokenSymbol,
@@ -52,6 +52,62 @@ export function safeLoadManager(address: string): LoadManagerRet {
 
     return {
         entity: managerEntity,
+        exists: exists,
+    }
+}
+
+class LoadMintLogRet {
+    entity: MintLog
+    exists: boolean
+}
+export function safeLoadMintLog(txnHash: Bytes, pool: string, lower: BigInt, upper: BigInt): LoadMintLogRet {
+    let exists = true
+
+    let mintLogId = txnHash.toString()
+                    .concat('-')
+                    .concat(pool)
+                    .concat('-')
+                    .concat(upper.toString())
+                    .concat('-')
+                    .concat(lower.toString())
+
+    let mintLogEntity = MintLog.load(mintLogId)
+
+    if (!mintLogEntity) {
+        mintLogEntity = new MintLog(mintLogId)
+        exists = false
+    }
+
+    return {
+        entity: mintLogEntity,
+        exists: exists,
+    }
+}
+
+class LoadBurnLogRet {
+    entity: BurnLog
+    exists: boolean
+}
+export function safeLoadBurnLog(txnHash: Bytes, pool: string, lower: BigInt, upper: BigInt): LoadBurnLogRet {
+    let exists = true
+
+    let burnLogId = txnHash.toString()
+                    .concat('-')
+                    .concat(pool)
+                    .concat('-')
+                    .concat(upper.toString())
+                    .concat('-')
+                    .concat(lower.toString())
+
+    let burnLogEntity = BurnLog.load(burnLogId)
+
+    if (!burnLogEntity) {
+        burnLogEntity = new BurnLog(burnLogId)
+        exists = false
+    }
+
+    return {
+        entity: burnLogEntity,
         exists: exists,
     }
 }

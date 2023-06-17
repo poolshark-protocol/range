@@ -91,12 +91,8 @@ templates:
           eventHandlers:
               - event: Swap(indexed address,bool,uint256,uint256,uint160,uint128,int24)
                 handler: handleSwap
-              - event: Mint(indexed address,indexed int24,indexed int24,uint128,uint128,uint128)
-                handler: handleMint
               - event: MintFungible(indexed address,int24,int24,indexed uint256,uint128,uint128,uint128,uint128)
                 handler: handleMintFungible
-              - event: Burn(address,indexed address,indexed int24,indexed int24,uint128,uint128,uint128,bool)
-                handler: handleBurn
               - event: BurnFungible(indexed address,int24,int24,indexed uint256,uint128,uint128,uint128,uint128)
                 handler: handleBurnFungible
               - event: Compound(indexed address,indexed int24,indexed int24,uint128,uint128,uint128)

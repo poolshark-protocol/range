@@ -19,6 +19,7 @@
         "deploy": "graph deploy --product hosted-service alphak3y/poolshark-range",
         "deploy-op-test": "graph deploy --product hosted-service alphak3y/poolshark-range-op-goerli",
         "deploy-studio": "graph deploy --studio poolsharks-exchange",
+        "deploy-sats": "graph deploy range-old-arbitrumGoerli --version-label v0.0.2 --node https://app.satsuma.xyz/api/subgraphs/deploy --deploy-key 7NoUUXPcOGfBX --ipfs https://ipfs.satsuma.xyz",
         "deploy-local": "graph deploy example --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
         "test": "graph codegen; graph test -v 0.2.0",
         "prepare-const": "mustache src/configs/goerli.json src/constants/constants.template.ts > src/constants/constants.ts",

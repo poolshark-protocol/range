@@ -67,6 +67,32 @@ type Token @entity {
   whitelistPools: [RangePool!]!
 }
 
+type MintLog @entity {
+    id: ID!
+
+    sender: Bytes!
+    recipient: Bytes!
+    lower: BigInt!
+    upper: BigInt!
+    tokenId: BigInt!
+    tokenMinted: BigInt!
+    liquidityMinted: BigInt!
+    pool: RangePool!
+}
+
+type BurnLog @entity {
+    id: ID!
+
+    owner: Bytes!
+    recipient: Bytes!
+    lower: BigInt!
+    upper: BigInt!
+    tokenId: BigInt!
+    tokenBurned: BigInt!
+    liquidityBurned: BigInt!
+    pool: RangePool!
+}
+
 type RangePool @entity {
   # tknA < tknB + swapFee
   id: ID!
