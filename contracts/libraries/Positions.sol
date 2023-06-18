@@ -302,6 +302,7 @@ library Positions {
     ) {
         uint256 totalSupply;
         totalSupply = Tokens.totalSupply(address(this), params.lower, params.upper);
+        /// @dev - only true if burn call
         if (params.amount > 0) {
             uint256 tokenId = Tokens.id(params.lower, params.upper);
             IRangePoolERC1155(address(this)).burnFungible(msg.sender, tokenId, params.amount);
@@ -334,16 +335,16 @@ library Positions {
         position.feeGrowthInside0Last = rangeFeeGrowth0;
         position.feeGrowthInside1Last = rangeFeeGrowth1;
 
-        position.amount0 += uint128(amount0Fees);
-        position.amount1 += uint128(amount1Fees);
+        position.amount0 += amount0Fees;
+        position.amount1 += amount1Fees;
 
         uint128 feesBurned0; uint128 feesBurned1;
         if (params.amount > 0) {
             feesBurned0 = uint128(
-                (uint256(position.amount0) * uint256(uint128(params.amount))) / (totalSupply)
+                (uint256(position.amount0) * uint256(params.amount)) / (totalSupply)
             );
             feesBurned1 = uint128(
-                (uint256(position.amount1) * uint256(uint128(params.amount))) / (totalSupply)
+                (uint256(position.amount1) * uint256(params.amount)) / (totalSupply)
             );
         }
         return (position, feesBurned0, feesBurned1);

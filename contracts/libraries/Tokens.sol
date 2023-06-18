@@ -5,7 +5,7 @@ import "./PrecisionMath.sol";
 import "../interfaces/IRangePoolFactory.sol";
 import "../interfaces/IRangePoolStructs.sol";
 
-/// @notice Math library that facilitates fee handling.
+/// @notice Token library for ERC-1155 calls.
 library Tokens {
     uint256 internal constant Q128 = 0x100000000000000000000000000000000;
 

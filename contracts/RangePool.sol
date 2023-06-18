@@ -81,8 +81,8 @@ contract RangePool is
             liquidityMinted: 0
         });
         cache = MintCall.perform(params, cache, tickMap, ticks, samples);
-        positions[params.lower][params.upper] = cache.position;
         poolState = cache.pool; 
+        positions[params.lower][params.upper] = cache.position;
     }
 
     function burn(
