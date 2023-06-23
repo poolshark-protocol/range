@@ -24,7 +24,10 @@ library MintCall {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.Sample[65535] storage samples
     ) external returns (IRangePoolStructs.MintCache memory) {
-        (cache.position, , ) = Positions.update(
+        (
+            cache.position,
+            ,,
+        ) = Positions.update(
                 ticks,
                 cache.position,
                 cache.pool,

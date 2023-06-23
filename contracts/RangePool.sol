@@ -93,7 +93,8 @@ contract RangePool is
             position: positions[params.lower][params.upper],
             constants: _immutables(),
             amount0: 0,
-            amount1: 0
+            amount1: 0,
+            tokenBurned: 0
         });
         cache = BurnCall.perform(params, cache, tickMap, ticks, samples);
         poolState = cache.pool;

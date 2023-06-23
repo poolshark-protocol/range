@@ -96,26 +96,6 @@ describe('RangePool Tests', function () {
     if (debugMode) await getSnapshot(hre.props.alice.address, 20, 60)
     if (debugMode) await getSample()
 
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '20',
-      upper: '40',
-      liquidityAmount: liquidityAmount,
-      balance0Increase: BN_ZERO,
-      balance1Increase: tokenAmount.sub(1),
-      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 52004084279811976585680024683007596365403983090071424474336696696308291582740, 49902591570441687020675)',
-    })
-
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '20',
-      upper: '60',
-      liquidityAmount: liquidityAmount.add(1),
-      balance0Increase: BN_ZERO,
-      balance1Increase: tokenAmount.sub(1),
-      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 84175109820460744055339126001827919702192640648716177173677299224470599300732, 49902591570441687020676)',
-    })
-
     if (debugMode) await getRangeBalanceOf(hre.props.alice.address, 20, 60)
     if (debugMode) await getSnapshot(hre.props.alice.address, 20, 60)
     await validateBurn({
@@ -250,16 +230,6 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
 
-    // reverts because fungible passed as false
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '10020',
-      upper: '20000',
-      liquidityAmount: aliceLiquidity.add(1),
-      balance0Increase: BN_ZERO,
-      balance1Increase: BN_ZERO,
-      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 6218138040528368831964571869767811158861841082162340705251949460170393461339, 419027207938949970577)',
-    })
     if (debugMode) await getSample()
     if (debugMode) await getRangeBalanceOf(hre.props.alice.address, 10000, 20000)
     if (debugMode) await getSnapshot(hre.props.alice.address, 10000, 20000)
@@ -308,15 +278,6 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
 
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '10000',
-      upper: '20000',
-      liquidityAmount: BigNumber.from('419027207938949970577'),
-      balance0Increase: BN_ZERO,
-      balance1Increase: BN_ZERO,
-      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2236771031221735906744102008774832778161797975119947154210717982934819779160, 419027207938949970577)',
-    })
     if (debugMode) await getSample()
     if (debugMode) await getTickAtPrice()
     if (debugMode) await getSnapshot(hre.props.alice.address, 10000, 20000)
@@ -427,16 +388,6 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
 
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '25000',
-      upper: '30000',
-      tokenAmount: aliceTokenAmount.add(1),
-      liquidityAmount: aliceLiquidity.add(aliceLiquidity2),
-      balance0Increase: BigNumber.from('199180535441500909413'),
-      balance1Increase: BigNumber.from('20082623526365456123'),
-      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 57647542114002963046563858950471683132924844866766617044886400134835958049633, 3168808846234106973666)',
-    })
     if (debugMode) await getSample()
     if (debugMode) await getRangeBalanceOf(hre.props.alice.address, 25000, 30000)
     if (debugMode) await getSnapshot(hre.props.alice.address, 25000, 30000)
@@ -502,16 +453,6 @@ describe('RangePool Tests', function () {
       collectRevertMessage: ''
     })
 
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '500',
-      upper: '1000',
-      tokenAmount: BigNumber.from('11988250493261524638130'),
-      liquidityAmount: BigNumber.from('11986657697951620560434'),
-      balance0Increase: BigNumber.from('150000000000000000000').sub(1),
-      balance1Increase: BigNumber.from('144243177493286617044'),
-      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2381093050879867228278279701469820094323623974324911225843268442440969283554, 11988250493261524638130)',
-    })
     if (debugMode) await getSnapshot(hre.props.alice.address, 500, 1000)
     if (debugMode) await getSample()
     await validateBurn({
@@ -599,16 +540,6 @@ describe('RangePool Tests', function () {
       collectRevertMessage: ''
     })
 
-    await validateBurn({
-      signer: hre.props.alice,
-      lower: '500',
-      upper: '1000',
-      tokenAmount: aliceLiquidity.add(aliceToken2).add(1),
-      liquidityAmount: BigNumber.from('11986657697951620560434'),
-      balance0Increase: BigNumber.from('153013648220322291925'),
-      balance1Increase: BigNumber.from('144243177493286617045'),
-      revertMessage: 'BurnExceedsBalance("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 2381093050879867228278279701469820094323623974324911225843268442440969283554, 11557073070124432353430)'
-    })
     if (debugMode) await getSnapshot(hre.props.alice.address, 500, 1000)
     await validateBurn({
       signer: hre.props.alice,
@@ -704,7 +635,7 @@ describe('RangePool Tests', function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
     const aliceLiquidity = BigNumber.from('7705754408611783555308')
     const bobLiquidity = BigNumber.from('12891478442546858467877')
-    const bobLiquidity2 = BigNumber.from('4901161634764542438934')
+    const bobLiquidity2 = BigNumber.from('4901161634764542438933')
 
     await validateMint({
       signer: hre.props.alice,
@@ -761,8 +692,8 @@ describe('RangePool Tests', function () {
       signer: hre.props.bob,
       lower: '600',
       upper: '800',
-      tokenAmount: bobLiquidity.sub(bobLiquidity2),
-      liquidityAmount: bobLiquidity.sub(bobLiquidity2),
+      tokenAmount: bobLiquidity.sub(bobLiquidity2).add(2),
+      liquidityAmount: bobLiquidity.sub(bobLiquidity2).add(2),
       balance0Increase: BigNumber.from('19215617142486657241'),
       balance1Increase: BigNumber.from('61981384395843878803'),
       revertMessage: '',

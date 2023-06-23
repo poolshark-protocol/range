@@ -182,15 +182,15 @@ library Positions {
             liquidityAmount: 0,
             totalSupply: 0,
             tokenId: Tokens.id(params.lower, params.upper)
-        }); 
+        });
         cache.totalSupply = Tokens.totalSupplyById(address(this), cache.tokenId);
-        cache.liquidityAmount = params.amount > 0 ? uint256(params.amount) * uint256(position.liquidity) 
-                                                                       / (cache.totalSupply + params.amount)
-                                                                     : params.amount;
-        if (params.amount == 0) {
+        cache.liquidityAmount = params.burnPercent > 0 ? removeParams.tokenBurned * uint256(position.liquidity) 
+                                                                       / (cache.totalSupply + removeParams.tokenBurned)
+                                                                     : 0;
+        if (removeParams.tokenBurned == 0) {
             return (state, position, removeParams.amount0, removeParams.amount1);
         } 
-        if (params.amount > position.liquidity) require(false, 'NotEnoughPositionLiquidity()');
+        if (cache.liquidityAmount > position.liquidity) require(false, 'NotEnoughPositionLiquidity()');
         {
             uint128 amount0Removed; uint128 amount1Removed;
             (amount0Removed, amount1Removed) = DyDxMath.getAmountsForLiquidity(
@@ -225,7 +225,7 @@ library Positions {
             params.lower,
             params.upper,
             cache.tokenId,
-            params.amount,
+            removeParams.tokenBurned,
             uint128(cache.liquidityAmount),
             removeParams.amount0,
             removeParams.amount1
@@ -296,16 +296,18 @@ library Positions {
         IRangePoolStructs.PoolState memory state,
         IRangePoolStructs.UpdateParams memory params
     ) internal returns (
-        IRangePoolStructs.Position memory, 
+        IRangePoolStructs.Position memory,
         uint128, 
+        uint128,
         uint128
     ) {
-        uint256 totalSupply;
-        totalSupply = Tokens.totalSupply(address(this), params.lower, params.upper);
+        IRangePoolStructs.UpdatePositionCache memory cache;
+        cache.totalSupply = Tokens.totalSupply(address(this), params.lower, params.upper);
         /// @dev - only true if burn call
-        if (params.amount > 0) {
+        if (params.burnPercent > 0) {
             uint256 tokenId = Tokens.id(params.lower, params.upper);
-            IRangePoolERC1155(address(this)).burnFungible(msg.sender, tokenId, params.amount);
+            cache.tokenBurned = params.burnPercent * Tokens.balanceOf(address(this), msg.sender, params.lower, params.upper) / 1e38;
+            IRangePoolERC1155(address(this)).burnFungible(msg.sender, tokenId, cache.tokenBurned);
         }
         
         (uint256 rangeFeeGrowth0, uint256 rangeFeeGrowth1) = rangeFeeGrowth(
@@ -339,15 +341,15 @@ library Positions {
         position.amount1 += amount1Fees;
 
         uint128 feesBurned0; uint128 feesBurned1;
-        if (params.amount > 0) {
+        if (params.burnPercent > 0) {
             feesBurned0 = uint128(
-                (uint256(position.amount0) * uint256(params.amount)) / (totalSupply)
+                (uint256(position.amount0) * uint256(cache.tokenBurned)) / (cache.totalSupply)
             );
             feesBurned1 = uint128(
-                (uint256(position.amount1) * uint256(params.amount)) / (totalSupply)
+                (uint256(position.amount1) * uint256(cache.tokenBurned)) / (cache.totalSupply)
             );
         }
-        return (position, feesBurned0, feesBurned1);
+        return (position, feesBurned0, feesBurned1, uint128(cache.tokenBurned));
     }
 
     function rangeFeeGrowth(
