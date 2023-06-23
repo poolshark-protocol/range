@@ -82,7 +82,7 @@ interface IRangePoolStructs {
         address to;
         int24 lower;
         int24 upper;
-        uint128 amount;
+        uint128 burnPercent;
     }
 
     struct SnapshotParams {
@@ -129,12 +129,13 @@ interface IRangePoolStructs {
     struct RemoveParams {
         uint128 amount0;
         uint128 amount1;
+        uint128 tokenBurned;
     }
 
     struct UpdateParams {
         int24 lower;
         int24 upper;
-        uint128 amount;
+        uint128 burnPercent;
     }
 
     struct MintCache {
@@ -150,6 +151,7 @@ interface IRangePoolStructs {
         Immutables constants;
         uint128 amount0;
         uint128 amount1;
+        uint128 tokenBurned;
     }
 
     struct SwapCache {
@@ -178,13 +180,14 @@ interface IRangePoolStructs {
     }
 
     struct UpdatePositionCache {
-        Position position;
-        uint160 priceLower;
-        uint160 priceUpper;
-        bool removeLower;
-        bool removeUpper;
-        int128 amountInDelta;
-        int128 amountOutDelta;
+        uint256 totalSupply;
+        uint256 tokenBurned;
+        uint256 rangeFeeGrowth0;
+        uint256 rangeFeeGrowth1;
+        uint128 amountFees0;
+        uint128 amountFees1;
+        uint128 feesBurned0;
+        uint128 feesBurned1;
     }
 
     struct SnapshotCache {

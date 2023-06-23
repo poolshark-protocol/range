@@ -24,10 +24,12 @@ library BurnCall {
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.Sample[65535] storage samples
     ) external returns (IRangePoolStructs.BurnCache memory) {
+        if (params.burnPercent > 1e38) params.burnPercent = 1e38;
         (
             cache.position,
             cache.amount0,
-            cache.amount1
+            cache.amount1,
+            cache.tokenBurned
         ) = Positions.update(
                 ticks,
                 cache.position,
@@ -35,10 +37,15 @@ library BurnCall {
                 IRangePoolStructs.UpdateParams(
                     params.lower,
                     params.upper,
-                    uint128(params.amount)
+                    params.burnPercent
                 )
         );
-        (cache.pool, cache.position, cache.amount0, cache.amount1) = Positions.remove(
+        (
+            cache.pool,
+            cache.position,
+            cache.amount0,
+            cache.amount1
+        ) = Positions.remove(
             cache.position,
             ticks,
             samples,
@@ -47,7 +54,8 @@ library BurnCall {
             params,
             IRangePoolStructs.RemoveParams(
                 cache.amount0,
-                cache.amount1
+                cache.amount1,
+                cache.tokenBurned
             )
         );
         cache.position.amount0 -= cache.amount0;

@@ -1,6 +1,7 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expect } from 'chai'
 import { BigNumber, Contract } from 'ethers'
+import { RangePoolERC1155 } from '../../../typechain'
 
 export const Q64x96 = BigNumber.from('2').pow(96)
 export const BN_ZERO = BigNumber.from('0')
@@ -269,7 +270,7 @@ export async function validateMint(params: ValidateMintParams) {
         to: signer.address, 
         lower: lower, 
         upper: upper,
-        amount: '0',
+        burnPercent: '0',
       }, {gasLimit: 3000000})
     await txn.wait()
   } else {
@@ -278,7 +279,7 @@ export async function validateMint(params: ValidateMintParams) {
         to: signer.address, 
         lower: lower, 
         upper: upper,
-        amount: '0',
+        burnPercent: '0',
       })
     ).to.be.revertedWith(collectRevertMessage)
   }
@@ -379,7 +380,7 @@ export async function validateBurn(params: ValidateBurnParams) {
   const signer = params.signer
   const lower = BigNumber.from(params.lower)
   const upper = BigNumber.from(params.upper)
-  const liquidityAmount = params.liquidityAmount
+  let liquidityAmount = params.liquidityAmount
   const balance0Increase = params.balance0Increase
   const balance1Increase = params.balance1Increase
   const revertMessage = params.revertMessage
@@ -392,16 +393,35 @@ export async function validateBurn(params: ValidateBurnParams) {
   let lowerTickBefore: Tick
   let upperTickBefore: Tick
   let positionBefore: Position
-  let positionToken: Contract
+  let positionToken: RangePoolERC1155
   let positionTokenId: BigNumber
   let positionTokenBalanceBefore: BigNumber
+  let positionTokenTotalSupply: BigNumber
   lowerTickBefore = await hre.props.rangePool.ticks(lower)
   upperTickBefore = await hre.props.rangePool.ticks(upper)
   // check position token balance
   positionTokenId  = await hre.props.positionsLib.id(lower, upper);
   positionToken = await hre.ethers.getContractAt('RangePoolERC1155', hre.props.rangePool.address);
   positionTokenBalanceBefore = await positionToken.balanceOf(signer.address, positionTokenId);
+  positionTokenTotalSupply = await positionToken.totalSupply(positionTokenId);
   positionBefore = await hre.props.rangePool.positions(lower, upper)
+
+  const burnPercent = positionTokenBalanceBefore.gt(BN_ZERO) ?
+                        (params.tokenAmount ? params.tokenAmount : liquidityAmount)
+                        .mul(ethers.utils.parseUnits('1', 38))
+                        .div(positionTokenBalanceBefore)
+                      : BN_ZERO
+                      
+  if (params.tokenAmount) {
+    params.tokenAmount = burnPercent.mul(positionTokenBalanceBefore).div(ethers.utils.parseUnits('1', 38))
+  }
+  if (positionTokenTotalSupply.gt(BN_ZERO)) {
+    liquidityAmount = positionBefore.liquidity.mul(params.tokenAmount ? params.tokenAmount : liquidityAmount).div(positionTokenTotalSupply)
+  } else {
+    liquidityAmount = BN_ZERO
+  }
+
+  // console.log('burn percent:', burnPercent.toString(), (params.tokenAmount ? params.tokenAmount : liquidityAmount).toString(), positionTokenBalanceBefore.toString())
 
   if (revertMessage == '') {
     const burnTxn = await hre.props.rangePool
@@ -410,7 +430,7 @@ export async function validateBurn(params: ValidateBurnParams) {
         to: params.signer.address,
         lower: lower,
         upper: upper,
-        amount: params.tokenAmount ? params.tokenAmount : liquidityAmount,
+        burnPercent: burnPercent
     })
     await burnTxn.wait()
   } else {
@@ -419,7 +439,7 @@ export async function validateBurn(params: ValidateBurnParams) {
         to: params.signer.address,
         lower: lower,
         upper: upper,
-        amount: params.tokenAmount ? params.tokenAmount : liquidityAmount,
+        burnPercent: burnPercent,
     })
     ).to.be.revertedWith(revertMessage)
     return
