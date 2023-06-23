@@ -27,7 +27,7 @@ contract RangePoolFactory is
         uint160 startPrice
     ) external override returns (address pool) {
         // validate token pair
-        if (tokenIn == tokenOut) {
+        if (tokenIn == tokenOut || tokenIn == address(0) || tokenOut == address(0)) {
             revert InvalidTokenAddress();
         }
         address token0 = tokenIn < tokenOut ? tokenIn : tokenOut;

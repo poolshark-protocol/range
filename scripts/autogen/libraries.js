@@ -1,3 +1,3 @@
 module.exports = {
-    Ticks: "0xE35d5Aa1Bac86d9eEaEf63E7013094192e57eD21",
+    Ticks: "0x22B9e0f6B333dc64fe520D5a897445d1726a4575",
 };
