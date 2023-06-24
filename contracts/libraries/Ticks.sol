@@ -21,6 +21,13 @@ library Ticks {
     error InvalidPositionAmount();
     error InvalidPositionBounds();
 
+    event Initialize(
+        uint160 startPrice,
+        int24 tickAtPrice,
+        int24 minTick,
+        int24 maxTick
+    );
+
     event Swap(
         address indexed recipient,
         bool zeroForOne,
@@ -43,12 +50,24 @@ library Ticks {
         IRangePoolStructs.PoolState memory
     )    
     {
-        uint160 minPrice = TickMath.getSqrtRatioAtTick(TickMap._round(TickMath.MIN_TICK, tickSpacing));
-        uint160 maxPrice = TickMath.getSqrtRatioAtTick(TickMap._round(TickMath.MAX_TICK, tickSpacing));
-        if (state.price < minPrice || state.price >= maxPrice) require(false, 'StartPriceInvalid()');
+        int24 minTick = TickMap._round(TickMath.MIN_TICK, tickSpacing);
+        int24 maxTick = TickMap._round(TickMath.MAX_TICK, tickSpacing);
+        uint160 minPrice = TickMath.getSqrtRatioAtTick(minTick);
+        uint160 maxPrice = TickMath.getSqrtRatioAtTick(maxTick);
+        if (state.price < minPrice || state.price >= maxPrice)
+            require(false, 'StartPriceInvalid()');
+
         TickMap.init(tickMap, TickMath.MIN_TICK, tickSpacing);
         TickMap.init(tickMap, TickMath.MAX_TICK, tickSpacing);
         state.tickAtPrice = TickMath.getTickAtSqrtRatio(state.price);
+        
+        emit Initialize(
+            state.price,
+            state.tickAtPrice,
+            minTick,
+            maxTick
+        );
+
         return (
             Samples.initialize(samples, state)
         );

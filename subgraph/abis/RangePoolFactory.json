@@ -38,12 +38,6 @@
         "internalType": "address",
         "name": "pool",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint160",
-        "name": "startPrice",
-        "type": "uint160"
       }
     ],
     "name": "RangePoolCreated",

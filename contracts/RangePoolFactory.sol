@@ -53,7 +53,7 @@ contract RangePoolFactory is
         rangePools[key] = pool;
 
         // emit event for indexers
-        emit RangePoolCreated(token0, token1, swapFee, pool, startPrice);
+        emit RangePoolCreated(token0, token1, swapFee, pool);
     }
 
     function getRangePool(

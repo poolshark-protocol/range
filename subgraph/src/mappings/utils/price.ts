@@ -42,7 +42,7 @@ export function getEthPriceInUSD(): BigDecimal {
  * Search through graph to find derived Eth per token.
  * @todo update to be derived ETH (add stablecoin estimates)
  **/
-export function findEthPerToken(token: Token, otherToken: Token): BigDecimal {
+export function findEthPerToken(token: Token, otherToken: Token, basePrice: BasePrice): BigDecimal {
   if (token.id == WETH_ADDRESS) {
     log.info('weth address match',[])
     return ONE_BD
@@ -54,7 +54,6 @@ export function findEthPerToken(token: Token, otherToken: Token): BigDecimal {
   // need to update this to actually detect best rate based on liquidity distribution
   let largestLiquidityETH = ZERO_BD
   let priceSoFar = ZERO_BD
-  let basePrice = safeLoadBasePrice('eth').entity
 
   if (basePrice === null) {
     return ZERO_BD
