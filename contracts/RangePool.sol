@@ -22,8 +22,8 @@ contract RangePool is
     SafeTransfers
 {
     address public immutable owner;
-    address internal immutable token0;
-    address internal immutable token1;
+    address public immutable token0;
+    address public immutable token1;
     uint16 public immutable swapFee;
     int24 public immutable tickSpacing;
 
