@@ -342,15 +342,24 @@ library Ticks {
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
+        int128 liquidityDelta = ticks[cache.crossTick].liquidityDelta;
         if (zeroForOne) {
             unchecked {
-                cache.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
+                if (liquidityDelta >= 0){
+                    cache.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
+                } else {
+                    cache.liquidity += uint128(-ticks[cache.crossTick].liquidityDelta); 
+                }
             }
             pool.tickAtPrice = cache.crossTick;
             cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
         } else {
             unchecked {
-                cache.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
+                if (liquidityDelta >= 0) {
+                    cache.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);
+                } else {
+                    cache.liquidity -= uint128(-ticks[cache.crossTick].liquidityDelta);
+                }
             }
             pool.tickAtPrice = cache.crossTick;
             cache.crossTick = TickMap.next(tickMap, cache.crossTick);
