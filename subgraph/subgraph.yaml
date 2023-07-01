@@ -8,9 +8,9 @@ dataSources:
       name: RangePoolFactory
       network: arbitrum-goerli
       source:
-          address: '0x2ee926Eb4bBf3C49c6D1434C8083cF09a0266fE2'
+          address: '0x5a8596ce0fc975D1E814c161fED83a056a3083E8'
           abi: RangePoolFactory
-          startBlock: 19717300
+          startBlock: 27958800
       mapping:
           kind: ethereum/events
           apiVersion: 0.0.6
@@ -31,15 +31,15 @@ dataSources:
               - name: ERC20NameBytes
                 file: ./abis/ERC20NameBytes.json
           eventHandlers:
-              - event: RangePoolCreated(indexed address,indexed address,indexed uint24,address,uint160)
+              - event: RangePoolCreated(indexed address,indexed address,indexed uint24,address)
                 handler: handleRangePoolCreated
     - kind: ethereum/contract
       name: RangePoolManager
       network: arbitrum-goerli
       source:
-          address: '0xf6E41cFEa90909D9d23CA11d992Fce4a50DEe1B4'
+          address: '0x73749f573c2B06bc56435118f8529A11FAD5266A'
           abi: RangePoolManager
-          startBlock: 19717300
+          startBlock: 27958800
       mapping:
           kind: ethereum/events
           apiVersion: 0.0.6
@@ -95,6 +95,8 @@ templates:
                 handler: handleMint
               - event: Burn(indexed address,int24,int24,indexed uint256,uint128,uint128,uint128,uint128)
                 handler: handleBurn
+              - event: Initialize(uint160,int24,int24,int24)
+                handler: handleInitialize
               - event: Compound(indexed int24,indexed int24,uint128,uint128,uint128)
                 handler: handleCompound
               - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)

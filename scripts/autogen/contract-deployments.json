@@ -93,110 +93,92 @@
     "arb_goerli": {
         "token0": {
             "contractName": "Token20",
-            "contractAddress": "0x78c4d40a6bf2372C8F07FeAE2e253494D4dEB301",
+            "contractAddress": "0x6774be1a283Faed7ED8e40463c40Fb33A8da3461",
             "constructorArguments": [
-                "Token20A",
-                "TOKEN20A",
+                "Wrapped Ether Test",
+                "WETH",
                 18
             ],
-            "created": "2023-05-25T03:11:57.584Z"
+            "created": "2023-06-23T20:38:06.497Z"
         },
         "token1": {
             "contractName": "Token20",
-            "contractAddress": "0xE9eF81b9aFA6026E06a138aeF3f572f0a5BA4025",
+            "contractAddress": "0xC26906E10E8BDaDeb2cf297eb56DF59775eE52c4",
             "constructorArguments": [
-                "Token20B",
-                "TOKEN20B",
+                "Dai Stablecoin Test",
+                "DAI",
                 18
             ],
-            "created": "2023-05-25T03:11:57.591Z"
-        },
-        "tickMathLib": {
-            "contractName": "TickMath",
-            "contractAddress": "0xa5042268342abF70E00F8505DE44D42bE21415B8",
-            "constructorArguments": [],
-            "created": "2023-05-25T03:11:58.670Z"
-        },
-        "precisionMathLib": {
-            "contractName": "PrecisionMath",
-            "contractAddress": "0xFD01c1CeF4578A3946CbB888E029321c2CD0CBaE",
-            "constructorArguments": [],
-            "created": "2023-05-14T00:13:14.613Z"
-        },
-        "dydxMathLib": {
-            "contractName": "DyDxMath",
-            "contractAddress": "0x8830c2B6EA58DA481cF843d0D8b43660444774c2",
-            "constructorArguments": [],
-            "created": "2023-05-14T00:13:15.951Z"
-        },
-        "tickMapLib": {
-            "contractName": "TickMap",
-            "contractAddress": "0x0966AD99eE788Fb70dDDEA7EA18D0d35237AB43d",
-            "constructorArguments": [],
-            "created": "2023-05-14T00:13:17.034Z"
-        },
-        "samplesLib": {
-            "contractName": "Samples",
-            "contractAddress": "0xe3206855939d37567f39071803ca0469846D4782",
-            "constructorArguments": [],
-            "created": "2023-05-14T00:13:17.988Z"
+            "created": "2023-06-23T20:38:06.504Z"
         },
         "ticksLib": {
             "contractName": "Ticks",
-            "contractAddress": "0x3BD0B34CC8e6f151d5EE3aaDCA83E53ad06e2A20",
+            "contractAddress": "0x1E84CD898da70765AF39C13E4a0424b7d41d2954",
             "constructorArguments": [],
-            "created": "2023-05-25T03:11:59.765Z"
+            "created": "2023-06-24T15:13:15.092Z"
         },
         "positionsLib": {
             "contractName": "Positions",
-            "contractAddress": "0x5A2445DCa398F975034cb5e9f29E088aEaFF50E7",
+            "contractAddress": "0x4869a759Dce6AE604a5ddC51ab6aC16971c372f8",
             "constructorArguments": [],
-            "created": "2023-05-25T03:12:00.973Z"
+            "created": "2023-06-24T15:13:18.154Z"
         },
         "rangePoolManager": {
             "contractName": "RangePoolManager",
-            "contractAddress": "0x5B1611F319Ed8e07B41E130A157010Eb6617ec98",
+            "contractAddress": "0x73749f573c2B06bc56435118f8529A11FAD5266A",
             "constructorArguments": [],
-            "created": "2023-05-25T03:12:05.660Z"
+            "created": "2023-06-24T15:13:37.663Z"
         },
         "rangePoolFactory": {
             "contractName": "RangePoolFactory",
-            "contractAddress": "0x6829239c3eb648F5DA66f1378e06E4DeaB148F15",
+            "contractAddress": "0x5a8596ce0fc975D1E814c161fED83a056a3083E8",
             "constructorArguments": [
-                "0x5B1611F319Ed8e07B41E130A157010Eb6617ec98"
+                "0x73749f573c2B06bc56435118f8529A11FAD5266A"
             ],
-            "created": "2023-05-25T03:12:06.881Z"
+            "created": "2023-06-24T15:13:41.296Z"
         },
         "rangePool": {
             "contractName": "RangePool",
-            "contractAddress": "0x7AAb31cf4346ef82823293E8F86d67301EBf4466",
+            "contractAddress": "0xe016dE948ded7D04345f44289EA0806b9A0A1E3d",
             "constructorArguments": [
-                "0x78c4d40a6bf2372C8F07FeAE2e253494D4dEB301",
-                "0xE9eF81b9aFA6026E06a138aeF3f572f0a5BA4025",
-                "0x5B1611F319Ed8e07B41E130A157010Eb6617ec98",
+                "0x6774be1a283Faed7ED8e40463c40Fb33A8da3461",
+                "0xC26906E10E8BDaDeb2cf297eb56DF59775eE52c4",
+                "0x73749f573c2B06bc56435118f8529A11FAD5266A",
                 "177159557114295710296101716160",
                 "10",
                 "500"
             ],
-            "created": "2023-05-25T03:12:09.951Z"
+            "created": "2023-06-24T15:13:49.853Z"
         },
         "mintCall": {
             "contractName": "MintCall",
-            "contractAddress": "0xDa235A39D094a32763Cedf6F4894b2b4914c6c83",
+            "contractAddress": "0xCaEbDfd6860179e755Cb8CBf5074000E79Df2A8f",
             "constructorArguments": [],
-            "created": "2023-05-25T03:12:02.286Z"
+            "created": "2023-06-24T15:13:21.847Z"
         },
         "burnCall": {
             "contractName": "BurnCall",
-            "contractAddress": "0x82cFd12CA9D29dB0d364E5eE4F5da06B1A7389ce",
+            "contractAddress": "0x2baC523587F234257EAc8e40159F459CC2574198",
             "constructorArguments": [],
-            "created": "2023-05-25T03:12:03.494Z"
+            "created": "2023-06-24T15:13:24.970Z"
         },
         "swapCall": {
             "contractName": "SwapCall",
-            "contractAddress": "0x6801Babe2C94AD971dbA8177510A88AC618CCc58",
+            "contractAddress": "0xE71A7396C9285951ED622c89bEf4379Df02380F5",
             "constructorArguments": [],
-            "created": "2023-05-25T03:12:04.675Z"
+            "created": "2023-06-24T15:13:28.258Z"
+        },
+        "quoteCall": {
+            "contractName": "QuoteCall",
+            "contractAddress": "0x1A3a84c56d768997645B43917cbfd67f5A07070B",
+            "constructorArguments": [],
+            "created": "2023-06-24T15:13:32.298Z"
+        },
+        "sampleCall": {
+            "contractName": "SampleCall",
+            "contractAddress": "0xf08611d2Fcde605CF22F4Bf988b1640D79DC9Fce",
+            "constructorArguments": [],
+            "created": "2023-06-24T15:13:35.063Z"
         }
     },
     "scroll_alpha": {

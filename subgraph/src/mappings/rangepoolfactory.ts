@@ -21,8 +21,6 @@ export function handleRangePoolCreated(event: RangePoolCreated): void {
     let loadRangePoolFactory = safeLoadRangePoolFactory(event.address.toHex())
     let loadToken0 = safeLoadToken(event.params.token0.toHexString())
     let loadToken1 = safeLoadToken(event.params.token1.toHexString())
-    let loadMinTick = safeLoadTick(event.params.pool.toHexString(), BigInt.fromI32(887272))
-    let loadMaxTick = safeLoadTick(event.params.pool.toHexString(), BigInt.fromI32(-887272))
     
     let basePrice = loadBasePrice.entity
     let feeTier = loadFeeTier.entity
@@ -30,8 +28,6 @@ export function handleRangePoolCreated(event: RangePoolCreated): void {
     let token1 = loadToken1.entity
     let pool = loadRangePool.entity
     let factory = loadRangePoolFactory.entity
-    let minTick = loadMinTick.entity
-    let maxTick = loadMaxTick.entity
 
     log.info("factory address: {}", [factory.id])
 
@@ -69,11 +65,6 @@ export function handleRangePoolCreated(event: RangePoolCreated): void {
     pool.token0 = token0.id
     pool.token1 = token1.id
     pool.feeTier = feeTier.id
-    pool.price = event.params.startPrice
-    pool.tickAtPrice = BIGINT_ZERO
-    let prices = sqrtPriceX96ToTokenPrices(pool.price, token0, token1)
-    pool.price0 = prices[0]
-    pool.price1 = prices[1]
     
     pool.factory = factory.id
     pool.createdAtBlockNumber = event.block.number
@@ -88,8 +79,6 @@ export function handleRangePoolCreated(event: RangePoolCreated): void {
     factory.save()
     token0.save()
     token1.save()
-    maxTick.save()
-    minTick.save()
 
     RangePoolTemplate.create(event.params.pool)
 }

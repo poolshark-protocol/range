@@ -119,8 +119,8 @@ export function handleMint(event: Mint): void {
     factory.txnCount = factory.txnCount.plus(ONE_BI)
 
     // eth price updates
-    token0.ethPrice = findEthPerToken(token0, token1)
-    token1.ethPrice = findEthPerToken(token1, token0)
+    token0.ethPrice = findEthPerToken(token0, token1, basePrice)
+    token1.ethPrice = findEthPerToken(token1, token0, basePrice)
     token0.usdPrice = token0.ethPrice.times(basePrice.USD)
     token1.usdPrice = token1.ethPrice.times(basePrice.USD)
 

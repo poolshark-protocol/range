@@ -27,7 +27,7 @@ contract RangePoolFactory is
         uint160 startPrice
     ) external override returns (address pool) {
         // validate token pair
-        if (tokenIn == tokenOut) {
+        if (tokenIn == tokenOut || tokenIn == address(0) || tokenOut == address(0)) {
             revert InvalidTokenAddress();
         }
         address token0 = tokenIn < tokenOut ? tokenIn : tokenOut;
@@ -53,7 +53,7 @@ contract RangePoolFactory is
         rangePools[key] = pool;
 
         // emit event for indexers
-        emit RangePoolCreated(token0, token1, swapFee, pool, startPrice);
+        emit RangePoolCreated(token0, token1, swapFee, pool);
     }
 
     function getRangePool(

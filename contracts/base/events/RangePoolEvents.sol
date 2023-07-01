@@ -2,6 +2,13 @@
 pragma solidity 0.8.13;
 
 abstract contract RangePoolEvents {
+    event Initialize(
+        uint160 startPrice,
+        int24 tickAtPrice,
+        int24 minTick,
+        int24 maxTick
+    );
+
     event Mint(
         address indexed recipient,
         int24 lower,

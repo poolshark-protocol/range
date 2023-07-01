@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { BigInt, BigDecimal, Address } from '@graphprotocol/graph-ts'
 import { RangePoolFactory as FactoryContract } from '../../generated/RangePoolFactory/RangePoolFactory'
-export let FACTORY_ADDRESS = '0x2ee926Eb4bBf3C49c6D1434C8083cF09a0266fE2'
+export let FACTORY_ADDRESS = '0x5a8596ce0fc975D1E814c161fED83a056a3083E8'
 export let WETH_ADDRESS = '0x6774be1a283faed7ed8e40463c40fb33a8da3461'
 
 // tokens where USD value is safe to use for globals
@@ -16,7 +16,7 @@ export let STABLE_COINS: string[] = [
 ]
 
 // used for safe eth pricing 
-export const STABLE_POOL_ADDRESS = '0x0c6cd757bbade7803c593bd77f5f2968921fa895'
+export const STABLE_POOL_ADDRESS = '0xe016de948ded7d04345f44289ea0806b9a0a1e3d'
 
 // determines which token to use for eth<-> rate, true means stable is token0 in pool above 
 export const STABLE_IS_TOKEN_0 = false

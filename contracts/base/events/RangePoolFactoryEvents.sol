@@ -6,7 +6,6 @@ abstract contract RangePoolFactoryEvents {
         address indexed token0,
         address indexed token1,
         uint24 indexed fee,
-        address pool,
-        uint160 startPrice
+        address pool
     );
 }
