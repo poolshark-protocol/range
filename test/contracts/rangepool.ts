@@ -811,4 +811,75 @@ describe('RangePool Tests', function () {
       console.log('balance after token1:', (await hre.props.token1.balanceOf(hre.props.rangePool.address)).toString())
     }
   })
+
+  it('pool - Should not underflow when crossing when exiting and entering position range :: KEBABSEC', async function () {
+    const pool: PoolState = await hre.props.rangePool.poolState()
+    const aliceLiquidity = BigNumber.from('4152939701311089823384')
+    const bobLiquidity = BigNumber.from('10356653617731432349576')
+
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '500',
+      upper: '1000',
+      amount0: tokenAmount,
+      amount1: tokenAmount,
+      balance0Decrease: BigNumber.from('0'),
+      balance1Decrease: tokenAmount,
+      tokenAmount: aliceLiquidity,
+      liquidityIncrease: aliceLiquidity,
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount.mul(2),
+      sqrtPriceLimitX96: maxPrice,
+      balanceInDecrease: BigNumber.from('107788010909609440040'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('99949999999999999999'), // token0 decrease in pool
+      revertMessage: '',
+    })
+
+    // if (debugMode) await getSnapshot(hre.props.bob.address, 600, 800)
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: true,
+      amountIn: tokenAmount.mul(2),
+      sqrtPriceLimitX96: minPrice,
+      balanceInDecrease: BigNumber.from('100000000000000000000'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('107734116904154635318'), // token0 decrease in pool
+      revertMessage: '',
+    })
+
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: tokenAmount.mul(2),
+      sqrtPriceLimitX96: maxPrice,
+      balanceInDecrease: BigNumber.from('107788010909609440040'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('99949999999999999999'), // token0 decrease in pool
+      revertMessage: '',
+    })
+
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '500',
+      upper: '1000',
+      tokenAmount: aliceLiquidity,
+      liquidityAmount: aliceLiquidity,
+      balance0Increase: BigNumber.from('99999999999999999'),
+      balance1Increase: BigNumber.from('107841904915064244759'),
+      revertMessage: '',
+    })
+
+    if (balanceCheck) {
+      console.log('balance after token0:', (await hre.props.token0.balanceOf(hre.props.rangePool.address)).toString())
+      console.log('balance after token1:', (await hre.props.token1.balanceOf(hre.props.rangePool.address)).toString())
+    }
+  })
 })
