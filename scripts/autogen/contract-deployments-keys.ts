@@ -37,4 +37,8 @@ export const CONTRACT_DEPLOYMENT_KEYS: ContractDeploymentsKey[] = [
         networkName: 'arb_goerli',
         objectName: 'rangePool'
     },
+    {
+        networkName: 'arb_goerli',
+        objectName: 'rangePool'
+    },
 ];
