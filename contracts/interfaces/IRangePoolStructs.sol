@@ -98,10 +98,10 @@ interface IRangePoolStructs {
 
     struct SwapParams {
         address to;
-        address refundTo;
         uint160 priceLimit;
         uint128 amountIn;
         bool zeroForOne;
+        bytes callbackData;
     }
 
     struct QuoteParams {

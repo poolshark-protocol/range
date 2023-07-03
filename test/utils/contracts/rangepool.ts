@@ -172,12 +172,12 @@ export async function validateSwap(params: ValidateSwapParams) {
   if (zeroForOne) {
     balanceInBefore = await hre.props.token0.balanceOf(signer.address)
     balanceOutBefore = await hre.props.token1.balanceOf(signer.address)
-    const approve0Txn = await hre.props.token0.approve(hre.props.rangePool.address, amountIn)
+    const approve0Txn = await hre.props.token0.approve(hre.props.poolRouter.address, amountIn)
     await approve0Txn.wait()
   } else {
     balanceInBefore = await hre.props.token1.balanceOf(signer.address)
     balanceOutBefore = await hre.props.token0.balanceOf(signer.address)
-    const approve1Txn = await hre.props.token1.approve(hre.props.rangePool.address, amountIn)
+    const approve1Txn = await hre.props.token1.approve(hre.props.poolRouter.address, amountIn)
     await approve1Txn.wait()
   }
 
@@ -197,27 +197,31 @@ export async function validateSwap(params: ValidateSwapParams) {
   const priceAfterQuote = quote[2]
 
   if (revertMessage == '') {
-    let txn = await hre.props.rangePool
+    let txn = await hre.props.poolRouter
       .connect(signer)
-      .swap({
+      .multiCall(
+      [hre.props.rangePool.address],  
+      [{
         to: signer.address,
-        refundTo: signer.address,
         zeroForOne: zeroForOne,
         amountIn: amountIn,
-        priceLimit: sqrtPriceLimitX96
-      })
+        priceLimit: sqrtPriceLimitX96,
+        callbackData: ethers.utils.formatBytes32String('')
+      }])
     await txn.wait()
   } else {
     await expect(
-      hre.props.rangePool
-        .connect(signer)
-        .swap({
-          to: signer.address,
-          refundTo: signer.address,
-          zeroForOne: zeroForOne,
-          amountIn: amountIn,
-          priceLimit: sqrtPriceLimitX96
-        })
+      hre.props.poolRouter
+      .connect(signer)
+      .multiCall(
+      [hre.props.rangePool.address],  
+      [{
+        to: signer.address,
+        zeroForOne: zeroForOne,
+        amountIn: amountIn,
+        priceLimit: sqrtPriceLimitX96,
+        callbackData: ethers.utils.formatBytes32String('')
+      }])
     ).to.be.revertedWith(revertMessage)
     return
   }

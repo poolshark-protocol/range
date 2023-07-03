@@ -67,7 +67,7 @@ describe('RangePool Tests', function () {
     await mintSigners20(hre.props.token1, tokenAmount.mul(10), [hre.props.alice, hre.props.bob])
   })
 
-  it('token1 - Should mint, swap, and burn 21', async function () {
+  it('token1 - Should mint, swap, and burn 32', async function () {
 
     await validateMint({
       signer: hre.props.alice,

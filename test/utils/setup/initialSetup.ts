@@ -19,6 +19,7 @@ import {
   QuoteCall__factory,
   SampleCall,
   SampleCall__factory,
+  PoolRouter__factory,
 } from '../../../typechain'
 
 export class InitialSetup {
@@ -37,24 +38,24 @@ export class InitialSetup {
   public async initialRangePoolSetup(): Promise<number> {
     const network = SUPPORTED_NETWORKS[hre.network.name.toUpperCase()]
 
-    const token0Address = (
-      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-        {
-          networkName: hre.network.name,
-          objectName: 'token0',
-        },
-        'readRangePoolSetup'
-      )
-    ).contractAddress
-    const token1Address = (
-      await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-        {
-          networkName: hre.network.name,
-          objectName: 'token1',
-        },
-        'readRangePoolSetup'
-      )
-    ).contractAddress
+    // const token0Address = (
+    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+    //     {
+    //       networkName: hre.network.name,
+    //       objectName: 'token0',
+    //     },
+    //     'readRangePoolSetup'
+    //   )
+    // ).contractAddress
+    // const token1Address = (
+    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
+    //     {
+    //       networkName: hre.network.name,
+    //       objectName: 'token1',
+    //     },
+    //     'readRangePoolSetup'
+    //   )
+    // ).contractAddress
     // const tickMathLib = (
     //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
     //     {
@@ -101,60 +102,60 @@ export class InitialSetup {
     //   )
     // ).contractAddress
 
-    hre.props.token0 = await hre.ethers.getContractAt('Token20', token0Address)
-    hre.props.token1 = await hre.ethers.getContractAt('Token20', token1Address)
+    // hre.props.token0 = await hre.ethers.getContractAt('Token20', token0Address)
+    // hre.props.token1 = await hre.ethers.getContractAt('Token20', token1Address)
     // hre.props.tickMathLib = await hre.ethers.getContractAt('TickMath', tickMathLib)
     // hre.props.precisionMathLib = await hre.ethers.getContractAt('PrecisionMath', precisionMathLib)
     // hre.props.dydxMathLib = await hre.ethers.getContractAt('DyDxMath', dydxMathLib)
     // hre.props.tickMapLib = await hre.ethers.getContractAt('TickMap', tickMapLib)
     // hre.props.samplesLib = await hre.ethers.getContractAt('Samples', samplesLib)
 
-    // await this.deployAssist.deployContractWithRetry(
-    //   network,
-    //   // @ts-ignore
-    //   Token20__factory,
-    //   'tokenA',
-    //   ['Wrapped Ether Test', 'WETH', this.token0Decimals]
-    // )
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
+      Token20__factory,
+      'tokenA',
+      ['Wrapped Ether Test', 'WETH', this.token0Decimals]
+    )
 
-    // await this.deployAssist.deployContractWithRetry(
-    //   network,
-    //   // @ts-ignore
-    //   Token20__factory,
-    //   'tokenB',
-    //   ['Dai Stablecoin Test', 'DAI', this.token1Decimals]
-    // )
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
+      Token20__factory,
+      'tokenB',
+      ['Dai Stablecoin Test', 'DAI', this.token1Decimals]
+    )
 
-    // const tokenOrder = hre.props.tokenA.address.localeCompare(hre.props.tokenB.address)
-    // let token0Args
-    // let token1Args
-    // if (tokenOrder < 0) {
-    //   hre.props.token0 = hre.props.tokenA
-    //   hre.props.token1 = hre.props.tokenB
-    //   token0Args = ['Wrapped Ether Test', 'WETH', this.token0Decimals]
-    //   token1Args = ['Dai Stablecoin Test', 'DAI', this.token1Decimals]
-    // } else {
-    //   hre.props.token0 = hre.props.tokenB
-    //   hre.props.token1 = hre.props.tokenA
-    //   token0Args = ['Dai Stablecoin Test', 'DAI', this.token1Decimals]
-    //   token1Args = ['Wrapped Ether Test', 'WETH', this.token0Decimals]
-    // }
-    // this.deployAssist.saveContractDeployment(
-    //   network,
-    //   'Token20',
-    //   'token0',
-    //   hre.props.token0,
-    //   token0Args
-    // )
-    // this.deployAssist.saveContractDeployment(
-    //   network,
-    //   'Token20',
-    //   'token1',
-    //   hre.props.token1,
-    //   token1Args
-    // )
-    // this.deployAssist.deleteContractDeployment(network, 'tokenA')
-    // this.deployAssist.deleteContractDeployment(network, 'tokenB')
+    const tokenOrder = hre.props.tokenA.address.localeCompare(hre.props.tokenB.address)
+    let token0Args
+    let token1Args
+    if (tokenOrder < 0) {
+      hre.props.token0 = hre.props.tokenA
+      hre.props.token1 = hre.props.tokenB
+      token0Args = ['Wrapped Ether Test', 'WETH', this.token0Decimals]
+      token1Args = ['Dai Stablecoin Test', 'DAI', this.token1Decimals]
+    } else {
+      hre.props.token0 = hre.props.tokenB
+      hre.props.token1 = hre.props.tokenA
+      token0Args = ['Dai Stablecoin Test', 'DAI', this.token1Decimals]
+      token1Args = ['Wrapped Ether Test', 'WETH', this.token0Decimals]
+    }
+    this.deployAssist.saveContractDeployment(
+      network,
+      'Token20',
+      'token0',
+      hre.props.token0,
+      token0Args
+    )
+    this.deployAssist.saveContractDeployment(
+      network,
+      'Token20',
+      'token1',
+      hre.props.token1,
+      token1Args
+    )
+    this.deployAssist.deleteContractDeployment(network, 'tokenA')
+    this.deployAssist.deleteContractDeployment(network, 'tokenB')
 
     await this.deployAssist.deployContractWithRetry(
       network,
@@ -238,6 +239,17 @@ export class InitialSetup {
         'contracts/libraries/pool/SampleCall.sol:SampleCall': hre.props.sampleCall.address
       }
     )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
+      PoolRouter__factory,
+      'poolRouter',
+      [
+        hre.props.rangePoolFactory.address
+      ]
+    )
+
     const setFactoryTxn = await hre.props.rangePoolManager
       .connect(hre.props.admin)
       .setFactory(
