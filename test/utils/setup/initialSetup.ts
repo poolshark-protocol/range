@@ -347,7 +347,7 @@ export class InitialSetup {
       .createRangePool(
         hre.props.token0.address,
         hre.props.token1.address,
-        '500',
+        '3000',
         '79228162514264337593543950336'
     , {gasLimit: 1000000000})
     await createPoolTxn.wait()

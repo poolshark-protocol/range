@@ -103,7 +103,7 @@ library Ticks {
             price: pool.price,
             liquidity: pool.liquidity,
             cross: true,
-            crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
+            crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice, true) 
                                          : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
             protocolFee: pool.protocolFee,
@@ -187,7 +187,7 @@ library Ticks {
             price: pool.price,
             liquidity: pool.liquidity,
             cross: true,
-            crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
+            crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice, true) 
                                          : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
             protocolFee: pool.protocolFee,
@@ -300,12 +300,12 @@ library Ticks {
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
-        IRangePoolStructs.Tick memory crossTick = ticks[cache.crossTick];
-        crossTick.feeGrowthOutside0       = pool.feeGrowthGlobal0 - crossTick.feeGrowthOutside0;
-        crossTick.feeGrowthOutside1       = pool.feeGrowthGlobal1 - crossTick.feeGrowthOutside1;
-        crossTick.tickSecondsAccumOutside = cache.tickSecondsAccum - crossTick.tickSecondsAccumOutside;
-        crossTick.secondsPerLiquidityAccumOutside = cache.secondsPerLiquidityAccum - crossTick.secondsPerLiquidityAccumOutside;
-        ticks[cache.crossTick] = crossTick;
+                    IRangePoolStructs.Tick memory crossTick = ticks[cache.crossTick];
+            crossTick.feeGrowthOutside0       = pool.feeGrowthGlobal0 - crossTick.feeGrowthOutside0;
+            crossTick.feeGrowthOutside1       = pool.feeGrowthGlobal1 - crossTick.feeGrowthOutside1;
+            crossTick.tickSecondsAccumOutside = cache.tickSecondsAccum - crossTick.tickSecondsAccumOutside;
+            crossTick.secondsPerLiquidityAccumOutside = cache.secondsPerLiquidityAccum - crossTick.secondsPerLiquidityAccumOutside;
+            ticks[cache.crossTick] = crossTick;
         int128 liquidityDelta = ticks[cache.crossTick].liquidityDelta;
         // observe most recent oracle update
         if (zeroForOne) {
@@ -317,7 +317,7 @@ library Ticks {
                 }
             }
             pool.tickAtPrice = cache.crossTick;
-            cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
+            cache.crossTick = TickMap.previous(tickMap, cache.crossTick, false);
         } else {
             unchecked {
                 if (liquidityDelta >= 0) {
@@ -352,7 +352,7 @@ library Ticks {
                 }
             }
             pool.tickAtPrice = cache.crossTick;
-            cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
+            cache.crossTick = TickMap.previous(tickMap, cache.crossTick, false);
         } else {
             unchecked {
                 if (liquidityDelta >= 0) {
