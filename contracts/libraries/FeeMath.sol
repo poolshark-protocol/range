@@ -3,7 +3,6 @@ pragma solidity 0.8.13;
 
 import "./PrecisionMath.sol";
 import "../interfaces/IRangePoolStructs.sol";
-import 'hardhat/console.sol';
 
 /// @notice Math library that facilitates fee handling.
 library FeeMath {
@@ -14,7 +13,7 @@ library FeeMath {
         IRangePoolStructs.SwapCache memory cache,
         uint256 amountOut,
         bool zeroForOne
-    ) internal view returns (
+    ) internal pure returns (
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     )
@@ -27,13 +26,9 @@ library FeeMath {
 
         if (zeroForOne) {
            pool.protocolFees.token1 += uint128(protocolFee);
-        //    console.log('fee growth 1 increased', feeAmount, Q128, cache.liquidity);
-           console.log('fee growth 1 add', pool.feeGrowthGlobal1, uint200(PrecisionMath.mulDiv(feeAmount, Q128, cache.liquidity)));
            pool.feeGrowthGlobal1 += uint200(PrecisionMath.mulDiv(feeAmount, Q128, cache.liquidity));
         } else {
           pool.protocolFees.token0 += uint128(protocolFee);
-        //   console.log('fee growth 0 increased', feeAmount, Q128, cache.liquidity);
-           console.log('fee growth 0 add', pool.feeGrowthGlobal0, uint200(PrecisionMath.mulDiv(feeAmount, Q128, cache.liquidity)));
           pool.feeGrowthGlobal0 += uint200(PrecisionMath.mulDiv(feeAmount, Q128, cache.liquidity));
         }
         cache.output += amountOut;

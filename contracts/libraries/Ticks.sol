@@ -11,7 +11,6 @@ import './PrecisionMath.sol';
 import './TickMath.sol';
 import './TickMap.sol';
 import './Samples.sol';
-import 'hardhat/console.sol';
 
 /// @notice Tick management library
 library Ticks {
@@ -98,11 +97,6 @@ library Ticks {
             IRangePoolStructs.SwapCache memory
         )
     {
-        if (pool.tickAtPrice == 73140) {
-            console.log('next tick to cross');
-            console.logInt(TickMap.previous(tickMap, pool.tickAtPrice, true));
-            console.log(pool.price, TickMath.getSqrtRatioAtTick(pool.tickAtPrice));
-        }
         cache = IRangePoolStructs.SwapCache({
             constants: cache.constants,
             pool: cache.pool,
@@ -225,7 +219,7 @@ library Ticks {
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache
-    ) internal view returns (
+    ) internal pure returns (
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
@@ -315,8 +309,6 @@ library Ticks {
         int128 liquidityDelta = ticks[cache.crossTick].liquidityDelta;
         // observe most recent oracle update
         if (zeroForOne) {
-            console.log('crossing down', uint24(cache.crossTick));
-
             unchecked {
                 if (liquidityDelta >= 0){
                     cache.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
@@ -327,7 +319,6 @@ library Ticks {
             pool.tickAtPrice = cache.crossTick;
             cache.crossTick = TickMap.previous(tickMap, cache.crossTick, false);
         } else {
-            console.log('crossing up', uint24(cache.crossTick), uint128(liquidityDelta));
             unchecked {
                 if (liquidityDelta >= 0) {
                     cache.liquidity += uint128(ticks[cache.crossTick].liquidityDelta);

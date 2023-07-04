@@ -681,7 +681,7 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
     if (debugMode) await getSnapshot(hre.props.bob.address, 600, 800)
-    console.log('FIRST BURN')
+    // console.log('FIRST BURN')
     await validateBurn({
       signer: hre.props.bob,
       lower: '600',
@@ -693,7 +693,7 @@ describe('RangePool Tests', function () {
       revertMessage: '',
     })
     if (debugMode) await getSnapshot(hre.props.bob.address, 600, 800)
-    console.log('SECOND BURN')
+    // console.log('SECOND BURN')
     await validateBurn({
       signer: hre.props.bob,
       lower: '600',
@@ -726,7 +726,7 @@ describe('RangePool Tests', function () {
     const pool: PoolState = await hre.props.rangePool.poolState()
     const aliceLiquidity = BigNumber.from('3852877204305891777654')
     const bobLiquidity = BigNumber.from('10356653617731432349576')
-    console.log('FIRST SWAP')
+    // console.log('FIRST SWAP')
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -753,7 +753,7 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: ''
     })
-    console.log('SECOND SWAP')
+    // console.log('SECOND SWAP')
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -925,11 +925,11 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: ''
     })
-    await getTickFeeGrowth(73140)
-    await getTickFeeGrowth(76020)
-    await getFeeGrowthGlobal()
-    await getRangeFeeGrowth(73140, 76020)
-    await getPositionFeeGrowth(73140, 76020)
+    // await getTickFeeGrowth(73140)
+    // await getTickFeeGrowth(76020)
+    // await getFeeGrowthGlobal()
+    // await getRangeFeeGrowth(73140, 76020)
+    // await getPositionFeeGrowth(73140, 76020)
 
     await mintSigners20(hre.props.token1, BigNumber.from('1000120000000000000000'), [hre.props.alice, hre.props.bob])
     //0x0ce063e85ccdeea4f80aed91034aab9310cec387ac572e7366fdf2264741c4d1
@@ -943,11 +943,11 @@ describe('RangePool Tests', function () {
       balanceOutIncrease: BigNumber.from('666077964566722076'), // token0 decrease in pool
       revertMessage: '',
     })
-    await getTickFeeGrowth(73140)
-    await getTickFeeGrowth(76020)
-    await getFeeGrowthGlobal()
-    await getRangeFeeGrowth(73140, 76020)
-    await getPositionFeeGrowth(73140, 76020)
+    // await getTickFeeGrowth(73140)
+    // await getTickFeeGrowth(76020)
+    // await getFeeGrowthGlobal()
+    // await getRangeFeeGrowth(73140, 76020)
+    // await getPositionFeeGrowth(73140, 76020)
 
     await mintSigners20(hre.props.token1, BigNumber.from('1000120000000000000000'), [hre.props.alice, hre.props.bob])
     //0x11fa356690c58c71c0abaedd6400f5011f624cdcf657c569d623e97d6592187e
@@ -1163,12 +1163,12 @@ describe('RangePool Tests', function () {
       balance1Increase: BigNumber.from('0'),
       revertMessage: '',
     })
-    await getFeeGrowthGlobal()
-    await getRangeFeeGrowth(73140, 76020)
-    console.log('BEFORE SWAP')
+    // await getFeeGrowthGlobal()
+    // await getRangeFeeGrowth(73140, 76020)
+    // console.log('BEFORE SWAP')
     //0x4d3e3bb5150a0874e0764067579d7ec5f09a72ae6686c3712c9095e9af067222
     // This swap causes the underflow on snapshot
-    await getTickAtPrice()
+    // await getTickAtPrice()
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
@@ -1179,11 +1179,11 @@ describe('RangePool Tests', function () {
       balanceOutIncrease: BigNumber.from('1221404429444282149252'), // token0 decrease in pool
       revertMessage: '',
     })
-    await getTickAtPrice()
-    await getFeeGrowthGlobal()
-    await getRangeFeeGrowth(73140, 76020)
-    console.log('END SWAP')
-    await getSnapshot(hre.props.alice.address, 73140, 76020)
+    // await getTickAtPrice()
+    // await getFeeGrowthGlobal()
+    // await getRangeFeeGrowth(73140, 76020)
+    // console.log('END SWAP')
+    // await getSnapshot(hre.props.alice.address, 73140, 76020)
     //0xfac2526e6bb1b4a3906826cf3e2f152c6fb0f2f0d7affe8fc69701f848d71897
     await validateSwap({
       signer: hre.props.alice,
@@ -1213,7 +1213,7 @@ describe('RangePool Tests', function () {
       revertMessage: '',
       collectRevertMessage: ''
     })
-    await getSnapshot(hre.props.alice.address, 73140, 76020)
+    // await getSnapshot(hre.props.alice.address, 73140, 76020)
     await validateBurn({
       signer: hre.props.alice,
       lower: '73140',
@@ -1234,7 +1234,7 @@ describe('RangePool Tests', function () {
       balance1Increase: BigNumber.from('66834894850190234087799'),
       revertMessage: '',
     })
-    if (true) {
+    if (balanceCheck) {
       console.log('balance after token0:', (await hre.props.token0.balanceOf(hre.props.rangePool.address)).toString())
       console.log('balance after token1:', (await hre.props.token1.balanceOf(hre.props.rangePool.address)).toString())
     }
