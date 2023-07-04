@@ -55,59 +55,9 @@ export class InitialSetup {
     //     'readRangePoolSetup'
     //   )
     // ).contractAddress
-    // const tickMathLib = (
-    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-    //     {
-    //       networkName: hre.network.name,
-    //       objectName: 'tickMathLib',
-    //     },
-    //     'readRangePoolSetup'
-    //   )
-    // ).contractAddress
-    // const precisionMathLib = (
-    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-    //     {
-    //       networkName: hre.network.name,
-    //       objectName: 'precisionMathLib',
-    //     },
-    //     'readRangePoolSetup'
-    //   )
-    // ).contractAddress
-    // const dydxMathLib = (
-    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-    //     {
-    //       networkName: hre.network.name,
-    //       objectName: 'dydxMathLib',
-    //     },
-    //     'readRangePoolSetup'
-    //   )
-    // ).contractAddress
-    // const tickMapLib = (
-    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-    //     {
-    //       networkName: hre.network.name,
-    //       objectName: 'tickMapLib',
-    //     },
-    //     'readRangePoolSetup'
-    //   )
-    // ).contractAddress
-    // const samplesLib = (
-    //   await this.contractDeploymentsJson.readContractDeploymentsJsonFile(
-    //     {
-    //       networkName: hre.network.name,
-    //       objectName: 'samplesLib',
-    //     },
-    //     'readRangePoolSetup'
-    //   )
-    // ).contractAddress
 
     // hre.props.token0 = await hre.ethers.getContractAt('Token20', token0Address)
     // hre.props.token1 = await hre.ethers.getContractAt('Token20', token1Address)
-    // hre.props.tickMathLib = await hre.ethers.getContractAt('TickMath', tickMathLib)
-    // hre.props.precisionMathLib = await hre.ethers.getContractAt('PrecisionMath', precisionMathLib)
-    // hre.props.dydxMathLib = await hre.ethers.getContractAt('DyDxMath', dydxMathLib)
-    // hre.props.tickMapLib = await hre.ethers.getContractAt('TickMap', tickMapLib)
-    // hre.props.samplesLib = await hre.ethers.getContractAt('Samples', samplesLib)
 
     await this.deployAssist.deployContractWithRetry(
       network,
@@ -347,7 +297,7 @@ export class InitialSetup {
       .createRangePool(
         hre.props.token0.address,
         hre.props.token1.address,
-        '3000',
+        '500',
         '79228162514264337593543950336'
     , {gasLimit: 1000000000})
     await createPoolTxn.wait()
