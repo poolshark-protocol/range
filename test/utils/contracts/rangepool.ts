@@ -97,6 +97,7 @@ export interface ValidateBurnParams {
   lower: string
   upper: string
   tokenAmount?: BigNumber
+  burnPercent?: BigNumber
   liquidityAmount: BigNumber
   balance0Increase: BigNumber
   balance1Increase: BigNumber
@@ -116,6 +117,33 @@ export async function getRangeBalanceOf(owner: string, lower: number, upper: num
   console.log('owner:', owner)
   console.log('balance:', balance.toString())
   return balance
+}
+
+export async function getTickFeeGrowth(index: number) {
+  const tick: Tick = await hre.props.rangePool.ticks(index)
+  console.log('feegrowth for', index, ':', tick.feeGrowthOutside0.toString(), tick.feeGrowthOutside1.toString())
+}
+
+export async function getFeeGrowthGlobal() {
+  const pool: PoolState = await hre.props.rangePool.poolState()
+  console.log('feegrowth global:', pool.feeGrowthGlobal0.toString(), pool.feeGrowthGlobal1.toString())
+}
+
+export async function getRangeFeeGrowth(lower: number, upper: number) {
+  const feeGrowth = await hre.props.positionsLib.rangeFeeGrowth(
+    hre.props.rangePool.address,
+    lower,
+    upper
+  )
+  console.log('range fee growth', lower, upper, ':', feeGrowth.feeGrowthInside0.toString(), feeGrowth.feeGrowthInside1.toString())
+}
+
+export async function getPositionFeeGrowth(lower: number, upper: number) {
+  const position = await hre.props.rangePool.positions(
+    lower,
+    upper
+  )
+  console.log('position fee growth', lower, upper, position.feeGrowthInside0Last.toString(), position.feeGrowthInside1Last.toString())
 }
 
 export async function getSnapshot(owner: string, lower: number, upper: number) {
@@ -406,7 +434,8 @@ export async function validateBurn(params: ValidateBurnParams) {
   positionTokenTotalSupply = await positionToken.totalSupply(positionTokenId);
   positionBefore = await hre.props.rangePool.positions(lower, upper)
 
-  const burnPercent = positionTokenBalanceBefore.gt(BN_ZERO) ?
+  let burnPercent = params.burnPercent
+  if (!burnPercent) burnPercent = positionTokenBalanceBefore.gt(BN_ZERO) ?
                         (params.tokenAmount ? params.tokenAmount : liquidityAmount)
                         .mul(ethers.utils.parseUnits('1', 38))
                         .div(positionTokenBalanceBefore)
@@ -416,9 +445,9 @@ export async function validateBurn(params: ValidateBurnParams) {
     params.tokenAmount = burnPercent.mul(positionTokenBalanceBefore).div(ethers.utils.parseUnits('1', 38))
   }
   if (positionTokenTotalSupply.gt(BN_ZERO)) {
-    liquidityAmount = positionBefore.liquidity.mul(params.tokenAmount ? params.tokenAmount : liquidityAmount).div(positionTokenTotalSupply)
+    if (!liquidityAmount) liquidityAmount = positionBefore.liquidity.mul(params.tokenAmount ? params.tokenAmount : liquidityAmount).div(positionTokenTotalSupply)
   } else {
-    liquidityAmount = BN_ZERO
+    if (!liquidityAmount) liquidityAmount = BN_ZERO
   }
 
   // console.log('burn percent:', burnPercent.toString(), (params.tokenAmount ? params.tokenAmount : liquidityAmount).toString(), positionTokenBalanceBefore.toString())

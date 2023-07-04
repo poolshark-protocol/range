@@ -15,6 +15,10 @@ import {
   getRangeBalanceOf,
   getSnapshot,
   getSample,
+  getTickFeeGrowth,
+  getFeeGrowthGlobal,
+  getRangeFeeGrowth,
+  getPositionFeeGrowth,
 } from '../utils/contracts/rangepool'
 
 alice: SignerWithAddress
@@ -882,4 +886,358 @@ describe('RangePool Tests', function () {
       console.log('balance after token1:', (await hre.props.token1.balanceOf(hre.props.rangePool.address)).toString())
     }
   })
+
+  it('pool - Should not underflow when crossing when exiting and entering position range 73:: KEBABSEC', async function () {
+    const pool: PoolState = await hre.props.rangePool.poolState()
+    const aliceLiquidity = BigNumber.from('288859894188086395983120')
+    const aliceLiquidity2 = BigNumber.from('130948265789136120265')
+    const aliceTokenAmount3 = BigNumber.from('289243963978185495685')
+    const aliceLiquidity3 = BigNumber.from('289244426214719608262')
+    const aliceTokenAmount4 = BigNumber.from('867731891934556487059')
+    const aliceLiquidity4 = BigNumber.from('867733278644158824788')
+
+    const bobLiquidity = BigNumber.from('10356653617731432349576')
+
+    //0xdec118d63b65cfd3e8598a0a993fe6d455bf6b6ad8e30603b9bfe83b3c31d2c5    
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '73140',
+      upper: '76020',
+      amount0: tokenAmount.mul(10),
+      amount1: BN_ZERO,
+      balance0Decrease: tokenAmount,
+      balance1Decrease: BN_ZERO,
+      tokenAmount: aliceLiquidity,
+      liquidityIncrease: aliceLiquidity,
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+    await getTickFeeGrowth(73140)
+    await getTickFeeGrowth(76020)
+    await getFeeGrowthGlobal()
+    await getRangeFeeGrowth(73140, 76020)
+    await getPositionFeeGrowth(73140, 76020)
+
+    await mintSigners20(hre.props.token1, BigNumber.from('1000120000000000000000'), [hre.props.alice, hre.props.bob])
+    //0x0ce063e85ccdeea4f80aed91034aab9310cec387ac572e7366fdf2264741c4d1
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: BigNumber.from('1000120000000000000000'),
+      sqrtPriceLimitX96: BigNumber.from('3077067665772502614228114341887'),
+      balanceInDecrease: BigNumber.from('1000120000000000000000'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('666077964566722076'), // token0 decrease in pool
+      revertMessage: '',
+    })
+    await getTickFeeGrowth(73140)
+    await getTickFeeGrowth(76020)
+    await getFeeGrowthGlobal()
+    await getRangeFeeGrowth(73140, 76020)
+    await getPositionFeeGrowth(73140, 76020)
+
+    await mintSigners20(hre.props.token1, BigNumber.from('1000120000000000000000'), [hre.props.alice, hre.props.bob])
+    //0x11fa356690c58c71c0abaedd6400f5011f624cdcf657c569d623e97d6592187e
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: BigNumber.from('1000120000000000000000'),
+      sqrtPriceLimitX96: BigNumber.from('3077067665772502614228114341887'),
+      balanceInDecrease: BigNumber.from('1000120000000000000000'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('665958920765498692'), // token0 decrease in pool
+      revertMessage: '',
+    })
+    //0xf0df1cade6825075311fbaf6a7c15b73478fc9ff0cfaa1e52185c3d908e827fb
+    await mintSigners20(hre.props.token1, BigNumber.from('1496453379000000000000'), [hre.props.alice, hre.props.bob])
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: BigNumber.from('1496453379000000000000'),
+      sqrtPriceLimitX96: BigNumber.from('3077754393416758970167012098048'),
+      balanceInDecrease: BigNumber.from('1496453379000000000000'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('996234651079624794'), // token0 decrease in pool
+      revertMessage: '',
+    })
+    //0x560d01f19e9cdb296813ee610cbd6d7c8a0fb78e9e8740697aa7bc10ad7f1e4e
+    await mintSigners20(hre.props.token1, BigNumber.from('1496453379000000000000'), [hre.props.alice, hre.props.bob])
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: BigNumber.from('1000000000000000000'),
+      sqrtPriceLimitX96: BigNumber.from('3061995978261174520047757950975'),
+      balanceInDecrease: BigNumber.from('0'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('0'), // token0 decrease in pool
+      revertMessage: '',
+    })
+    //0x256395b982182064b119c1971988dd9808c7d65b9d444ec20ccdd055193b5b02
+    await mintSigners20(hre.props.token1, BigNumber.from('1496453379000000000000'), [hre.props.alice, hre.props.bob])
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: true,
+      amountIn: BigNumber.from('1000000000000000000'),
+      sqrtPriceLimitX96: BigNumber.from('3061995978261174520047757950975'),
+      balanceInDecrease: BigNumber.from('1000000000000000000'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('1500606953415818538340'), // token0 decrease in pool
+      revertMessage: '',
+    })
+    //0x2d6ccd80a36be175bfbaa6b967563d1b90a3bb7411adf1d28d90475c2c060216
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '73140',
+      upper: '76020',
+      tokenAmount: BN_ZERO,
+      liquidityAmount: BN_ZERO.sub(BigNumber.from('336888226423966071')),
+      balance0Increase: BigNumber.from('0'),
+      balance1Increase: BigNumber.from('0'),
+      revertMessage: '',
+    })
+    //0xe3140e07b139361118b959e57cefe2a2992d991a35bb73f14c302eeac78bf9b5
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '66120',
+      upper: '80160',
+      amount0: BigNumber.from('1000000000000000000'),
+      amount1: BigNumber.from('1502429956147627474636'),
+      balance0Decrease: BigNumber.from('1000000000000000000'),
+      balance1Decrease: BigNumber.from('1502429956147627474636'),
+      tokenAmount: aliceLiquidity2,
+      liquidityIncrease: aliceLiquidity2,
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+    //0x87cc302dd8d81d41c6d59fd1519e95ab900139af01d6934b0fd3bd313c98a337
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '66120',
+      upper: '80160',
+      tokenAmount: BN_ZERO,
+      liquidityAmount: BN_ZERO,
+      balance0Increase: BigNumber.from('0'),
+      balance1Increase: BigNumber.from('0'),
+      revertMessage: '',
+    })
+    //0xdbccb0a55ff2841f7d0778f80fded3b48c0493202b21bac0ab071b619ac836bd
+    await mintSigners20(hre.props.token0, BigNumber.from('1496453379000000000000'), [hre.props.alice, hre.props.bob])
+    await mintSigners20(hre.props.token1, BigNumber.from('1496453379000000000000'), [hre.props.alice, hre.props.bob])
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '73140',
+      upper: '76020',
+      amount0: BigNumber.from('1000000000000000000'),
+      amount1: BigNumber.from('1997991949702276994'),
+      balance0Decrease: BigNumber.from('1000000000000000000'),
+      balance1Decrease: BigNumber.from('1997991949702276994'),
+      tokenAmount: aliceTokenAmount3,
+      liquidityIncrease: aliceLiquidity3,
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+    //0x3657fa31430cc2cdb4b8576cbc07fe3b0765562ef5a02774d096702d3ba0c092
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '73140',
+      upper: '76020',
+      tokenAmount: BN_ZERO,
+      liquidityAmount: BN_ZERO,
+      balance0Increase: BigNumber.from('0'),
+      balance1Increase: BigNumber.from('0'),
+      revertMessage: '',
+    })
+    //0x6ecc898e89ba37480f21d02d998af048690115c142cefc32028321b6599004de
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '73140',
+      upper: '76020',
+      burnPercent: BigNumber.from('100032954481854984095420499972189286'),
+      liquidityAmount: BigNumber.from('289244763213965801676'),
+      balance0Increase: BigNumber.from('1000001165101954093'),
+      balance1Increase: BigNumber.from('1998742875900707206'),
+      revertMessage: '',
+    })
+    //0xf56c6732aec4578f3068358f213ac61548744890c9b59a9b4d94deea7095e007
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '73140',
+      upper: '76020',
+      amount0: BigNumber.from('3000000000000000000'),
+      amount1: BigNumber.from('5993975849106830981'),
+      balance0Decrease: BigNumber.from('3000000000000000000'),
+      balance1Decrease: BigNumber.from('5993975849106830981'),
+      tokenAmount: aliceTokenAmount4,
+      liquidityIncrease: aliceLiquidity4,
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+    //0xe5d03332de5694a46b370f9423dbd8008f148445d32a3e6d810dafc2ad10c830
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: true,
+      amountIn: BigNumber.from('1000000000000000000'),
+      sqrtPriceLimitX96: BigNumber.from('3061588000433258657988919427072'),
+      balanceInDecrease: BigNumber.from('1000000000000000000'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('1500205148221113272257'), // token0 decrease in pool
+      revertMessage: '',
+    })
+    //0x5e9bdcfaedba76aa371e1877dd10b998f20fcc243ff739320ef6deff77ee2704
+    const aliceTokenAmount5 = BigNumber.from('866866488688235047403')
+    const aliceLiquidity5 = BigNumber.from('866868248112395911647')
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '73140',
+      upper: '76020',
+      amount0: BigNumber.from('3000000000000000000'),
+      amount1: BigNumber.from('5993975849106830981'),
+      balance0Decrease: BigNumber.from('3000000000000000000'),
+      balance1Decrease: BigNumber.from('5993975849106830981'),
+      tokenAmount: aliceTokenAmount5,
+      liquidityIncrease: aliceLiquidity5,
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+    //0xa05d59b9bd417d6489d1aff5c5b6efe5e61443e30a6a2f0d40482c2683a40d7e
+    await mintSigners20(hre.props.token0, BigNumber.from('33023622513667392995848'), [hre.props.alice, hre.props.bob])
+    await mintSigners20(hre.props.token1, BigNumber.from('33023622513667392995848'), [hre.props.alice, hre.props.bob])
+    const aliceTokenAmount6 = BigNumber.from('2879560692345943491093')
+    const aliceLiquidity6 = BigNumber.from('2879560960970776983364')
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '66120',
+      upper: '80160',
+      amount0: BigNumber.from('22000000000000000000'),
+      amount1: BigNumber.from('33023622513667392995848'),
+      balance0Decrease: BigNumber.from('22000000000000000000'),
+      balance1Decrease: BigNumber.from('33023622513667392995848'),
+      tokenAmount: aliceTokenAmount6,
+      liquidityIncrease: aliceLiquidity6,
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+    //0xd4e4fb14cc804685f0c35893cea7171a1dfa37b28f4719bf1cacc80321d2fa6e
+    await mintSigners20(hre.props.token0, BigNumber.from('33023622513667392995848'), [hre.props.alice, hre.props.bob])
+    await mintSigners20(hre.props.token1, BigNumber.from('33023622513667392995848'), [hre.props.alice, hre.props.bob])
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '66120',
+      upper: '80160',
+      amount0: BigNumber.from('22000000000000000000'),
+      amount1: BigNumber.from('33023622513667392995848'),
+      balance0Decrease: BigNumber.from('22000000000000000000'),
+      balance1Decrease: BigNumber.from('33023622513667392995848'),
+      tokenAmount: aliceTokenAmount6,
+      liquidityIncrease: aliceLiquidity6,
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+    //0x0c2cf2c87629df41bc1472e3984cded9df86aec0e4e3398ef9ab1f30cd7a6afc
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '66120',
+      upper: '80160',
+      burnPercent: BigNumber.from('0'),
+      liquidityAmount: BigNumber.from('0'),
+      balance0Increase: BigNumber.from('0'),
+      balance1Increase: BigNumber.from('0'),
+      revertMessage: '',
+    })
+    await getFeeGrowthGlobal()
+    await getRangeFeeGrowth(73140, 76020)
+    console.log('BEFORE SWAP')
+    //0x4d3e3bb5150a0874e0764067579d7ec5f09a72ae6686c3712c9095e9af067222
+    // This swap causes the underflow on snapshot
+    await getTickAtPrice()
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: true,
+      amountIn: BigNumber.from('5000000000000000000'),
+      sqrtPriceLimitX96: BigNumber.from('3059588122704193012744629256192'),
+      balanceInDecrease: BigNumber.from('815798405335420362'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('1221404429444282149253'), // token0 decrease in pool
+      revertMessage: '',
+    })
+    await getTickAtPrice()
+    await getFeeGrowthGlobal()
+    await getRangeFeeGrowth(73140, 76020)
+    console.log('END SWAP')
+    await getSnapshot(hre.props.alice.address, 73140, 76020)
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '73140',
+      upper: '76020',
+      burnPercent: ethers.utils.parseUnits('1', 38),
+      liquidityAmount: BigNumber.from('290594832266070128492212'),
+      balance0Increase: BigNumber.from('1006006157700985848708'),
+      balance1Increase: BigNumber.from('1749018723452173172'),
+      revertMessage: '',
+    })
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '66120',
+      upper: '80160',
+      burnPercent: ethers.utils.parseUnits('1', 38),
+      liquidityAmount: BigNumber.from('5890070187730690086993'),
+      balance0Increase: BigNumber.from('45481368002835771994'),
+      balance1Increase: BigNumber.from('66829894850190234087799'),
+      revertMessage: '',
+    })
+    if (true) {
+      console.log('balance after token0:', (await hre.props.token0.balanceOf(hre.props.rangePool.address)).toString())
+      console.log('balance after token1:', (await hre.props.token1.balanceOf(hre.props.rangePool.address)).toString())
+    }
+    return
+    //0xfac2526e6bb1b4a3906826cf3e2f152c6fb0f2f0d7affe8fc69701f848d71897
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: false,
+      amountIn: BigNumber.from('5000000000000000000'),
+      sqrtPriceLimitX96: BigNumber.from('3075057850633752459897890406400'),
+      balanceInDecrease: BigNumber.from('5000000000000000000'), // token1 increase in pool
+      balanceOutIncrease: BigNumber.from('3334341550232992'), // token0 decrease in pool
+      revertMessage: '',
+    })
+
+    //0x4950b3696a62cdc4e9584c81911a4c3b6f6cc5c4013ea8454286a27d150d6f69
+    const aliceTokenAmount7 = BigNumber.from('626481304233809566491')
+    const aliceLiquidity7 = BigNumber.from('626481304233809566491')
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '66960',
+      upper: '80520',
+      amount0: BigNumber.from('5000000000000000000'),
+      amount1: BigNumber.from('6437962369913333422010'),
+      balance0Decrease: BigNumber.from('5000000000000000000'),
+      balance1Decrease: BigNumber.from('6437962369913333422010'),
+      tokenAmount: aliceTokenAmount7,
+      liquidityIncrease: aliceLiquidity7,
+      revertMessage: '',
+      collectRevertMessage: ''
+    })
+    await getSnapshot(hre.props.alice.address, 73140, 76020)
+    await validateBurn({
+      signer: hre.props.alice,
+      lower: '73140',
+      upper: '76020',
+      burnPercent: BigNumber.from('2000000000000000000000000000000000000'),
+      liquidityAmount: BigNumber.from('0'),
+      balance0Increase: BigNumber.from('0'),
+      balance1Increase: BigNumber.from('0'),
+      revertMessage: '',
+    })
+    return
+  })
+
 })

@@ -56,14 +56,15 @@ library TickMap {
 
     function previous(
         IRangePoolStructs.TickMap storage tickMap,
-        int24 tick
+        int24 tick,
+        bool roundUp
     ) internal view returns (
         int24 previousTick
     ) {
         unchecked {
             int24 tickSpacing = IRangePool(address(this)).tickSpacing();
             // rounds up to ensure relative position
-            if (tick % tickSpacing != 0) tick += tickSpacing;
+            if (tick % tickSpacing != 0 || roundUp) tick += tickSpacing;
             (
               uint256 tickIndex,
               uint256 wordIndex,
@@ -89,12 +90,14 @@ library TickMap {
 
     function next(
         IRangePoolStructs.TickMap storage tickMap,
-        int24 tick
+        int24 tick,
+        bool roundDown
     ) internal view returns (
         int24 nextTick
     ) {
         unchecked {
             int24 tickSpacing = IRangePool(address(this)).tickSpacing();
+            if (roundDown) tick += tickSpacing;
             (
               uint256 tickIndex,
               uint256 wordIndex,

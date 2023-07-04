@@ -317,7 +317,9 @@ library Positions {
             params.lower,
             params.upper
         );
-
+        if (position.feeGrowthInside0Last > rangeFeeGrowth0) {
+            console.log(position.feeGrowthInside0Last, rangeFeeGrowth0);
+        }
         uint128 amount0Fees = uint128(
             PrecisionMath.mulDiv(
                 rangeFeeGrowth0 - position.feeGrowthInside0Last,
