@@ -64,7 +64,8 @@ library TickMap {
         unchecked {
             int24 tickSpacing = IRangePool(address(this)).tickSpacing();
             // rounds up to ensure relative position
-            if (tick % tickSpacing != 0 || roundUp) tick += tickSpacing;
+            if ((tick % tickSpacing != 0 || roundUp)
+                 && tick < _round(TickMath.MAX_TICK, tickSpacing)) tick += tickSpacing;
             (
               uint256 tickIndex,
               uint256 wordIndex,
@@ -90,14 +91,12 @@ library TickMap {
 
     function next(
         IRangePoolStructs.TickMap storage tickMap,
-        int24 tick,
-        bool roundDown
+        int24 tick
     ) internal view returns (
         int24 nextTick
     ) {
         unchecked {
             int24 tickSpacing = IRangePool(address(this)).tickSpacing();
-            if (roundDown) tick += tickSpacing;
             (
               uint256 tickIndex,
               uint256 wordIndex,
@@ -135,7 +134,7 @@ library TickMap {
         )
     {
         unchecked {
-            if (tick > TickMath.MAX_TICK) require(false, ' TickIndexOverflow()');
+            if (tick > TickMath.MAX_TICK) require(false, 'TickIndexOverflow()');
             if (tick < TickMath.MIN_TICK) require(false, 'TickIndexUnderflow()');
             if (tick % tickSpacing != 0) tick = _round(tick, tickSpacing);
             tickIndex = uint256(int256((tick - _round(TickMath.MIN_TICK, tickSpacing)) / tickSpacing));

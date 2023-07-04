@@ -110,7 +110,7 @@ library Ticks {
             liquidity: pool.liquidity,
             cross: true,
             crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice, true) 
-                                         : TickMap.next(tickMap, pool.tickAtPrice, true),
+                                         : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
             protocolFee: pool.protocolFee,
             input: params.amountIn,
@@ -194,7 +194,7 @@ library Ticks {
             liquidity: pool.liquidity,
             cross: true,
             crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice, true) 
-                                         : TickMap.next(tickMap, pool.tickAtPrice, true),
+                                         : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
             protocolFee: pool.protocolFee,
             input: params.amountIn,
@@ -306,16 +306,17 @@ library Ticks {
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
-        int128 liquidityDelta = ticks[cache.crossTick].liquidityDelta;
-        // observe most recent oracle update
-        if (zeroForOne) {
-            console.log('crossing down', uint24(cache.crossTick));
-            IRangePoolStructs.Tick memory crossTick = ticks[cache.crossTick];
+                    IRangePoolStructs.Tick memory crossTick = ticks[cache.crossTick];
             crossTick.feeGrowthOutside0       = pool.feeGrowthGlobal0 - crossTick.feeGrowthOutside0;
             crossTick.feeGrowthOutside1       = pool.feeGrowthGlobal1 - crossTick.feeGrowthOutside1;
             crossTick.tickSecondsAccumOutside = cache.tickSecondsAccum - crossTick.tickSecondsAccumOutside;
             crossTick.secondsPerLiquidityAccumOutside = cache.secondsPerLiquidityAccum - crossTick.secondsPerLiquidityAccumOutside;
             ticks[cache.crossTick] = crossTick;
+        int128 liquidityDelta = ticks[cache.crossTick].liquidityDelta;
+        // observe most recent oracle update
+        if (zeroForOne) {
+            console.log('crossing down', uint24(cache.crossTick));
+
             unchecked {
                 if (liquidityDelta >= 0){
                     cache.liquidity -= uint128(ticks[cache.crossTick].liquidityDelta);
@@ -335,7 +336,7 @@ library Ticks {
                 }
             }
             pool.tickAtPrice = cache.crossTick;
-            cache.crossTick = TickMap.next(tickMap, cache.crossTick, false);
+            cache.crossTick = TickMap.next(tickMap, cache.crossTick);
         }
         return (pool, cache);
     }
@@ -370,7 +371,7 @@ library Ticks {
                 }
             }
             pool.tickAtPrice = cache.crossTick;
-            cache.crossTick = TickMap.next(tickMap, cache.crossTick, false);
+            cache.crossTick = TickMap.next(tickMap, cache.crossTick);
         }
         return (pool, cache);
     }
