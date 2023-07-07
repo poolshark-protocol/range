@@ -107,9 +107,10 @@ library Ticks {
                                          : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
             protocolFee: pool.protocolFee,
-            input: params.amountIn,
+            input:  0,
             output: 0,
-            amountIn: params.amountIn,
+            exactIn: params.exactIn,
+            amountLeft: params.amount,
             tickSecondsAccum: 0,
             secondsPerLiquidityAccum: 0
         });
@@ -161,7 +162,7 @@ library Ticks {
         emit Swap(
             params.to,
             params.zeroForOne,
-            params.amountIn - cache.input,
+            cache.input,
             cache.output, /// @dev - subgraph will do math to compute fee amount
             pool.price,
             pool.liquidity,
@@ -191,12 +192,14 @@ library Ticks {
                                          : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
             protocolFee: pool.protocolFee,
-            input: params.amountIn,
+            input:  0,
             output: 0,
-            amountIn: params.amountIn,
+            exactIn: params.exactIn,
+            amountLeft: params.amount,
             tickSecondsAccum: 0,
             secondsPerLiquidityAccum: 0
         });
+
         while (cache.cross) {
             cache.crossPrice = TickMath.getSqrtRatioAtTick(cache.crossTick);
             (pool, cache) = _quoteSingle(params.zeroForOne, params.priceLimit, pool, cache);
@@ -219,12 +222,15 @@ library Ticks {
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache
-    ) internal pure returns (
+    ) internal view returns (
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
-        if (zeroForOne ? priceLimit >= cache.price
-                       : priceLimit <= cache.price)
+        if ((zeroForOne ? priceLimit >= cache.price
+                        : priceLimit <= cache.price) ||
+            cache.price == TickMath.MIN_SQRT_RATIO ||
+            cache.price == TickMath.MAX_SQRT_RATIO ||
+            cache.amountLeft == 0)
         {
             cache.cross = false;
             return (pool, cache);
@@ -238,22 +244,24 @@ library Ticks {
                 nextPrice = priceLimit;
             }
             uint256 maxDx = DyDxMath.getDx(cache.liquidity, nextPrice, cache.price, true);
-            if (cache.input <= maxDx) {
+            if (cache.amountLeft <= maxDx) {
                 // We can swap within the current range.
                 uint256 liquidityPadded = uint256(cache.liquidity) << 96;
                 // calculate price after swap
                 uint256 newPrice = PrecisionMath.mulDivRoundingUp(
                     liquidityPadded,
                     cache.price,
-                    liquidityPadded + uint256(cache.price) * uint256(cache.input)
+                    liquidityPadded + uint256(cache.price) * uint256(cache.amountLeft)
                 );
                 amountOut = DyDxMath.getDy(cache.liquidity, newPrice, uint256(cache.price), false);
-                cache.input = 0;
+                cache.input += cache.amountLeft;
+                cache.amountLeft = 0;
                 cache.cross = false;
                 cache.price = uint160(newPrice);
             } else { 
                 amountOut = DyDxMath.getDy(cache.liquidity, nextPrice, cache.price, false);
-                cache.input -= maxDx;
+                cache.input += maxDx;
+                cache.amountLeft -= maxDx;
                 if (nextPrice == cache.crossPrice
                         && nextPrice != cache.price) { cache.cross = true; }
                 else cache.cross = false;
@@ -265,20 +273,22 @@ library Ticks {
                 nextPrice = priceLimit;
             }
             uint256 maxDy = DyDxMath.getDy(cache.liquidity, uint256(cache.price), nextPrice, true);
-            if (cache.input <= maxDy) {
+            if (cache.amountLeft <= maxDy) {
                 // We can swap within the current range.
                 // Calculate new price after swap: ΔP = Δy/L.
                 uint256 newPrice = cache.price +
-                    PrecisionMath.mulDiv(cache.input, Q96, cache.liquidity);
+                    PrecisionMath.mulDiv(cache.amountLeft, Q96, cache.liquidity);
                 // Calculate output of swap
                 amountOut = DyDxMath.getDx(cache.liquidity, cache.price, newPrice, false);
-                cache.input = 0;
+                cache.input += cache.amountLeft;
+                cache.amountLeft = 0;
                 cache.cross = false;
                 cache.price = uint160(newPrice);
             } else {
                 // Swap & cross the tick.
                 amountOut = DyDxMath.getDx(cache.liquidity, cache.price, nextPrice, false);
-                cache.input -= maxDy;
+                cache.input += maxDy;
+                cache.amountLeft -= maxDy;
                 if (nextPrice == cache.crossPrice 
                     && nextPrice != cache.price) { cache.cross = true; }
                 else cache.cross = false;
@@ -300,12 +310,12 @@ library Ticks {
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
-                    IRangePoolStructs.Tick memory crossTick = ticks[cache.crossTick];
-            crossTick.feeGrowthOutside0       = pool.feeGrowthGlobal0 - crossTick.feeGrowthOutside0;
-            crossTick.feeGrowthOutside1       = pool.feeGrowthGlobal1 - crossTick.feeGrowthOutside1;
-            crossTick.tickSecondsAccumOutside = cache.tickSecondsAccum - crossTick.tickSecondsAccumOutside;
-            crossTick.secondsPerLiquidityAccumOutside = cache.secondsPerLiquidityAccum - crossTick.secondsPerLiquidityAccumOutside;
-            ticks[cache.crossTick] = crossTick;
+        IRangePoolStructs.Tick memory crossTick = ticks[cache.crossTick];
+        crossTick.feeGrowthOutside0       = pool.feeGrowthGlobal0 - crossTick.feeGrowthOutside0;
+        crossTick.feeGrowthOutside1       = pool.feeGrowthGlobal1 - crossTick.feeGrowthOutside1;
+        crossTick.tickSecondsAccumOutside = cache.tickSecondsAccum - crossTick.tickSecondsAccumOutside;
+        crossTick.secondsPerLiquidityAccumOutside = cache.secondsPerLiquidityAccum - crossTick.secondsPerLiquidityAccumOutside;
+        ticks[cache.crossTick] = crossTick;
         int128 liquidityDelta = ticks[cache.crossTick].liquidityDelta;
         // observe most recent oracle update
         if (zeroForOne) {

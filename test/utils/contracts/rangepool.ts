@@ -217,7 +217,8 @@ export async function validateSwap(params: ValidateSwapParams) {
   // quote pre-swap and validate balance changes match post-swap
   const quote = await hre.props.rangePool.quote({
     zeroForOne: zeroForOne,
-    amountIn: amountIn,
+    amount: amountIn,
+    exactIn: true,
     priceLimit: sqrtPriceLimitX96
   })
   const inAmount = quote[0]
@@ -229,10 +230,10 @@ export async function validateSwap(params: ValidateSwapParams) {
       .connect(signer)
       .swap({
         to: signer.address,
-        refundTo: signer.address,
         zeroForOne: zeroForOne,
-        amountIn: amountIn,
-        priceLimit: sqrtPriceLimitX96
+        amount: amountIn,
+        priceLimit: sqrtPriceLimitX96,
+        exactIn: true
       })
     await txn.wait()
   } else {
@@ -241,10 +242,10 @@ export async function validateSwap(params: ValidateSwapParams) {
         .connect(signer)
         .swap({
           to: signer.address,
-          refundTo: signer.address,
           zeroForOne: zeroForOne,
-          amountIn: amountIn,
-          priceLimit: sqrtPriceLimitX96
+          amount: amountIn,
+          priceLimit: sqrtPriceLimitX96,
+          exactIn: true
         })
     ).to.be.revertedWith(revertMessage)
     return

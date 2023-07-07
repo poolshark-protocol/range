@@ -2,7 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { expect } from 'chai'
 import { BigNumber } from 'ethers'
 import { IRangePool } from '../../../typechain'
-import { PoolState, BN_ZERO, validateMint, validateSwap, getSample, validateSample, validateBurn } from '../../utils/contracts/rangepool'
+import { PoolState, BN_ZERO, validateMint, validateSwap, getSample, validateSample, validateBurn, getTickAtPrice } from '../../utils/contracts/rangepool'
 import { gBefore } from '../../utils/hooks.test'
 import { mintSigners20 } from '../../utils/token'
 
@@ -49,6 +49,17 @@ describe('Samples Library Tests', function () {
   this.beforeEach(async function () {})
 
   it('Should get accurate accumulator values', async function () {
+    await validateSwap({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      zeroForOne: true,
+      amountIn: BN_ZERO,
+      sqrtPriceLimitX96: BN_ZERO,
+      balanceInDecrease:BN_ZERO,
+      balanceOutIncrease: BN_ZERO,
+      revertMessage: '',
+    })
+
     await validateMint({
         signer: hre.props.alice,
         recipient: hre.props.alice.address,
@@ -63,7 +74,7 @@ describe('Samples Library Tests', function () {
         revertMessage: '',
         collectRevertMessage: ''
       })
-  
+
       await validateSwap({
         signer: hre.props.alice,
         recipient: hre.props.alice.address,
@@ -76,8 +87,8 @@ describe('Samples Library Tests', function () {
       })
 
       await validateSample({
-        tickSecondsAccum: '1903300',
-        secondsPerLiquidityAccum: '2722258935367507707710994414499188461813',
+        tickSecondsAccum: '1935490',
+        secondsPerLiquidityAccum: '3402823669209384634637743629362724884725',
         averagePrice: '1461300573427867316570072651998408279850435624081',
         averageLiquidity: '7995110090085540330',
         averageTick: 887270

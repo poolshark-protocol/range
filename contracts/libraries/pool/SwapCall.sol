@@ -20,11 +20,15 @@ library SwapCall {
         IRangePoolStructs.SwapParams memory params,
         IRangePoolStructs.SwapCache memory cache,
         IRangePoolStructs.TickMap storage tickMap,
+        IRangePoolStructs.PoolState storage poolState,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.Sample[65535] storage samples
-    ) external returns (IRangePoolStructs.PoolState memory) {
-        SafeTransfersLib.transferIn(params.zeroForOne ? cache.constants.token0 : cache.constants.token1, params.amountIn);
-         (cache.pool, cache) = Ticks.swap(
+    ) external returns (
+        int256,
+        int256
+    ) {
+        SafeTransfersLib.transferIn(params.zeroForOne ? cache.constants.token0 : cache.constants.token1, params.amount);
+        (cache.pool, cache) = Ticks.swap(
             ticks,
             samples,
             tickMap,
@@ -32,17 +36,44 @@ library SwapCall {
             cache,
             cache.pool
         );
+        save(cache.pool, poolState);
         if (params.zeroForOne) {
-            if (cache.input > 0) {
-                SafeTransfersLib.transferOut(params.to, cache.constants.token0, cache.input);
+            if (cache.amountLeft > 0) {
+                SafeTransfersLib.transferOut(params.to, cache.constants.token0, cache.amountLeft);
             }
             SafeTransfersLib.transferOut(params.to, cache.constants.token1, cache.output);
         } else {
-            if (cache.input > 0) {
-                SafeTransfersLib.transferOut(params.to, cache.constants.token1, cache.input);
+            if (cache.amountLeft > 0) {
+                SafeTransfersLib.transferOut(params.to, cache.constants.token1, cache.amountLeft);
             }
             SafeTransfersLib.transferOut(params.to, cache.constants.token0, cache.output);
         }
-        return cache.pool;
+        return (
+            params.zeroForOne ? 
+                (
+                    -int256(cache.input),
+                     int256(cache.output)
+                )
+              : (
+                     int256(cache.output),
+                    -int256(cache.input)
+                )
+        );
+    }
+
+    function save(
+        IRangePoolStructs.PoolState memory pool,
+        IRangePoolStructs.PoolState storage poolState
+    ) internal {
+        poolState.tickAtPrice = pool.tickAtPrice;
+        poolState.tickSecondsAccum = pool.tickSecondsAccum;
+        poolState.secondsPerLiquidityAccum = pool.secondsPerLiquidityAccum;
+        poolState.price = pool.price;
+        poolState.liquidity = pool.liquidity;
+        poolState.liquidityGlobal = pool.liquidityGlobal;
+        poolState.feeGrowthGlobal0 = pool.feeGrowthGlobal0;
+        poolState.feeGrowthGlobal1 = pool.feeGrowthGlobal1;
+        poolState.samples = pool.samples;
+        poolState.protocolFees = pool.protocolFees;
     }
 }

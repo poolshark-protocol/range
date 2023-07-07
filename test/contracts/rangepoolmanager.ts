@@ -230,12 +230,12 @@ describe('RangePoolAdmin Tests', function () {
 
     await hre.props.rangePoolManager
         .connect(hre.props.admin)
-        .enableFeeTier("100", "5")
+        .enableFeeTier("100", "20")
 
     expect(await
       hre.props.rangePoolManager
         .connect(hre.props.admin)
         .feeTiers(100)
-    ).to.be.equal(5)
+    ).to.be.equal(20)
   })
 })
