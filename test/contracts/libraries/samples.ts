@@ -48,12 +48,12 @@ describe('Samples Library Tests', function () {
 
   this.beforeEach(async function () {})
 
-  it('Should get accurate accumulator values', async function () {
+  it('Should get accurate accumulator values 27', async function () {
     await validateSwap({
       signer: hre.props.alice,
       recipient: hre.props.alice.address,
       zeroForOne: true,
-      amountIn: BN_ZERO,
+      amount: BN_ZERO,
       sqrtPriceLimitX96: BN_ZERO,
       balanceInDecrease:BN_ZERO,
       balanceOutIncrease: BN_ZERO,
@@ -79,7 +79,7 @@ describe('Samples Library Tests', function () {
         signer: hre.props.alice,
         recipient: hre.props.alice.address,
         zeroForOne: false,
-        amountIn: tokenAmount,
+        amount: tokenAmount,
         sqrtPriceLimitX96: maxPrice,
         balanceInDecrease: BigNumber.from('82071478085223566135'),
         balanceOutIncrease: BigNumber.from('13496379535787307859'),
@@ -87,8 +87,8 @@ describe('Samples Library Tests', function () {
       })
 
       await validateSample({
-        tickSecondsAccum: '1935490',
-        secondsPerLiquidityAccum: '3402823669209384634637743629362724884725',
+        tickSecondsAccum: '1951585',
+        secondsPerLiquidityAccum: '3743106036130323098101118236794493096181',
         averagePrice: '1461300573427867316570072651998408279850435624081',
         averageLiquidity: '7995110090085540330',
         averageTick: 887270
