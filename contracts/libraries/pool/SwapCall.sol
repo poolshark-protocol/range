@@ -27,7 +27,6 @@ library SwapCall {
         int256,
         int256
     ) {
-        SafeTransfersLib.transferIn(params.zeroForOne ? cache.constants.token0 : cache.constants.token1, params.amount);
         (cache.pool, cache) = Ticks.swap(
             ticks,
             samples,
@@ -36,16 +35,11 @@ library SwapCall {
             cache,
             cache.pool
         );
+        SafeTransfersLib.transferIn(params.zeroForOne ? cache.constants.token0 : cache.constants.token1, cache.input);
         save(cache.pool, poolState);
         if (params.zeroForOne) {
-            if (cache.amountLeft > 0) {
-                SafeTransfersLib.transferOut(params.to, cache.constants.token0, cache.amountLeft);
-            }
             SafeTransfersLib.transferOut(params.to, cache.constants.token1, cache.output);
         } else {
-            if (cache.amountLeft > 0) {
-                SafeTransfersLib.transferOut(params.to, cache.constants.token1, cache.amountLeft);
-            }
             SafeTransfersLib.transferOut(params.to, cache.constants.token0, cache.output);
         }
         return (
