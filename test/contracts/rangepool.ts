@@ -86,7 +86,7 @@ describe('RangePool Exact In Tests', function () {
       liquidityIncrease: liquidityAmount,
       revertMessage: '',
     })
-    console.log('before swap')
+    // console.log('before swap')
     if (debugMode) await getPrice()
     await validateSwap({
       signer: hre.props.alice,
@@ -98,7 +98,7 @@ describe('RangePool Exact In Tests', function () {
       balanceOutIncrease: BigNumber.from('10053126651581942488'),
       revertMessage: '',
     })
-    console.log('after swap')
+    // console.log('after swap')
     if (debugMode) await getPrice()
     if (debugMode) await getSnapshot(hre.props.alice.address, 20, 60)
     if (debugMode) await getSample()

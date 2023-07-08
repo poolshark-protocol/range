@@ -294,7 +294,6 @@ library Ticks {
                 if (cache.exactIn) {
                     newPrice = cache.price +
                         PrecisionMath.mulDiv(cache.amountLeft, Q96, cache.liquidity);
-                    // Calculate output of swap
                     amountOut = DyDxMath.getDx(cache.liquidity, cache.price, newPrice, false);
                     cache.input += cache.amountLeft;
                 } else {
@@ -304,18 +303,13 @@ library Ticks {
                         cache.price,
                         liquidityPadded - uint256(cache.price) * cache.amountLeft
                     );
-                    // newPrice = liquidity * cache.price / (liquidity - price * amount)
-                    // liquidity - price * amount = liquiidty * cache.price / newPrice
-                    // amount = (liquidity - liquidity * cache.price / newPrice) / price
                     amountOut = cache.amountLeft;
                     cache.input += DyDxMath.getDy(cache.liquidity, cache.price, newPrice, true);
-                    // console.log
                 }
                 cache.amountLeft = 0;
                 cache.cross = false;
                 cache.price = uint160(newPrice);
             } else {
-                // Swap & cross the tick.
                 if (cache.exactIn) {
                     amountOut = DyDxMath.getDx(cache.liquidity, cache.price, nextPrice, false);
                     cache.input += amountMax;
@@ -334,7 +328,6 @@ library Ticks {
         return (pool, cache);
     }
 
-    //maybe call ticks on msg.sender to get tick
     function _cross(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.TickMap storage tickMap,
