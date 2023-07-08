@@ -5,7 +5,8 @@ interface PoolsharkStructs {
     struct SwapParams {
         address to;
         uint160 priceLimit;
-        uint128 amountIn;
+        uint128  amount;
+        bool exactIn;
         bool zeroForOne;
         bytes callbackData;
     }

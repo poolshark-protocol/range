@@ -317,7 +317,6 @@ library Positions {
             params.lower,
             params.upper
         );
-
         uint128 amount0Fees = uint128(
             PrecisionMath.mulDiv(
                 rangeFeeGrowth0 - position.feeGrowthInside0Last,

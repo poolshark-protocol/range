@@ -99,14 +99,16 @@ interface IRangePoolStructs {
     struct SwapParams {
         address to;
         uint160 priceLimit;
-        uint128 amountIn;
+        uint128  amount;
+        bool exactIn;
         bool zeroForOne;
         bytes callbackData;
     }
 
     struct QuoteParams {
         uint160 priceLimit;
-        uint128 amountIn;
+        uint128 amount;
+        bool exactIn;
         bool zeroForOne;
     }
 
@@ -157,17 +159,18 @@ interface IRangePoolStructs {
     struct SwapCache {
         Immutables constants;
         PoolState pool;
-        uint160 price;
-        uint128 liquidity;
-        bool    cross;
-        int24   crossTick;
-        uint160 crossPrice;
-        uint16  protocolFee;
-        int56   tickSecondsAccum;
-        uint160 secondsPerLiquidityAccum;
         uint256 input;
         uint256 output;
-        uint256 amountIn;
+        uint256 amountLeft;
+        uint160 price;
+        uint160 crossPrice;
+        uint160 secondsPerLiquidityAccum;
+        uint128 liquidity;
+        int56   tickSecondsAccum;
+        int24   crossTick;
+        uint16  protocolFee;
+        bool    exactIn;
+        bool    cross;
     }
 
     struct PositionCache {

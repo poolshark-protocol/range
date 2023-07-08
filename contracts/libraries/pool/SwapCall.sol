@@ -22,10 +22,13 @@ library SwapCall {
         IRangePoolStructs.SwapParams memory params,
         IRangePoolStructs.SwapCache memory cache,
         IRangePoolStructs.TickMap storage tickMap,
+        IRangePoolStructs.PoolState storage poolState,
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.Sample[65535] storage samples
-    ) external returns (IRangePoolStructs.PoolState memory) {
-        // execute swap
+    ) external returns (
+        int256,
+        int256
+    ) {
         (cache.pool, cache) = Ticks.swap(
             ticks,
             samples,
@@ -34,9 +37,7 @@ library SwapCall {
             cache,
             cache.pool
         );
-
-        // calculate amount to transfer in
-        cache.amountIn = params.amountIn - cache.input;
+        save(cache.pool, poolState);
         
         // transfer output amount
         SafeTransfersLib.transferOut(
@@ -49,16 +50,42 @@ library SwapCall {
         // check balance and execute callback
         uint256 balanceStart = balance(params, cache);
         IPoolsharkSwapCallback(msg.sender).poolsharkSwapCallback(
-            params.zeroForOne ? -int256(cache.amountIn) : int256(cache.output),
-            params.zeroForOne ? int256(cache.output) : -int256(cache.amountIn),
+            params.zeroForOne ? -int256(cache.input) : int256(cache.output),
+            params.zeroForOne ? int256(cache.output) : -int256(cache.input),
             params.callbackData
         );
 
         // check balance requirements after callback
-        if (balance(params, cache) < balanceStart + cache.amountIn)
+        if (balance(params, cache) < balanceStart + cache.input)
             require(false, 'SwapInputAmountTooLow()');
 
-        return cache.pool;
+        return (
+            params.zeroForOne ? 
+                (
+                    -int256(cache.input),
+                     int256(cache.output)
+                )
+              : (
+                     int256(cache.output),
+                    -int256(cache.input)
+                )
+        );
+    }
+
+    function save(
+        IRangePoolStructs.PoolState memory pool,
+        IRangePoolStructs.PoolState storage poolState
+    ) internal {
+        poolState.tickAtPrice = pool.tickAtPrice;
+        poolState.tickSecondsAccum = pool.tickSecondsAccum;
+        poolState.secondsPerLiquidityAccum = pool.secondsPerLiquidityAccum;
+        poolState.price = pool.price;
+        poolState.liquidity = pool.liquidity;
+        poolState.liquidityGlobal = pool.liquidityGlobal;
+        poolState.feeGrowthGlobal0 = pool.feeGrowthGlobal0;
+        poolState.feeGrowthGlobal1 = pool.feeGrowthGlobal1;
+        poolState.samples = pool.samples;
+        poolState.protocolFees = pool.protocolFees;
     }
 
     function balance(

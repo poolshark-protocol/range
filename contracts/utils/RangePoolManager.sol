@@ -130,7 +130,8 @@ contract RangePoolManager is
         if (feeTiers[swapFee] != 0) {
             revert FeeTierAlreadyEnabled();
         }
-        if(tickSpacing <= 0 || tickSpacing >= 16384) revert FeeTierTickSpacingInvalid();
+        if(tickSpacing < 2 || tickSpacing >= 16384) revert FeeTierTickSpacingInvalid();
+        if(tickSpacing % 2 != 0) revert FeeTierTickSpacingInvalid();
         feeTiers[swapFee] = tickSpacing;
         emit FeeTierEnabled(swapFee, tickSpacing);
     }

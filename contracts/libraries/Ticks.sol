@@ -103,16 +103,18 @@ library Ticks {
             price: pool.price,
             liquidity: pool.liquidity,
             cross: true,
-            crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
+            crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice, true) 
                                          : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
             protocolFee: pool.protocolFee,
-            input: params.amountIn,
+            input:  0,
             output: 0,
-            amountIn: params.amountIn,
+            exactIn: params.exactIn,
+            amountLeft: params.amount,
             tickSecondsAccum: 0,
             secondsPerLiquidityAccum: 0
         });
+        if (!cache.exactIn) cache.amountLeft = PrecisionMath.mulDivRoundingUp(uint256(params.amount), 1e6, (1e6 - cache.constants.swapFee));
         // grab latest sample and store in cache for _cross
         (
             cache.tickSecondsAccum,
@@ -161,7 +163,7 @@ library Ticks {
         emit Swap(
             params.to,
             params.zeroForOne,
-            params.amountIn - cache.input,
+            cache.input,
             cache.output, /// @dev - subgraph will do math to compute fee amount
             pool.price,
             pool.liquidity,
@@ -187,16 +189,18 @@ library Ticks {
             price: pool.price,
             liquidity: pool.liquidity,
             cross: true,
-            crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice) 
+            crossTick: params.zeroForOne ? TickMap.previous(tickMap, pool.tickAtPrice, true) 
                                          : TickMap.next(tickMap, pool.tickAtPrice),
             crossPrice: 0,
             protocolFee: pool.protocolFee,
-            input: params.amountIn,
+            input:  0,
             output: 0,
-            amountIn: params.amountIn,
+            exactIn: params.exactIn,
+            amountLeft: params.amount,
             tickSecondsAccum: 0,
             secondsPerLiquidityAccum: 0
         });
+        if (!cache.exactIn) cache.amountLeft = PrecisionMath.mulDivRoundingUp(uint256(params.amount), 1e6, uint256(1e6 - cache.constants.swapFee));
         while (cache.cross) {
             cache.crossPrice = TickMath.getSqrtRatioAtTick(cache.crossTick);
             (pool, cache) = _quoteSingle(params.zeroForOne, params.priceLimit, pool, cache);
@@ -223,8 +227,11 @@ library Ticks {
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
-        if (zeroForOne ? priceLimit >= cache.price
-                       : priceLimit <= cache.price)
+        if ((zeroForOne ? priceLimit >= cache.price
+                        : priceLimit <= cache.price) ||
+            cache.price == TickMath.MIN_SQRT_RATIO ||
+            cache.price == TickMath.MAX_SQRT_RATIO ||
+            cache.amountLeft == 0)
         {
             cache.cross = false;
             return (pool, cache);
@@ -237,23 +244,39 @@ library Ticks {
             if (nextPrice < priceLimit) {
                 nextPrice = priceLimit;
             }
-            uint256 maxDx = DyDxMath.getDx(cache.liquidity, nextPrice, cache.price, true);
-            if (cache.input <= maxDx) {
+            uint256 amountMax = cache.exactIn ? DyDxMath.getDx(cache.liquidity, nextPrice, cache.price, true)
+                                              : DyDxMath.getDy(cache.liquidity, nextPrice, cache.price, false);
+            if (cache.amountLeft <= amountMax) {
                 // We can swap within the current range.
                 uint256 liquidityPadded = uint256(cache.liquidity) << 96;
                 // calculate price after swap
-                uint256 newPrice = PrecisionMath.mulDivRoundingUp(
-                    liquidityPadded,
-                    cache.price,
-                    liquidityPadded + uint256(cache.price) * uint256(cache.input)
-                );
-                amountOut = DyDxMath.getDy(cache.liquidity, newPrice, uint256(cache.price), false);
-                cache.input = 0;
+                uint256 newPrice;
+                if (cache.exactIn) {
+                    newPrice = PrecisionMath.mulDivRoundingUp(
+                        liquidityPadded,
+                        cache.price,
+                        liquidityPadded + uint256(cache.price) * uint256(cache.amountLeft)
+                    );
+                    amountOut = DyDxMath.getDy(cache.liquidity, newPrice, uint256(cache.price), false);
+                    cache.input += cache.amountLeft;
+                } else {
+                    newPrice = cache.price - 
+                        PrecisionMath.divRoundingUp(cache.amountLeft << 96, cache.liquidity);
+                    amountOut = cache.amountLeft;
+                    cache.input += DyDxMath.getDx(cache.liquidity, newPrice, uint256(cache.price), true);
+                }
+                cache.amountLeft = 0;
                 cache.cross = false;
                 cache.price = uint160(newPrice);
-            } else { 
-                amountOut = DyDxMath.getDy(cache.liquidity, nextPrice, cache.price, false);
-                cache.input -= maxDx;
+            } else {
+                if (cache.exactIn) {
+                    amountOut = DyDxMath.getDy(cache.liquidity, nextPrice, cache.price, false);
+                    cache.input += amountMax;
+                } else {
+                    amountOut = amountMax;
+                    cache.input += DyDxMath.getDx(cache.liquidity, nextPrice, cache.price, true);
+                }
+                cache.amountLeft -= amountMax;
                 if (nextPrice == cache.crossPrice
                         && nextPrice != cache.price) { cache.cross = true; }
                 else cache.cross = false;
@@ -264,21 +287,37 @@ library Ticks {
             if (nextPrice > priceLimit) {
                 nextPrice = priceLimit;
             }
-            uint256 maxDy = DyDxMath.getDy(cache.liquidity, uint256(cache.price), nextPrice, true);
-            if (cache.input <= maxDy) {
-                // We can swap within the current range.
-                // Calculate new price after swap: ΔP = Δy/L.
-                uint256 newPrice = cache.price +
-                    PrecisionMath.mulDiv(cache.input, Q96, cache.liquidity);
-                // Calculate output of swap
-                amountOut = DyDxMath.getDx(cache.liquidity, cache.price, newPrice, false);
-                cache.input = 0;
+            uint256 amountMax = cache.exactIn ? DyDxMath.getDy(cache.liquidity, uint256(cache.price), nextPrice, true)
+                                              : DyDxMath.getDx(cache.liquidity, uint256(cache.price), nextPrice, false);
+            if (cache.amountLeft <= amountMax) {
+                uint256 newPrice;
+                if (cache.exactIn) {
+                    newPrice = cache.price +
+                        PrecisionMath.mulDiv(cache.amountLeft, Q96, cache.liquidity);
+                    amountOut = DyDxMath.getDx(cache.liquidity, cache.price, newPrice, false);
+                    cache.input += cache.amountLeft;
+                } else {
+                    uint256 liquidityPadded = uint256(cache.liquidity) << 96;
+                    newPrice = PrecisionMath.mulDivRoundingUp(
+                        liquidityPadded, 
+                        cache.price,
+                        liquidityPadded - uint256(cache.price) * cache.amountLeft
+                    );
+                    amountOut = cache.amountLeft;
+                    cache.input += DyDxMath.getDy(cache.liquidity, cache.price, newPrice, true);
+                }
+                cache.amountLeft = 0;
                 cache.cross = false;
                 cache.price = uint160(newPrice);
             } else {
-                // Swap & cross the tick.
-                amountOut = DyDxMath.getDx(cache.liquidity, cache.price, nextPrice, false);
-                cache.input -= maxDy;
+                if (cache.exactIn) {
+                    amountOut = DyDxMath.getDx(cache.liquidity, cache.price, nextPrice, false);
+                    cache.input += amountMax;
+                } else {
+                    amountOut = amountMax;
+                    cache.input += DyDxMath.getDy(cache.liquidity, cache.price, nextPrice, true);
+                }
+                cache.amountLeft -= amountMax;
                 if (nextPrice == cache.crossPrice 
                     && nextPrice != cache.price) { cache.cross = true; }
                 else cache.cross = false;
@@ -289,7 +328,6 @@ library Ticks {
         return (pool, cache);
     }
 
-    //maybe call ticks on msg.sender to get tick
     function _cross(
         mapping(int24 => IRangePoolStructs.Tick) storage ticks,
         IRangePoolStructs.TickMap storage tickMap,
@@ -317,7 +355,7 @@ library Ticks {
                 }
             }
             pool.tickAtPrice = cache.crossTick;
-            cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
+            cache.crossTick = TickMap.previous(tickMap, cache.crossTick, false);
         } else {
             unchecked {
                 if (liquidityDelta >= 0) {
@@ -352,7 +390,7 @@ library Ticks {
                 }
             }
             pool.tickAtPrice = cache.crossTick;
-            cache.crossTick = TickMap.previous(tickMap, cache.crossTick);
+            cache.crossTick = TickMap.previous(tickMap, cache.crossTick, false);
         } else {
             unchecked {
                 if (liquidityDelta >= 0) {
