@@ -11,7 +11,6 @@ import './PrecisionMath.sol';
 import './TickMath.sol';
 import './TickMap.sol';
 import './Samples.sol';
-import 'hardhat/console.sol';
 
 /// @notice Tick management library
 library Ticks {
@@ -202,7 +201,6 @@ library Ticks {
             secondsPerLiquidityAccum: 0
         });
         if (!cache.exactIn) cache.amountLeft = PrecisionMath.mulDivRoundingUp(uint256(params.amount), 1e6, uint256(1e6 - cache.constants.swapFee));
-        console.log('amount left', cache.amountLeft, params.amount);
         while (cache.cross) {
             cache.crossPrice = TickMath.getSqrtRatioAtTick(cache.crossTick);
             (pool, cache) = _quoteSingle(params.zeroForOne, params.priceLimit, pool, cache);
@@ -225,7 +223,7 @@ library Ticks {
         uint160 priceLimit,
         IRangePoolStructs.PoolState memory pool,
         IRangePoolStructs.SwapCache memory cache
-    ) internal view returns (
+    ) internal pure returns (
         IRangePoolStructs.PoolState memory,
         IRangePoolStructs.SwapCache memory
     ) {
@@ -261,13 +259,11 @@ library Ticks {
                     );
                     amountOut = DyDxMath.getDy(cache.liquidity, newPrice, uint256(cache.price), false);
                     cache.input += cache.amountLeft;
-                    console.log('new price', newPrice, cache.price, cache.liquidity);
                 } else {
                     newPrice = cache.price - 
                         PrecisionMath.divRoundingUp(cache.amountLeft << 96, cache.liquidity);
                     amountOut = cache.amountLeft;
                     cache.input += DyDxMath.getDx(cache.liquidity, newPrice, uint256(cache.price), true);
-                    console.log('new price', newPrice, cache.price, cache.liquidity);
                 }
                 cache.amountLeft = 0;
                 cache.cross = false;
@@ -293,13 +289,11 @@ library Ticks {
             }
             uint256 amountMax = cache.exactIn ? DyDxMath.getDy(cache.liquidity, uint256(cache.price), nextPrice, true)
                                               : DyDxMath.getDx(cache.liquidity, uint256(cache.price), nextPrice, false);
-            console.log('amount max', amountMax);
             if (cache.amountLeft <= amountMax) {
                 uint256 newPrice;
                 if (cache.exactIn) {
                     newPrice = cache.price +
                         PrecisionMath.mulDiv(cache.amountLeft, Q96, cache.liquidity);
-                console.log('new price', newPrice, cache.price);
                     // Calculate output of swap
                     amountOut = DyDxMath.getDx(cache.liquidity, cache.price, newPrice, false);
                     cache.input += cache.amountLeft;
@@ -313,8 +307,6 @@ library Ticks {
                     // newPrice = liquidity * cache.price / (liquidity - price * amount)
                     // liquidity - price * amount = liquiidty * cache.price / newPrice
                     // amount = (liquidity - liquidity * cache.price / newPrice) / price
-                    console.log('exact out no tick cross', liquidityPadded, cache.price, cache.amountLeft);
-                    console.log('new price', newPrice, cache.price);
                     amountOut = cache.amountLeft;
                     cache.input += DyDxMath.getDy(cache.liquidity, cache.price, newPrice, true);
                     // console.log

@@ -516,7 +516,6 @@ export async function validateBurn(params: ValidateBurnParams) {
   positionAfter = await hre.props.rangePool.positions(lower, upper)
   if (params.tokenAmount)
     expect(positionTokenBalanceAfter.sub(positionTokenBalanceBefore)).to.be.equal(BN_ZERO.sub(params.tokenAmount))
-    console.log('liquidity amount', params.liquidityAmount ?? liquidityAmount, liquidityAmount, params.liquidityAmount)
   expect(lowerTickAfter.liquidityDelta.sub(lowerTickBefore.liquidityDelta)).to.be.equal(
     BN_ZERO.sub(params.liquidityAmount ?? liquidityAmount)
   )
