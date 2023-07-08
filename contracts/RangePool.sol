@@ -108,11 +108,11 @@ contract RangePool is
         int256
     )
     {
-        if (params.amountIn == 0) return (0,0);
+        if (params.amount == 0) return (0,0);
         SwapCache memory cache;
         cache.pool = poolState;
         cache.constants = _immutables();
-        poolState = SwapCall.perform(params, cache, tickMap, ticks, samples);
+        return SwapCall.perform(params, cache, tickMap, poolState, ticks, samples);
     }
 
     function increaseSampleLength(
@@ -145,7 +145,7 @@ contract RangePool is
             ticks
         );
         return (
-            params.amountIn - cache.input,
+            cache.input,
             cache.output,
             pool.price
         );

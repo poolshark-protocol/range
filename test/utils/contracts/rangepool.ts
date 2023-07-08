@@ -85,11 +85,12 @@ export interface ValidateSwapParams {
   signer: SignerWithAddress
   recipient: string
   zeroForOne: boolean
-  amountIn: BigNumber
+  amount: BigNumber
   sqrtPriceLimitX96: BigNumber
   balanceInDecrease: BigNumber
   balanceOutIncrease: BigNumber
   revertMessage: string
+  exactIn?: boolean
 }
 
 export interface ValidateBurnParams {
@@ -109,6 +110,11 @@ export async function getTickAtPrice() {
   console.log('tick at price:', tickAtPrice)
 }
 
+export async function getPrice() {
+  const poolPrice = (await hre.props.rangePool.poolState()).price
+  console.log('pool price:', poolPrice.toString())
+}
+
 export async function getRangeBalanceOf(owner: string, lower: number, upper: number): Promise<BigNumber> {
   const positionTokenId  = await hre.props.positionsLib.id(lower, upper);
   const balance = await hre.props.rangePool.balanceOf(owner, positionTokenId)
@@ -122,6 +128,11 @@ export async function getRangeBalanceOf(owner: string, lower: number, upper: num
 export async function getTickFeeGrowth(index: number) {
   const tick: Tick = await hre.props.rangePool.ticks(index)
   console.log('feegrowth for', index, ':', tick.feeGrowthOutside0.toString(), tick.feeGrowthOutside1.toString())
+}
+
+export async function getTickLiquidity(index: number) {
+  const tick: Tick = await hre.props.rangePool.ticks(index)
+  console.log('liquiditydelta for', index, ':', tick.liquidityDelta.toString())
 }
 
 export async function getFeeGrowthGlobal() {
@@ -189,25 +200,11 @@ export async function validateSwap(params: ValidateSwapParams) {
   const signer = params.signer
   const recipient = params.recipient
   const zeroForOne = params.zeroForOne
-  const amountIn = params.amountIn
+  const amount = params.amount
   const sqrtPriceLimitX96 = params.sqrtPriceLimitX96
   const balanceInDecrease = params.balanceInDecrease
   const balanceOutIncrease = params.balanceOutIncrease
   const revertMessage = params.revertMessage
-
-  let balanceInBefore
-  let balanceOutBefore
-  if (zeroForOne) {
-    balanceInBefore = await hre.props.token0.balanceOf(signer.address)
-    balanceOutBefore = await hre.props.token1.balanceOf(signer.address)
-    const approve0Txn = await hre.props.token0.approve(hre.props.rangePool.address, amountIn)
-    await approve0Txn.wait()
-  } else {
-    balanceInBefore = await hre.props.token1.balanceOf(signer.address)
-    balanceOutBefore = await hre.props.token0.balanceOf(signer.address)
-    const approve1Txn = await hre.props.token1.approve(hre.props.rangePool.address, amountIn)
-    await approve1Txn.wait()
-  }
 
   const poolBefore: PoolState = await hre.props.rangePool.poolState()
   const liquidityBefore = poolBefore.liquidity
@@ -217,22 +214,48 @@ export async function validateSwap(params: ValidateSwapParams) {
   // quote pre-swap and validate balance changes match post-swap
   const quote = await hre.props.rangePool.quote({
     zeroForOne: zeroForOne,
-    amountIn: amountIn,
+    amount: amount,
+    exactIn: params.exactIn ?? true,
     priceLimit: sqrtPriceLimitX96
   })
   const inAmount = quote[0]
   const outAmount = quote[1]
   const priceAfterQuote = quote[2]
 
+  let balanceInBefore
+  let balanceOutBefore
+  if (zeroForOne) {
+    balanceInBefore = await hre.props.token0.balanceOf(signer.address)
+    balanceOutBefore = await hre.props.token1.balanceOf(signer.address)
+    let approve0Txn
+    if (params.exactIn ?? true) {
+      approve0Txn = await hre.props.token0.approve(hre.props.rangePool.address, amount)
+    } else {
+      approve0Txn = await hre.props.token0.approve(hre.props.rangePool.address, inAmount)
+    }
+    approve0Txn = await hre.props.token0.approve(hre.props.rangePool.address, inAmount)
+    await approve0Txn.wait()
+  } else {
+    balanceInBefore = await hre.props.token1.balanceOf(signer.address)
+    balanceOutBefore = await hre.props.token0.balanceOf(signer.address)
+    let approve1Txn
+    if (params.exactIn ?? true) {
+      approve1Txn = await hre.props.token1.approve(hre.props.rangePool.address, amount)
+    } else {
+      approve1Txn = await hre.props.token1.approve(hre.props.rangePool.address, inAmount)
+    }
+    await approve1Txn.wait()
+  }
+
   if (revertMessage == '') {
     let txn = await hre.props.rangePool
       .connect(signer)
       .swap({
         to: signer.address,
-        refundTo: signer.address,
         zeroForOne: zeroForOne,
-        amountIn: amountIn,
-        priceLimit: sqrtPriceLimitX96
+        amount: amount,
+        priceLimit: sqrtPriceLimitX96,
+        exactIn: params.exactIn ?? true
       })
     await txn.wait()
   } else {
@@ -241,10 +264,10 @@ export async function validateSwap(params: ValidateSwapParams) {
         .connect(signer)
         .swap({
           to: signer.address,
-          refundTo: signer.address,
           zeroForOne: zeroForOne,
-          amountIn: amountIn,
-          priceLimit: sqrtPriceLimitX96
+          amount: amount,
+          priceLimit: sqrtPriceLimitX96,
+          exactIn: params.exactIn ?? true
         })
     ).to.be.revertedWith(revertMessage)
     return
@@ -494,7 +517,7 @@ export async function validateBurn(params: ValidateBurnParams) {
   if (params.tokenAmount)
     expect(positionTokenBalanceAfter.sub(positionTokenBalanceBefore)).to.be.equal(BN_ZERO.sub(params.tokenAmount))
   expect(lowerTickAfter.liquidityDelta.sub(lowerTickBefore.liquidityDelta)).to.be.equal(
-    BN_ZERO.sub(liquidityAmount)
+    BN_ZERO.sub(params.liquidityAmount ?? liquidityAmount)
   )
   expect(upperTickAfter.liquidityDelta.sub(upperTickBefore.liquidityDelta)).to.be.equal(
     liquidityAmount
