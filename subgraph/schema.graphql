@@ -108,6 +108,44 @@ type RangePool @entity {
   updatedAtBlockNumber: BigInt!
 }
 
+type MintLog @entity {
+    id: ID!
+
+    sender: Bytes!
+    recipient: Bytes!
+    lower: BigInt!
+    upper: BigInt!
+    tokenId: BigInt!
+    tokenMinted: BigInt!
+    liquidityMinted: BigInt!
+    pool: RangePool!
+}
+
+type BurnLog @entity {
+    id: ID!
+
+    owner: Bytes!
+    recipient: Bytes!
+    lower: BigInt!
+    upper: BigInt!
+    tokenId: BigInt!
+    tokenBurned: BigInt!
+    liquidityBurned: BigInt!
+    pool: RangePool!
+}
+
+type CompoundLog @entity {
+    id: ID!
+
+    sender: Bytes!
+    pool: RangePool!
+    lower: BigInt!
+    upper: BigInt!
+    liquidityCompounded: BigInt!
+    positionAmount0: BigInt!
+    positionAmount1: BigInt!
+}
+
 type Tick @entity {
     # pool address + tick index
     id: ID!
@@ -124,7 +162,6 @@ type Tick @entity {
 
 type Position @entity {
     id: ID!
-    owner: Bytes!
     lower: BigInt!
     upper: BigInt!
     pool: RangePool!

@@ -1,4 +1,4 @@
-import { safeLoadPosition, safeLoadRangePool, safeLoadRangePoolFactory, safeLoadToken } from "../utils/loads"
+import { safeLoadCompoundLog, safeLoadPosition, safeLoadRangePool, safeLoadRangePoolFactory, safeLoadToken } from "../utils/loads"
 import {
     BigInt
 } from '@graphprotocol/graph-ts'
@@ -18,6 +18,20 @@ export function handleCompound(event: Compound): void {
     let lower = BigInt.fromI32(lowerParam)
     let upper = BigInt.fromI32(upperParam)
 
+    // log compound action
+    let loadCompoundLog = safeLoadCompoundLog(event.transaction.hash, poolAddress, lower, upper)
+    let compoundLog = loadCompoundLog.entity
+    if (!loadCompoundLog.exists) {
+        compoundLog.sender = senderParam
+        compoundLog.pool = poolAddress
+        compoundLog.lower = lower
+        compoundLog.upper = upper
+        compoundLog.positionAmount0 = positionAmount0Param
+        compoundLog.positionAmount1 = positionAmount1Param 
+    }
+    compoundLog.liquidityCompounded = compoundLog.liquidityCompounded.plus(liquidityCompoundedParam)
+    compoundLog.save()
+
     let loadRangePool = safeLoadRangePool(poolAddress)
     let pool = loadRangePool.entity
     let loadRangePoolFactory = safeLoadRangePoolFactory(pool.factory)
@@ -29,7 +43,6 @@ export function handleCompound(event: Compound): void {
 
     let loadPosition = safeLoadPosition(
         poolAddress,
-        ownerParam,
         lower,
         upper
     )
