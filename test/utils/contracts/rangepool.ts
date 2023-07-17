@@ -229,46 +229,51 @@ export async function validateSwap(params: ValidateSwapParams) {
     balanceOutBefore = await hre.props.token1.balanceOf(signer.address)
     let approve0Txn
     if (params.exactIn ?? true) {
-      approve0Txn = await hre.props.token0.approve(hre.props.rangePool.address, amount)
+      approve0Txn = await hre.props.token0.approve(hre.props.poolRouter.address, amount)
     } else {
-      approve0Txn = await hre.props.token0.approve(hre.props.rangePool.address, inAmount)
+      approve0Txn = await hre.props.token0.approve(hre.props.poolRouter.address, inAmount)
     }
-    approve0Txn = await hre.props.token0.approve(hre.props.rangePool.address, inAmount)
     await approve0Txn.wait()
   } else {
     balanceInBefore = await hre.props.token1.balanceOf(signer.address)
     balanceOutBefore = await hre.props.token0.balanceOf(signer.address)
     let approve1Txn
     if (params.exactIn ?? true) {
-      approve1Txn = await hre.props.token1.approve(hre.props.rangePool.address, amount)
+      approve1Txn = await hre.props.token1.approve(hre.props.poolRouter.address, amount)
     } else {
-      approve1Txn = await hre.props.token1.approve(hre.props.rangePool.address, inAmount)
+      approve1Txn = await hre.props.token1.approve(hre.props.poolRouter.address, inAmount)
     }
     await approve1Txn.wait()
   }
 
   if (revertMessage == '') {
-    let txn = await hre.props.rangePool
+    let txn = await hre.props.poolRouter
       .connect(signer)
-      .swap({
+      .multiCall(
+      [hre.props.rangePool.address],  
+      [{
         to: signer.address,
         zeroForOne: zeroForOne,
         amount: amount,
         priceLimit: sqrtPriceLimitX96,
-        exactIn: params.exactIn ?? true
-      })
+        exactIn: params.exactIn ?? true,
+        callbackData: ethers.utils.formatBytes32String('')
+      }])
     await txn.wait()
   } else {
     await expect(
-      hre.props.rangePool
-        .connect(signer)
-        .swap({
+      hre.props.poolRouter
+      .connect(signer)
+      .multiCall(
+      [hre.props.rangePool.address],  
+        [{
           to: signer.address,
           zeroForOne: zeroForOne,
           amount: amount,
           priceLimit: sqrtPriceLimitX96,
-          exactIn: params.exactIn ?? true
-        })
+          exactIn: params.exactIn ?? true,
+          callbackData: ethers.utils.formatBytes32String('')
+        }])
     ).to.be.revertedWith(revertMessage)
     return
   }

@@ -19,6 +19,7 @@ import {
   QuoteCall__factory,
   SampleCall,
   SampleCall__factory,
+  PoolRouter__factory,
 } from '../../../typechain'
 
 export class InitialSetup {
@@ -188,6 +189,17 @@ export class InitialSetup {
         'contracts/libraries/pool/SampleCall.sol:SampleCall': hre.props.sampleCall.address
       }
     )
+
+    await this.deployAssist.deployContractWithRetry(
+      network,
+      // @ts-ignore
+      PoolRouter__factory,
+      'poolRouter',
+      [
+        hre.props.rangePoolFactory.address
+      ]
+    )
+
     const setFactoryTxn = await hre.props.rangePoolManager
       .connect(hre.props.admin)
       .setFactory(

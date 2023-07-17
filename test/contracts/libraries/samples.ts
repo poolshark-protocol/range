@@ -87,8 +87,8 @@ describe('Samples Library Tests', function () {
       })
 
       await validateSample({
-        tickSecondsAccum: '1951585',
-        secondsPerLiquidityAccum: '3743106036130323098101118236794493096181',
+        secondsPerLiquidityAccum: '3402823669209384634637743629362724884725',
+        tickSecondsAccum: '1935490',
         averagePrice: '1461300573427867316570072651998408279850435624081',
         averageLiquidity: '7995110090085540330',
         averageTick: 887270

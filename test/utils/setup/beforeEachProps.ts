@@ -17,6 +17,7 @@ import {
   SwapCall,
   QuoteCall,
   SampleCall,
+  PoolRouter,
 } from '../../../typechain'
 import { InitialSetup } from './initialSetup'
 
@@ -24,6 +25,7 @@ export interface BeforeEachProps {
   rangePool: RangePool
   rangePoolManager: RangePoolManager
   rangePoolFactory: RangePoolFactory
+  poolRouter: PoolRouter
   tickMathLib: TickMath
   tickMapLib: TickMap
   dydxMathLib: DyDxMath
@@ -72,6 +74,7 @@ export class GetBeforeEach {
     let rangePool: RangePool
     let rangePoolManager: RangePoolManager
     let rangePoolFactory: RangePoolFactory
+    let poolRouter: PoolRouter
     let tickMathLib: TickMath
     let tickMapLib: TickMap
     let dydxMathLib: DyDxMath
@@ -98,6 +101,7 @@ export class GetBeforeEach {
       rangePool,
       rangePoolManager,
       rangePoolFactory,
+      poolRouter,
       tickMathLib,
       tickMapLib,
       dydxMathLib,

@@ -102,6 +102,7 @@ interface IRangePoolStructs {
         uint128  amount;
         bool exactIn;
         bool zeroForOne;
+        bytes callbackData;
     }
 
     struct QuoteParams {
