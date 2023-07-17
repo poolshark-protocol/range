@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt, ethereum, log } from '@graphprotocol/graph-ts'
-import { RangePool, Position, Tick, Token, FeeTier, RangePoolManager, RangePoolFactory, BasePrice, Transaction, Swap, PositionToken, PositionFraction } from '../../../generated/schema'
+import { Address, BigDecimal, BigInt, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
+import { RangePool, Position, Tick, Token, FeeTier, RangePoolManager, RangePoolFactory, BasePrice, Transaction, Swap, PositionToken, PositionFraction, MintLog, BurnLog, CompoundLog } from '../../../generated/schema'
 import { ONE_BD } from '../../constants/constants'
 import {
     fetchTokenSymbol,
@@ -214,13 +214,96 @@ export function safeLoadRangePoolFactory(factoryAddress: string): LoadRangePoolF
     }
 }
 
+class LoadMintLogRet {
+    entity: MintLog
+    exists: boolean
+}
+export function safeLoadMintLog(txnHash: Bytes, pool: string, lower: BigInt, upper: BigInt): LoadMintLogRet {
+    let exists = true
+
+    let mintLogId = txnHash.toString()
+                    .concat('-')
+                    .concat(pool)
+                    .concat('-')
+                    .concat(upper.toString())
+                    .concat('-')
+                    .concat(lower.toString())
+
+    let mintLogEntity = MintLog.load(mintLogId)
+
+    if (!mintLogEntity) {
+        mintLogEntity = new MintLog(mintLogId)
+        exists = false
+    }
+
+    return {
+        entity: mintLogEntity,
+        exists: exists,
+    }
+}
+
+class LoadBurnLogRet {
+    entity: BurnLog
+    exists: boolean
+}
+export function safeLoadBurnLog(txnHash: Bytes, pool: string, lower: BigInt, upper: BigInt): LoadBurnLogRet {
+    let exists = true
+
+    let burnLogId = txnHash.toString()
+                    .concat('-')
+                    .concat(pool)
+                    .concat('-')
+                    .concat(upper.toString())
+                    .concat('-')
+                    .concat(lower.toString())
+
+    let burnLogEntity = BurnLog.load(burnLogId)
+
+    if (!burnLogEntity) {
+        burnLogEntity = new BurnLog(burnLogId)
+        exists = false
+    }
+
+    return {
+        entity: burnLogEntity,
+        exists: exists,
+    }
+}
+
+class LoadCompoundLogRet {
+    entity: CompoundLog
+    exists: boolean
+}
+export function safeLoadCompoundLog(txnHash: Bytes, pool: string, lower: BigInt, upper: BigInt): LoadCompoundLogRet {
+    let exists = true
+
+    let compoundLogId = txnHash.toString()
+                    .concat('-')
+                    .concat(pool)
+                    .concat('-')
+                    .concat(upper.toString())
+                    .concat('-')
+                    .concat(lower.toString())
+
+    let compoundLogEntity = CompoundLog.load(compoundLogId)
+
+    if (!compoundLogEntity) {
+        compoundLogEntity = new CompoundLog(compoundLogId)
+        exists = false
+    }
+
+    return {
+        entity: compoundLogEntity,
+        exists: exists,
+    }
+}
+
 class LoadPositionRet {
     entity: Position
     exists: boolean
 }
 export function safeLoadPosition(
     poolAddress: string,
-    owner: string,
     lower: BigInt,
     upper: BigInt
 ): LoadPositionRet {
@@ -228,7 +311,6 @@ export function safeLoadPosition(
     let fromToken: string
 
     let positionId = poolAddress
-        .concat(owner)
         .concat(lower.toString())
         .concat(upper.toString())
 

@@ -1,6 +1,6 @@
 import { Address, store } from "@graphprotocol/graph-ts"
 import { Burn } from "../../../generated/RangePoolFactory/RangePool"
-import { safeLoadBasePrice, safeLoadPositionById, safeLoadPositionFraction, safeLoadPositionToken, safeLoadRangePool, safeLoadRangePoolFactory, safeLoadTick, safeLoadToken } from "../utils/loads"
+import { safeLoadBasePrice, safeLoadBurnLog, safeLoadPositionById, safeLoadPositionFraction, safeLoadPositionToken, safeLoadRangePool, safeLoadRangePoolFactory, safeLoadTick, safeLoadToken } from "../utils/loads"
 import {
     BigInt,
 } from '@graphprotocol/graph-ts'
@@ -10,7 +10,7 @@ import { BIGINT_ZERO, convertTokenToDecimal } from "../utils/helpers"
 import { findEthPerToken } from "../utils/price"
 
 export function handleBurn(event: Burn): void {
-    let recipientParam = event.params.recipient.toHex()
+    let recipientParam = event.params.recipient
     let lowerParam = event.params.lower
     let upperParam = event.params.upper
     let tokenIdParam = event.params.tokenId
@@ -19,10 +19,25 @@ export function handleBurn(event: Burn): void {
     let amount0Param = event.params.amount0
     let amoun1Param = event.params.amount1
     let poolAddress = event.address.toHex()
-    let msgSender = event.transaction.from.toHex()
+    let msgSender = event.transaction.from
 
     let lower = BigInt.fromI32(lowerParam)
     let upper = BigInt.fromI32(upperParam)
+
+    // log burn action
+    let loadBurnLog = safeLoadBurnLog(event.transaction.hash, poolAddress, lower, upper)
+    let burnLog = loadBurnLog.entity
+    if (!loadBurnLog.exists) {
+        burnLog.owner = msgSender
+        burnLog.recipient = recipientParam
+        burnLog.lower = lower
+        burnLog.upper = upper
+        burnLog.tokenId = tokenIdParam
+        burnLog.pool = poolAddress
+    }
+    burnLog.tokenBurned = burnLog.tokenBurned.plus(tokenBurnedParam)
+    burnLog.liquidityBurned = burnLog.liquidityBurned.plus(liquidityBurnedParam)
+    burnLog.save()
 
     let loadPositionToken = safeLoadPositionToken(
         poolAddress,
@@ -32,7 +47,7 @@ export function handleBurn(event: Burn): void {
     let loadPositionFraction = safeLoadPositionFraction(
         poolAddress,
         tokenIdParam,
-        Address.fromString(msgSender)
+        msgSender
     )
     let positionFraction = loadPositionFraction.entity
     let loadPosition = safeLoadPositionById(positionToken.position)

@@ -12,6 +12,7 @@ import {
     safeLoadRangePoolFactory,
     safeLoadPositionToken,
     safeLoadPositionFraction,
+    safeLoadMintLog,
 } from '../utils/loads'
 import { Mint } from '../../../generated/RangePoolFactory/RangePool'
 import { convertTokenToDecimal } from '../utils/helpers'
@@ -21,7 +22,7 @@ import { findEthPerToken } from '../utils/price'
 
 export function handleMint(event: Mint): void {
     //TODO: fix event to emit 'recipient' and make new deployment
-    let recipientParam = event.params.recipient.toHex()
+    let recipientParam = event.params.recipient
     let lowerParam = event.params.lower
     let upperParam = event.params.upper 
     let liquidityMintedParam = event.params.liquidityMinted
@@ -48,6 +49,21 @@ export function handleMint(event: Mint): void {
     let token0 = loadToken0.entity
     let token1 = loadToken1.entity
 
+    // log mint action
+    let loadMintLog = safeLoadMintLog(event.transaction.hash, poolAddress, lower, upper)
+    let mintLog = loadMintLog.entity
+    if (!loadMintLog.exists) {
+        mintLog.sender = msgSender
+        mintLog.recipient = recipientParam
+        mintLog.lower = lower
+        mintLog.upper = upper
+        mintLog.tokenId = tokenIdParam
+        mintLog.pool = poolAddress
+    }
+    mintLog.tokenMinted = mintLog.tokenMinted.plus(tokenMintedParam)
+    mintLog.liquidityMinted = mintLog.liquidityMinted.plus(liquidityMintedParam)
+    mintLog.save()
+
     let loadLowerTick = safeLoadTick(
         poolAddress,
         lower
@@ -58,7 +74,6 @@ export function handleMint(event: Mint): void {
     )
     let loadPosition = safeLoadPosition(
         poolAddress,
-        recipientParam, 
         lower,
         upper
     )
@@ -69,7 +84,7 @@ export function handleMint(event: Mint): void {
     let loadPositionFraction = safeLoadPositionFraction(
         poolAddress,
         tokenIdParam,
-        Address.fromString(recipientParam)
+        recipientParam
     )
     let position = loadPosition.entity
     let positionToken = loadPositionToken.entity
@@ -84,7 +99,6 @@ export function handleMint(event: Mint): void {
     if (!loadPosition.exists) {
         position.lower = lower
         position.upper = upper
-        position.owner = Bytes.fromHexString(recipientParam) as Bytes
         position.pool = pool.id
         position.createdAtBlockNumber = event.block.number
         position.createdAtTimestamp = event.block.timestamp
