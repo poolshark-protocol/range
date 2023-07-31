@@ -28,8 +28,8 @@ export class MintPosition {
     await this.initialSetup.readRangePoolSetup(this.nonce)
     const token0Amount = ethers.utils.parseUnits('100', await hre.props.token0.decimals())
     const token1Amount = ethers.utils.parseUnits('100', await hre.props.token1.decimals())
-    await mintSigners20(hre.props.token0, token0Amount.mul(10000), [hre.props.alice])
-    await mintSigners20(hre.props.token1, token1Amount.mul(10000), [hre.props.alice])
+    await mintSigners20(hre.props.token0, token0Amount.mul(10), [hre.props.alice])
+    await mintSigners20(hre.props.token1, token1Amount.mul(10), [hre.props.alice])
 
     const liquidityAmount = BigNumber.from('44721359549995793929')
 
@@ -47,19 +47,19 @@ export class MintPosition {
     //   revertMessage:''
     // })
     await getSample(true)
-    // await validateMint({
-    //   signer: hre.props.alice,
-    //   recipient: hre.props.alice.address,
-    //   lower: '-887270',
-    //   upper: '887270',
-    //   amount0: token0Amount,
-    //   amount1: token1Amount,
-    //   balance0Decrease: BigNumber.from('0'),
-    //   balance1Decrease: token1Amount,
-    //   liquidityIncrease: liquidityAmount,
-    //   revertMessage: '',
-    //   balanceCheck: false
-    // })
+    await validateMint({
+      signer: hre.props.alice,
+      recipient: hre.props.alice.address,
+      lower: '-887270',
+      upper: '887270',
+      amount0: token0Amount,
+      amount1: token1Amount,
+      balance0Decrease: BigNumber.from('0'),
+      balance1Decrease: token1Amount,
+      liquidityIncrease: liquidityAmount,
+      revertMessage: '',
+      balanceCheck: false
+    })
 
     // await validateMint({
     //   signer: hre.props.alice,
